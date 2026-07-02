@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://h4f6xqjagguy"]
+
+[ext_resource type="Script" uid="uid://uj3fpyqghe2v" path="res://Core/Systems/ComponentHandler.gd" id="1_a3d8c"]
+[ext_resource type="Script" uid="uid://mobt30lvr51y" path="res://Scenes/Player/Player.gd" id="1_jhyir"]
+[ext_resource type="Script" uid="uid://bgsj8gw2nmanw" path="res://Core/Components/InputSource/PlayerInput.gd" id="2_gk6dx"]
+[ext_resource type="Script" uid="uid://cgduh0h7grupy" path="res://Core/Systems/StateMachine.gd" id="2_xpcdj"]
+[ext_resource type="Script" uid="uid://ch5wra7y1gllq" path="res://Core/Components/CameraComponent.gd" id="3_jhyir"]
+[ext_resource type="Script" uid="uid://ckkpqo3bx8v2t" path="res://Core/Components/GravityComponent.gd" id="4_74mp2"]
+[ext_resource type="Script" uid="uid://bspc0ucuc08ip" path="res://Core/Components/LookComponent.gd" id="5_oikmp"]
+[ext_resource type="Script" uid="uid://chvfc2ghjnp2v" path="res://Core/Components/MoveComponent.gd" id="6_06tpx"]
+[ext_resource type="Script" uid="uid://dd0hhf1ndit0j" path="res://Core/States/Player/PlayerIdleState.gd" id="8_7g0yx"]
+[ext_resource type="Script" uid="uid://curn3k3c5dk1f" path="res://Core/States/Player/PlayerMoveState.gd" id="9_dey5f"]
+[ext_resource type="Script" uid="uid://celih626t4r46" path="res://Core/States/Player/PlayerJumpState.gd" id="11_74mp2"]
+[ext_resource type="Script" uid="uid://mokv377dhvq5" path="res://Core/States/Player/PlayerFlyingState.gd" id="12_oikmp"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_w45gy"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_w45gy"]
+
+[node name="Player" type="CharacterBody3D" unique_id=900159298]
+script = ExtResource("1_jhyir")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=875408619]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("CapsuleMesh_w45gy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=801005380]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_w45gy")
+
+[node name="ComponentHandler" type="Node" parent="." unique_id=643640741]
+unique_name_in_owner = true
+script = ExtResource("1_a3d8c")
+default_components = Array[Script]([ExtResource("2_gk6dx"), ExtResource("3_jhyir"), ExtResource("4_74mp2"), ExtResource("5_oikmp"), ExtResource("6_06tpx")])
+metadata/_custom_type_script = "uid://uj3fpyqghe2v"
+
+[node name="StateMachine" type="Node" parent="." unique_id=1902570200]
+unique_name_in_owner = true
+script = ExtResource("2_xpcdj")
+state_scripts = Array[GDScript]([ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2"), ExtResource("12_oikmp")])
+metadata/_custom_type_script = "uid://cgduh0h7grupy"
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1263752586]
+custom_minimum_size = Vector2(10, 10)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 5.0
+offset_bottom = 5.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4

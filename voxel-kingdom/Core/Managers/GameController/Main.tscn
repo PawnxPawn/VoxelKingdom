@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://bbb843krs7tb3"]
+
+[ext_resource type="Script" uid="uid://bfljda1hw0dh1" path="res://Core/Managers/GameController/Main.gd" id="1_unf75"]
+
+[node name="Main" type="Node" unique_id=209543582]
+script = ExtResource("1_unf75")
+
+[node name="SceneManager" type="Node" parent="." unique_id=1099837046]
+unique_name_in_owner = true
+
+[node name="UIManager" type="CanvasLayer" parent="." unique_id=184480125]
+unique_name_in_owner = true

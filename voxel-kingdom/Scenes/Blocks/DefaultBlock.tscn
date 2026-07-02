@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://c6yyee7na55t2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vtpij"]
+albedo_color = Color(0, 0.4745098, 0, 1)
+
+[node name="DefaultBlock" type="CSGBox3D" unique_id=2060873355]
+material = SubResource("StandardMaterial3D_vtpij")

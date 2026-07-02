@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://c4rskdb1wf7gb"]
+
+[ext_resource type="Script" uid="uid://bfljda1hw0dh1" path="res://Core/Managers/GameController/Main.gd" id="1_mtm67"]
+
+[node name="GameManager" type="Node" unique_id=1787820013]
+script = ExtResource("1_mtm67")
+
+[node name="SceneManger" type="Node" parent="." unique_id=751169187]
+
+[node name="UIManager" type="Node" parent="." unique_id=1547022617]
