@@ -54,8 +54,10 @@ func _process_input() -> void:
 
 
 func input(event: InputEvent) -> void:
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		change_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	#TODO: DELETE after pause menu is added
-	if event.is_action_pressed(&"ui_cancel"):
+	if event.is_action_pressed(&"ui_cancel") and not OS.has_feature("web"):
 		_owner.get_tree().quit()
 	if event is InputEventMouseMotion:
 		var look_direction = (event.screen_relative * PIXEL_SCALE) * _mouse_sensitivity
