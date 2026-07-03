@@ -37,7 +37,7 @@ metadata/_custom_type_script = "uid://uj3fpyqghe2v"
 [node name="StateMachine" type="Node" parent="." unique_id=1902570200]
 unique_name_in_owner = true
 script = ExtResource("2_xpcdj")
-state_scripts = Array[GDScript]([ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2"), ExtResource("12_oikmp")])
+state_scripts = Array[GDScript]([ExtResource("12_oikmp"), ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2")])
 metadata/_custom_type_script = "uid://cgduh0h7grupy"
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1263752586]

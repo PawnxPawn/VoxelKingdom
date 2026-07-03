@@ -27,7 +27,6 @@ script = ExtResource("1_7cwmi")
 world_size = Vector3(256, 256, 256)
 colors = Array[Color]([Color(0, 0.2627451, 0, 1), Color(0.28496382, 0.47122926, 0.23112375, 1), Color(0.7274283, 0.7274284, 0.7274283, 1), Color(0.65663993, 0.6272755, 0.6146053, 1)])
 cut_off = 0.30000000000000004
-noise_scale = 1.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1365840279]
 environment = SubResource("Environment_ab4hr")
@@ -39,7 +38,7 @@ shadow_enabled = true
 [node name="Player" parent="." unique_id=900159298 instance=ExtResource("2_qykia")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5216007, 217.0185, 9.799481)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1910590541]
+[node name="ChunkGenerator" type="MeshInstance3D" parent="." unique_id=1910590541]
 mesh = SubResource("ArrayMesh_w4u2d")
 script = ExtResource("3_gs4kv")
 material = SubResource("StandardMaterial3D_gs4kv")

@@ -29,6 +29,10 @@ func connect_components() -> void:
 		if _input:
 			_input.moved.connect(_move.set_direction)
 			_move.set_direction(_owner.input.direction)
+	
+	if _input:
+		_input.fly_pressed.connect(transition_to.bind(&"FlyState"))
+
 
 	if _gravity:
 		_gravity.grounded.connect(_on_grounded)
@@ -38,6 +42,9 @@ func disconnect_components() -> void:
 		_handler.set_active(MoveComponent, false)
 		if _input:
 			_input.moved.disconnect(_move.set_direction)
+	
+	if _input:
+		_input.fly_pressed.disconnect(transition_to.bind(&"FlyState"))
 
 	if _gravity:
 		_gravity.grounded.disconnect(_on_grounded)
