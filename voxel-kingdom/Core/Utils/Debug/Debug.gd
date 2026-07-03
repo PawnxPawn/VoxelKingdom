@@ -63,7 +63,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
-	frame_tracker += 1 
+	pass
+	#frame_tracker += 1 
 
 
 func add_debug_label(id: StringName, value: Variant, frames_before_updating: int = 1) -> void:

@@ -27,7 +27,7 @@ enum GravityType {
 const PRESETS: Dictionary = {
 	GravityType.NORMAL: {
 		&"ascent": 10.0,
-		&"descent": 30.0,
+		&"descent": 15.0,
 	},
 }
 

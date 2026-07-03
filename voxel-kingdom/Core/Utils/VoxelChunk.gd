@@ -1,7 +1,7 @@
 class_name VoxelChunk
 extends MeshInstance3D
 
-var chunk_size: Vector3i = Vector3i(64, 64, 64)
+var chunk_size: Vector3i = Vector3i(256, 256, 256)
 var noise_scale: float = 0.05
 var height_base: float = 8.0
 var height_amplitude: float = 8.0

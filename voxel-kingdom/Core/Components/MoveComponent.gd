@@ -18,7 +18,7 @@ var slow_down_speed: float = 20.0
 var move_mode_results: Dictionary = {
 	move_mode.Walk: 60.0,
 	move_mode.Run: 80.0,
-	move_mode.Fly: 120.0,
+	move_mode.Fly: 480.0,
 }
 
 

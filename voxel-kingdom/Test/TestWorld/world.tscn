@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bha0ybw7k60v3" path="res://Test/TestWorld/world.gd" id="1_7cwmi"]
 [ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="2_qykia"]
+[ext_resource type="Script" uid="uid://dqbkvxrwq8ccf" path="res://Test/TestWorld/mesh_instance_3d.gd" id="3_gs4kv"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qykia"]
 sky_top_color = Color(0.42689714, 0.65096635, 1, 1)
@@ -16,8 +17,17 @@ background_mode = 2
 sky = SubResource("Sky_gs4kv")
 glow_enabled = true
 
+[sub_resource type="ArrayMesh" id="ArrayMesh_w4u2d"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gs4kv"]
+vertex_color_use_as_albedo = true
+
 [node name="World" type="Node3D" unique_id=1147436933]
 script = ExtResource("1_7cwmi")
+world_size = Vector3(256, 256, 256)
+colors = Array[Color]([Color(0, 0.2627451, 0, 1), Color(0.28496382, 0.47122926, 0.23112375, 1), Color(0.7274283, 0.7274284, 0.7274283, 1), Color(0.65663993, 0.6272755, 0.6146053, 1)])
+cut_off = 0.30000000000000004
+noise_scale = 1.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1365840279]
 environment = SubResource("Environment_ab4hr")
@@ -28,3 +38,8 @@ shadow_enabled = true
 
 [node name="Player" parent="." unique_id=900159298 instance=ExtResource("2_qykia")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5216007, 217.0185, 9.799481)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1910590541]
+mesh = SubResource("ArrayMesh_w4u2d")
+script = ExtResource("3_gs4kv")
+material = SubResource("StandardMaterial3D_gs4kv")
