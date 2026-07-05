@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://4rqt7q4iep3m" path="res://Test/TestWorld/ChunkManager.tscn" id="3_gs4kv"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qykia"]
-sky_top_color = Color(0.59335905, 0.7527102, 1, 1)
+sky_top_color = Color(0.31285283, 0.34551787, 0.8410348, 1)
 sky_horizon_color = Color(0.80490446, 0.86119324, 0.947792, 1)
 ground_bottom_color = Color(0, 0, 0, 1)
 ground_horizon_color = Color(0.8245915, 0.8728588, 0.9511173, 1)
@@ -18,6 +18,11 @@ background_mode = 2
 sky = SubResource("Sky_gs4kv")
 glow_enabled = true
 
+[sub_resource type="LabelSettings" id="LabelSettings_gs4kv"]
+font_size = 32
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(10, 10)
+
 [node name="World" type="Node3D" unique_id=1147436933]
 script = ExtResource("1_7cwmi")
 
@@ -25,12 +30,20 @@ script = ExtResource("1_7cwmi")
 environment = SubResource("Environment_ab4hr")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1774491407]
-transform = Transform3D(-0.8561976, 0.47450316, 0.2043821, -0.19566786, -0.66393685, 0.72173524, 0.4781627, 0.57795703, 0.6613063, -22.285038, 27.494595, 37)
-visible = false
+transform = Transform3D(0.7946996, -0.60652995, 0.023959426, -0.4763232, -0.59865826, 0.64399105, -0.37625644, -0.52319187, -0.7646576, -21.947058, 29.13071, 37)
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=900159298 instance=ExtResource("2_qykia")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5216007, 217.0185, 9.799481)
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
-colors = Array[Color]([Color(0.16051984, 0.4680891, 0.13776836, 1), Color(0.4138818, 0.19364199, 9.62615e-08, 1), Color(0.50928575, 0.5092863, 0.50928617, 1), Color(0.20690814, 0.08037958, 0.33782503, 1)])
+colors = Array[Color]([Color(0.7254459, 0.10317088, 0.008282725, 1), Color(7.0391224e-07, 0.1902256, 0.042052887, 1), Color(0.48512578, 0.32438016, 0.13510123, 1), Color(0.46618086, 0.4661808, 0.4661808, 1)])
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
+
+[node name="SeedLabel" type="Label" parent="CanvasLayer" unique_id=515268437]
+unique_name_in_owner = true
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Seed: 0"
+label_settings = SubResource("LabelSettings_gs4kv")

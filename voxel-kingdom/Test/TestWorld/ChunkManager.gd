@@ -7,7 +7,9 @@ var instance: ChunkManager
 @export var chunk_size: int = 32
 
 @export var noise_frequency: float = 0.003
-@export var noise_seed: int = 0
+@export var noise_seed: int = randi()
+
+@onready var seed_label: Label = %SeedLabel
 
 
 var noise = FastNoiseLite.new()
@@ -37,6 +39,8 @@ func _ready() -> void:
 	noise.frequency = noise_frequency
 	noise.seed = noise_seed
 	
+	seed_label.text = "Seed: %s" % noise_seed
+	
 	number_of_chunks = Vector3i(
 		ceili(float(dimensions.x) / chunk_size),
 		ceili(float(dimensions.y) / chunk_size),
@@ -63,7 +67,7 @@ func _run_generation(chunk_start: Vector3i, chunk_count: Vector3i) -> void:
 
 	if all_done:
 		var gen_time = (Time.get_ticks_usec() - _start_time) / 1000000.0
-		print("Blocks in world: %d\nGen Time: %s" % [Chunk.cube_count, gen_time])
+		print("Cubes in world: %d\nGen Time: %s" % [Chunk.cube_count, gen_time])
 
 
 func generate_chunks(chunk_start: Vector3i, chunk_count: Vector3i) -> void:
@@ -75,7 +79,6 @@ func generate_chunks(chunk_start: Vector3i, chunk_count: Vector3i) -> void:
 				new_chunk.generate_date(chunk_size, dimensions.y, noise, colors)
 				new_chunk.generate_mesh()
 				add_child.call_deferred(new_chunk)
-	print("Thread ID: %s finished" % OS.get_thread_caller_id())
 
 
 func _exit_tree() -> void:
