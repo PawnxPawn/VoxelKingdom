@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="CameraComponentData" format=3 uid="uid://bfyar8d3nqwpr"]
+
+[ext_resource type="Script" uid="uid://ch5wra7y1gllq" path="res://Core/Components/Scripts/CameraComponent.gd" id="1_0m61l"]
+[ext_resource type="Script" uid="uid://bib2lxwsc0q2f" path="res://Core/Components/ComponentResources/ComponentDataScripts/CameraComponentData.gd" id="2_gs408"]
+
+[resource]
+script = ExtResource("2_gs408")
+metadata/_custom_type_script = "uid://bib2lxwsc0q2f"

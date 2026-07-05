@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="PlayerInputData" format=3 uid="uid://c84sb1mdsou2t"]
+
+[ext_resource type="Script" uid="uid://bgsj8gw2nmanw" path="res://Core/Components/Scripts/InputSource/PlayerInput.gd" id="1_n6kih"]
+[ext_resource type="Script" uid="uid://c0in8crdrwup2" path="res://Core/Components/ComponentResources/ComponentDataScripts/PlayerInputData.gd" id="2_kusub"]
+
+[resource]
+script = ExtResource("2_kusub")
+metadata/_custom_type_script = "uid://c0in8crdrwup2"

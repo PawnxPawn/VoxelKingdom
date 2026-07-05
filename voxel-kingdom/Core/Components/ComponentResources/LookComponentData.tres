@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="LookComponentData" format=3 uid="uid://d1tgow81jdq6i"]
+
+[ext_resource type="Script" uid="uid://bspc0ucuc08ip" path="res://Core/Components/Scripts/LookComponent.gd" id="1_88kbs"]
+[ext_resource type="Script" uid="uid://ct2b8u80qrjrv" path="res://Core/Components/ComponentResources/ComponentDataScripts/LookComponentData.gd" id="2_n2twi"]
+
+[resource]
+script = ExtResource("2_n2twi")
+metadata/_custom_type_script = "uid://ct2b8u80qrjrv"

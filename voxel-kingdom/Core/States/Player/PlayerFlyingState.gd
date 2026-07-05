@@ -34,6 +34,8 @@ func connect_components() -> void:
 		if _input:
 			_input.moved.connect(_move.set_direction)
 			_move.set_direction(_owner.input.direction)
+			_input.sprinting_pressed.connect(_move.set_move_mode.bind(_move.move_mode.FlyFast))
+			_input.sprinting_released.connect(_move.set_move_mode.bind(_move.move_mode.Fly))
 	
 	if _input:
 		_input.jump_pressed.connect(_gravity.set_ascend.bind(true))
@@ -46,8 +48,10 @@ func connect_components() -> void:
 func disconnect_components() -> void:
 	if _move:
 		_handler.set_active(MoveComponent, false)
-		if _owner.input:
-			_owner.input.moved.disconnect(_move.set_direction)
+		if _input:
+			_input.moved.disconnect(_move.set_direction)
+			_input.sprinting_pressed.disconnect(_move.set_move_mode.bind(_move.move_mode.FlyFast))
+			_input.sprinting_released.disconnect(_move.set_move_mode.bind(_move.move_mode.Fly))
 	
 	if _gravity:
 		_gravity.set_ascend(false)
