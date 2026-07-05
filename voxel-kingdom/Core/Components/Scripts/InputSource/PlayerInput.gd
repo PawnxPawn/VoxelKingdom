@@ -2,9 +2,11 @@ class_name PlayerInput extends InputSource
 
 const PIXEL_SCALE:float = 0.002
 
+#Resource Exports
+var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
+
 var direction: Vector2 = Vector2.ZERO
 
-var _mouse_sensitivity = Vector2(1.0, 0.50)
 var _look_direction: Vector2 = Vector2.ZERO
 var _new_look_direction: Vector2 = Vector2.ZERO
 
@@ -60,7 +62,7 @@ func input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel") and not OS.has_feature("web"):
 		_owner.get_tree().quit()
 	if event is InputEventMouseMotion:
-		var look_direction = (event.screen_relative * PIXEL_SCALE) * _mouse_sensitivity
+		var look_direction = (event.screen_relative * PIXEL_SCALE) * mouse_sensitivity
 		look_direction_changed.emit(look_direction)
 		
 

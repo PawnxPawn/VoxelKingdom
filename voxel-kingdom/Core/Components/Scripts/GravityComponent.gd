@@ -15,8 +15,12 @@ var is_flying: bool = false
 var _ascend_input: bool = false
 var _descend_input: bool = false
 
+
+#Resource Exports
+var normal_ascending_gravity:float = 10.0
+var normal_descending_gravity:float = 15.0
 var jump_velocity: float = 4.0
-var fly_speed = 4.0
+var fly_up_down_speed:float = 4.0
 
 
 enum GravityType {
@@ -24,10 +28,10 @@ enum GravityType {
 	CUSTOM,
 }
 
-const PRESETS: Dictionary = {
+var presets: Dictionary = {
 	GravityType.NORMAL: {
-		&"ascent": 10.0,
-		&"descent": 15.0,
+		&"ascent": normal_ascending_gravity,
+		&"descent": normal_descending_gravity,
 	},
 }
 
@@ -77,7 +81,7 @@ func apply_characterbody_gravity() -> void:
 	
 	if is_flying:
 		var direction: float = float(_ascend_input) - float(_descend_input)
-		_owner.velocity.y = direction * fly_speed
+		_owner.velocity.y = direction * fly_up_down_speed
 		return
 	
 	var gravity: float = gravity_ascent if _owner.velocity.y > 0.0 else gravity_descent
@@ -95,8 +99,8 @@ func set_gravity(type: GravityType, custom_ascent: float = 0.0, custom_descent: 
 		gravity_ascent = custom_ascent
 		gravity_descent = custom_descent
 		return
-	gravity_ascent = PRESETS[type][&"ascent"]
-	gravity_descent = PRESETS[type][&"descent"]
+	gravity_ascent = presets[type][&"ascent"]
+	gravity_descent = presets[type][&"descent"]
 
 
 func jump() -> void:

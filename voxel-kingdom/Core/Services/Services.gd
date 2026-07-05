@@ -22,8 +22,13 @@ func _register_services() -> void:
 	add_child(debug)
 
 
+func _deregister_service() -> void:
+	pass
+
+
 func set_ui_manager(ui_manager:Node):
 	ui.ui_manager = ui_manager
+
 
 func set_scene_manager(scene_manager:Node):
 	scene_loader.scene_manager = scene_manager

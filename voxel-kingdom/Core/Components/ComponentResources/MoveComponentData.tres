@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="MoveComponentData" format=3 uid="uid://b8kquqdyyovoh"]
+
+[ext_resource type="Script" uid="uid://b5siwqp1c0q8q" path="res://Core/Components/ComponentResources/ComponentDataScripts/MoveComponentData.gd" id="1_48u4d"]
+[ext_resource type="Script" uid="uid://chvfc2ghjnp2v" path="res://Core/Components/Scripts/MoveComponent.gd" id="1_k64ym"]
+
+[resource]
+script = ExtResource("1_48u4d")
+metadata/_custom_type_script = "uid://b5siwqp1c0q8q"

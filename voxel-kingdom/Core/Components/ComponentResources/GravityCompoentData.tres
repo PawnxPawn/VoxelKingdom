@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="GravityComponentData" format=3 uid="uid://bsaad20l8i0ch"]
+
+[ext_resource type="Script" uid="uid://ckkpqo3bx8v2t" path="res://Core/Components/Scripts/GravityComponent.gd" id="1_a63a0"]
+[ext_resource type="Script" uid="uid://5ub3dmbjdiqe" path="res://Core/Components/ComponentResources/ComponentDataScripts/GravityComponentData.gd" id="2_08rl5"]
+
+[resource]
+script = ExtResource("2_08rl5")
+metadata/_custom_type_script = "uid://5ub3dmbjdiqe"

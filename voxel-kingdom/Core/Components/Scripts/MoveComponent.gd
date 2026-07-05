@@ -6,9 +6,15 @@ enum move_mode {
 	Walk,
 	Run,
 	Fly,
+	FlyFast,
 }
 
-const MAX_SPEED: float = 150.0
+#Resource Stats
+var max_speed: float = 150.0
+var walk_speed:float = 60.0
+var run_speed:float = 80.0
+var fly_speed:float = 480.0
+var fly_fast_speed: float = 900.0
 
 var _input_direction: Vector2 = Vector2.ZERO
 
@@ -16,9 +22,10 @@ var speed: float = 60.0
 var slow_down_speed: float = 20.0
 
 var move_mode_results: Dictionary = {
-	move_mode.Walk: 60.0,
-	move_mode.Run: 80.0,
-	move_mode.Fly: 480.0,
+	move_mode.Walk: walk_speed,
+	move_mode.Run: run_speed,
+	move_mode.Fly: fly_speed,
+	move_mode.FlyFast: fly_fast_speed,
 }
 
 

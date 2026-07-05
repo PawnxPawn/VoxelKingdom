@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://vqyykbxy7a60"]
+
+[ext_resource type="Script" uid="uid://dqbkvxrwq8ccf" path="res://Test/TestWorld/Chunk.gd" id="1_sc5a4"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sc5a4"]
+vertex_color_use_as_albedo = true
+
+[node name="Chunk" type="StaticBody3D" unique_id=1940101697]
+script = ExtResource("1_sc5a4")
+material = SubResource("StandardMaterial3D_sc5a4")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1274664315]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=996496366]
