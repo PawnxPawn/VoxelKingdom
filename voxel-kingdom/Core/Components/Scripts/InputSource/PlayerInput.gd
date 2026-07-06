@@ -53,11 +53,18 @@ func _process_input() -> void:
 		crouch_pressed.emit()
 	if Input.is_action_just_released(&"Crouch"):
 		crouch_released.emit()
+	
+	if Input.is_action_just_pressed("Add_Block"):
+		add_block_pressed.emit()
+	if Input.is_action_just_pressed("Remove_Block"):
+		remove_block_pressed.emit()
+
 
 
 func input(event: InputEvent) -> void:
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-		change_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	if event is InputEventMouseButton or event is InputEventMouseMotion:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	#TODO: DELETE after pause menu is added
 	if event.is_action_pressed(&"ui_cancel") and not OS.has_feature("web"):
 		_owner.get_tree().quit()

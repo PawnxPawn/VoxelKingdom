@@ -11,3 +11,5 @@ signal sprinting_released
 signal interacted_pressed
 signal inventory_pressed
 signal fly_pressed
+signal add_block_pressed
+signal remove_block_pressed

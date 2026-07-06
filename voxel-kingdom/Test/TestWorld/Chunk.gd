@@ -9,22 +9,32 @@ enum Face {
 	BACK,
 }
 
+
+
 @export var use_centered_voxels: bool = false
 @export var material: Material
+@export var stone_height: int = 45
+@export var dirt_depth: int = 3      
+@export var bedrock_height: int = 2
+
 
 @onready var collision_shape_3d: CollisionShape3D = $CollisionShape3D
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 
 static var cube_count: int = 0
 
-var voxels: Dictionary[Vector3, Color] = {}
+var chunk_data: ChunkData = ChunkData.new()
+var voxel_colors: Dictionary[TerrianData.TerrianType, Color] = {}
 var chunk_size: int = 0
 
-var surface_array: Array = []
-var vertices: PackedVector3Array = PackedVector3Array()
-var normals: PackedVector3Array = PackedVector3Array()
-var colors: PackedColorArray = PackedColorArray()
+var mesh_data: MeshData = MeshData.new()
 var collision_faces: PackedVector3Array = PackedVector3Array()
+var _pending_collision_boxes: Array[Dictionary] = []
+
+var _rebuild_mutex: Mutex = Mutex.new()
+var _rebuild_running: bool = false
+var _rebuild_dirty: bool = false
+var _active_task_id: int = -1
 
 var face_normals: Dictionary[Face, Vector3] = {
 	Face.FRONT: Vector3(0, 0, 1),
@@ -45,19 +55,20 @@ var face_axes: Dictionary[Face, FaceAxes] = {
 	Face.BOTTOM: FaceAxes.new(1, -1, 0, 1, 2, 1),
 }
 
-
+var _provisional_shape: CollisionShape3D = null
 
 func _ready() -> void:
-	surface_array.resize(Mesh.ARRAY_MAX)
 	mesh_instance.mesh = ArrayMesh.new()
 	collision_shape_3d.disabled = true
-	if voxels.is_empty():
+	if chunk_data.is_empty():
 		return
 	commit_mesh()
 
 
-func generate_date(size: int, max_height: int, noise: Noise, color_array: Array[Color]) -> void:
+func generate_date(size: int, max_height: int, noise: Noise, color_array: Dictionary[TerrianData.TerrianType, Color]) -> void:
 	chunk_size = size
+	chunk_data.set_size(size)
+	voxel_colors = color_array
 	
 	for x: int in range(size):
 		for z: int in range(size):
@@ -77,59 +88,86 @@ func generate_date(size: int, max_height: int, noise: Noise, color_array: Array[
 			var local_height: float = target_height - position.y
 			
 			for y: int in range(min(local_height, size)):
-				var depth_from_surface: int = int(local_height) - y
-				var color_index: int = min(depth_from_surface, color_array.size() - 1)
-				voxels[Vector3(x, y, z)] = color_array[color_index]
+				var depth_from_surface: int = int(local_height) - 1 - y
+				var terrain_type: TerrianData.TerrianType
+				var global_y: int = int(position.y) + y
+				
+				if global_y <= bedrock_height:
+					terrain_type = TerrianData.TerrianType.BEDROCK
+				elif global_y >= stone_height:
+					terrain_type = TerrianData.TerrianType.STONE
+				elif depth_from_surface == 0:
+					terrain_type = TerrianData.TerrianType.GRASS
+				elif depth_from_surface <= dirt_depth:
+					terrain_type = TerrianData.TerrianType.DIRT
+				else:
+					terrain_type = TerrianData.TerrianType.STONE
+				
+				chunk_data.add_voxel(Vector3i(x, y, z), terrain_type)
 				cube_count += 1
 
 
 func generate_mesh() -> void:
-	if voxels.is_empty():
+	if chunk_data.is_empty():
+		mesh_data.reset()
 		return
+	mesh_data.reset()
+	collision_faces.clear()
+	var flat_voxels: PackedInt32Array = chunk_data.get_voxels_copy()
 	for face: Face in Face.values():
-		mesh_face(face)
+		mesh_face(face, flat_voxels)
 
 
-func mesh_face(face: Face) -> void:
+func mesh_face(face: Face, flat_voxels: PackedInt32Array) -> void:
 	var axes: FaceAxes = face_axes[face]
 	var normal: Vector3 = face_normals[face]
 	
 	for layer: int in range(chunk_size):
-		var mask: Dictionary[Vector2i, Color] = {}
+		var mask: PackedInt32Array = PackedInt32Array()
+		mask.resize(chunk_size * chunk_size)
+		mask.fill(-1)
 		
 		for across: int in range(chunk_size):
 			for up: int in range(chunk_size):
-				var pos: Vector3 = Vector3.ZERO
+				var pos: Vector3i = Vector3i.ZERO
 				pos[axes.normal_axis] = layer
 				pos[axes.across_axis] = across
 				pos[axes.up_axis] = up
 				
-				if not voxels.has(pos):
+				var voxel: int = flat_voxels[pos.x + pos.z * chunk_size + pos.y * chunk_size * chunk_size]
+				if voxel == TerrianData.TerrianType.AIR:
 					continue
 				
-				var neighbor: Vector3 = pos + normal
-				if voxels.has(neighbor):
-					continue 
+				var neighbor: Vector3i = pos + Vector3i(normal)
+				var mask_index: int = across * chunk_size + up
+				if neighbor.x < 0 or neighbor.y < 0 or neighbor.z < 0 or neighbor.x >= chunk_size or neighbor.y >= chunk_size or neighbor.z >= chunk_size:
+					mask[mask_index] = voxel
+					continue
 				
-				mask[Vector2i(across, up)] = voxels[pos]
+				var neighbor_voxel: int = flat_voxels[neighbor.x + neighbor.z * chunk_size + neighbor.y * chunk_size * chunk_size]
+				if neighbor_voxel != TerrianData.TerrianType.AIR:
+					continue
+				
+				mask[mask_index] = voxel
 				
 		merge_mask(mask, face, axes, layer)
 
 
-func merge_mask(mask: Dictionary[Vector2i, Color], face: Face, axes: FaceAxes, layer: int) -> void:
-	var visited: Dictionary[Vector2i, bool] = {}
+func merge_mask(mask: PackedInt32Array, face: Face, axes: FaceAxes, layer: int) -> void:
+	var visited: PackedByteArray = PackedByteArray()
+	visited.resize(chunk_size * chunk_size)
 	
 	for across: int in range(chunk_size):
 		for up: int in range(chunk_size):
-			var start: Vector2i = Vector2i(across, up)
-			if visited.has(start) or not mask.has(start):
+			var start_index: int = across * chunk_size + up
+			if visited[start_index] or mask[start_index] == -1:
 				continue
 			
-			var color: Color = mask[start]
+			var voxel: int = mask[start_index]
 			var width: int = 1
 			while across + width < chunk_size:
-				var next_cell: Vector2i = Vector2i(across + width, up)
-				if mask.get(next_cell) != color or visited.has(next_cell):
+				var next_index: int = (across + width) * chunk_size + up
+				if mask[next_index] != voxel or visited[next_index]:
 					break
 				width += 1
 			
@@ -137,8 +175,8 @@ func merge_mask(mask: Dictionary[Vector2i, Color], face: Face, axes: FaceAxes, l
 			while up + height < chunk_size:
 				var row_matches: bool = true
 				for dx: int in range(width):
-					var cell: Vector2i = Vector2i(across + dx, up + height)
-					if mask.get(cell) != color or visited.has(cell):
+					var cell_index: int = (across + dx) * chunk_size + (up + height)
+					if mask[cell_index] != voxel or visited[cell_index]:
 						row_matches = false
 						break
 				if not row_matches:
@@ -147,9 +185,9 @@ func merge_mask(mask: Dictionary[Vector2i, Color], face: Face, axes: FaceAxes, l
 				
 			for dx: int in range(width):
 				for dy: int in range(height):
-					visited[Vector2i(across + dx, up + dy)] = true
+					visited[(across + dx) * chunk_size + (up + dy)] = 1
 					
-			add_quad(face, axes, layer, across, up, width, height, color)
+			add_quad(face, axes, layer, across, up, width, height, voxel_colors[voxel as TerrianData.TerrianType])
 
 
 func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, width: int, height: int, color: Color) -> void:
@@ -172,68 +210,59 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 	var corners: Array[Vector3] = [bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
 	
 	for corner: Vector3 in corners:
-		vertices.append(corner)
-		normals.append(normal)
-		colors.append(color)
+		mesh_data.add_data(corner, normal, color)
 		collision_faces.append(corner)
 
 
-func commit_mesh() -> void:
-	surface_array[Mesh.ARRAY_VERTEX] = vertices
-	surface_array[Mesh.ARRAY_NORMAL] = normals
-	surface_array[Mesh.ARRAY_COLOR] = colors
+func compute_collision_boxes() -> void:
+	if chunk_data.is_empty():
+		_pending_collision_boxes = []
+		return
 	
-	var arr_mesh: ArrayMesh = mesh_instance.mesh as ArrayMesh
-	arr_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface_array)
-	mesh_instance.mesh.surface_set_material(0, material)
-	
-	generate_collision()
-
-
-func generate_collision() -> void:
-	var visited: Dictionary[Vector3, bool] = {}
+	var flat_voxels: PackedInt32Array = chunk_data.get_voxels_copy()
+	var visited: PackedByteArray = PackedByteArray()
+	visited.resize(chunk_size * chunk_size * chunk_size)
 	var boxes: Array[Dictionary] = []
 	
 	for x: int in range(chunk_size):
 		for y: int in range(chunk_size):
 			for z: int in range(chunk_size):
-				var start: Vector3 = Vector3(x, y, z)
-				
-				if not voxels.has(start) or visited.has(start):
+				var start_index: int = x + z * chunk_size + y * chunk_size * chunk_size
+				if flat_voxels[start_index] == TerrianData.TerrianType.AIR or visited[start_index]:
 					continue
-					
+				
 				var max_x: int = x
-				while max_x + 1 < chunk_size and voxels.has(Vector3(max_x + 1, y, z)):
+				while max_x + 1 < chunk_size and flat_voxels[(max_x + 1) + z * chunk_size + y * chunk_size * chunk_size] != TerrianData.TerrianType.AIR:
 					max_x += 1
-					
+				
 				var max_z: int = z
 				var can_grow_z: bool = true
 				while can_grow_z and max_z + 1 < chunk_size:
 					for scan_x: int in range(x, max_x + 1):
-						if not voxels.has(Vector3(scan_x, y, max_z + 1)):
+						if flat_voxels[scan_x + (max_z + 1) * chunk_size + y * chunk_size * chunk_size] == TerrianData.TerrianType.AIR:
 							can_grow_z = false
 							break
 					if can_grow_z:
 						max_z += 1
-						
+				
 				var max_y: int = y
 				var can_grow_y: bool = true
 				while can_grow_y and max_y + 1 < chunk_size:
 					for scan_x: int in range(x, max_x + 1):
 						for scan_z: int in range(z, max_z + 1):
-							if not voxels.has(Vector3(scan_x, max_y + 1, scan_z)):
+							if flat_voxels[scan_x + scan_z * chunk_size + (max_y + 1) * chunk_size * chunk_size] == TerrianData.TerrianType.AIR:
 								can_grow_y = false
 								break
 						if not can_grow_y:
 							break
 					if can_grow_y:
 						max_y += 1
-						
+				
 				for scan_x: int in range(x, max_x + 1):
 					for scan_y: int in range(y, max_y + 1):
 						for scan_z: int in range(z, max_z + 1):
-							visited[Vector3(scan_x, scan_y, scan_z)] = true
-							
+							visited[scan_x + scan_z * chunk_size + scan_y * chunk_size * chunk_size] = 1
+				
 				var size: Vector3 = Vector3(max_x - x + 1, max_y - y + 1, max_z - z + 1)
 				var center: Vector3 = Vector3(
 					x + size.x * 0.5 - 0.5,
@@ -242,11 +271,15 @@ func generate_collision() -> void:
 				)
 				
 				boxes.append({"size": size, "center": center})
-				
-	apply_collision_boxes(boxes)
+	
+	_pending_collision_boxes = boxes
 
 
 func apply_collision_boxes(boxes: Array[Dictionary]) -> void:
+	for child in get_children():
+		if child is CollisionShape3D and child != collision_shape_3d:
+			child.free()
+	
 	for box: Dictionary in boxes:
 		var shape: BoxShape3D = BoxShape3D.new()
 		shape.size = box["size"]
@@ -256,9 +289,88 @@ func apply_collision_boxes(boxes: Array[Dictionary]) -> void:
 		shape_node.position = box["center"]
 		
 		add_child(shape_node)
-		
-	print("collision boxes: ", boxes.size())
+	
 	collision_shape_3d.disabled = true
+
+
+func commit_mesh() -> void:
+	mesh_data.commit()
+	
+	var arr_mesh: ArrayMesh = mesh_instance.mesh as ArrayMesh
+	arr_mesh.clear_surfaces()
+	if not mesh_data.is_empty():
+		arr_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_data.get_surface_array())
+		mesh_instance.mesh.surface_set_material(0, material)
+	
+	apply_collision_boxes(_pending_collision_boxes)
+
+
+func set_voxel(pos: Vector3i, voxel: TerrianData.TerrianType) -> void:
+	chunk_data.add_voxel(pos, voxel)
+	_add_provisional_collision(pos)
+	_request_rebuild()
+
+
+func remove_voxel_at_local(pos: Vector3i) -> void:
+	chunk_data.remove_voxel(pos)
+	_request_rebuild()
+
+
+func _add_provisional_collision(pos: Vector3i) -> void:
+	_remove_provisional_collision()
+	var shape: BoxShape3D = BoxShape3D.new()
+	shape.size = Vector3.ONE
+	_provisional_shape = CollisionShape3D.new()
+	_provisional_shape.shape = shape
+	_provisional_shape.position = Vector3(pos)
+	add_child(_provisional_shape)
+
+
+func _remove_provisional_collision() -> void:
+	if _provisional_shape != null and is_instance_valid(_provisional_shape):
+		_provisional_shape.free()
+	_provisional_shape = null
+
+
+func _request_rebuild() -> void:
+	_rebuild_mutex.lock()
+	if _rebuild_running:
+		_rebuild_dirty = true
+		_rebuild_mutex.unlock()
+		return
+	_rebuild_running = true
+	_rebuild_mutex.unlock()
+	
+	_active_task_id = WorkerThreadPool.add_task(_rebuild_threaded, true, "chunk_edit_rebuild")
+
+
+func _rebuild_threaded() -> void:
+	generate_mesh()
+	compute_collision_boxes()
+	call_deferred("_on_rebuild_complete")
+
+
+func _on_rebuild_complete() -> void:
+	if not is_instance_valid(self):
+		return
+	
+	commit_mesh()
+	
+	_rebuild_mutex.lock()
+	var needs_another_pass: bool = _rebuild_dirty
+	_rebuild_dirty = false
+	if needs_another_pass:
+		_rebuild_mutex.unlock()
+		_active_task_id = WorkerThreadPool.add_task(_rebuild_threaded)
+	else:
+		_rebuild_running = false
+		_active_task_id = -1
+		_rebuild_mutex.unlock()
+
+
+func _exit_tree() -> void:
+	if _active_task_id != -1:
+		WorkerThreadPool.wait_for_task_completion(_active_task_id)
 
 
 #=============================================

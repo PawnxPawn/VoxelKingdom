@@ -12,6 +12,7 @@
 [ext_resource type="Script" uid="uid://curn3k3c5dk1f" path="res://Core/States/Player/PlayerMoveState.gd" id="9_dey5f"]
 [ext_resource type="Script" uid="uid://celih626t4r46" path="res://Core/States/Player/PlayerJumpState.gd" id="11_74mp2"]
 [ext_resource type="Script" uid="uid://mokv377dhvq5" path="res://Core/States/Player/PlayerFlyingState.gd" id="12_oikmp"]
+[ext_resource type="Script" uid="uid://bbypqo8ffuhss" path="res://Scenes/Player/BlockDetectionRayCast.gd" id="13_06tpx"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_w45gy"]
 
@@ -55,3 +56,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+
+[node name="RayCast3D" type="RayCast3D" parent="." unique_id=1585101922]
+target_position = Vector3(0, 0, -4)
+script = ExtResource("13_06tpx")

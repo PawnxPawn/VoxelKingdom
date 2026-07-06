@@ -29,6 +29,7 @@ var move_mode_results: Dictionary = {
 }
 
 
+
 func physics_process(_delta: float) -> void:
 	if not is_active: return
 	_move_char3d(_input_direction)
