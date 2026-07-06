@@ -15,8 +15,12 @@
 [ext_resource type="Script" uid="uid://bbypqo8ffuhss" path="res://Scenes/Player/BlockDetectionRayCast.gd" id="13_06tpx"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_w45gy"]
+radius = 0.4
+height = 1.8
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_w45gy"]
+radius = 0.4
+height = 1.8
 
 [node name="Player" type="CharacterBody3D" unique_id=900159298]
 script = ExtResource("1_jhyir")

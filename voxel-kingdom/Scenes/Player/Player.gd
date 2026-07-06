@@ -3,7 +3,7 @@ class_name Player extends Entity
 signal add_block(position:Vector3i, normal:Vector3i, terrian:TerrianData.TerrianType)
 signal remove_block(position)
 
-var instance
+@export var chunk_manager:ChunkManager
 
 @onready var _handler: ComponentHandler = %ComponentHandler
 @onready var _sm: StateMachine = %StateMachine
@@ -16,13 +16,15 @@ var input: InputSource = null
 var gravity: GravityComponent = null
 var look: LookComponent = null
 
+var spawn_x = 10
+var spawn_z = 10
+
+
 func _ready() -> void:
-	if instance == null:
-		instance = self
-	else:
-		queue_free()
 	_connect_components()
 	_setup_sm()
+	
+	chunk_manager.first_chunk_ready.connect(_spawn)
 
 func _connect_components() -> void:
 	input = _handler.get_component(InputSource)
@@ -51,12 +53,18 @@ func _setup_camera() -> void:
 	if not camera: return
 	ray_cast.reparent(camera.camera)
 	ray_cast.position = Vector3.ZERO
-	var head_location = Vector3(0.0, 2, 0.0)
+	var head_location = Vector3(0.0, 1.8, 0.0)
 	camera.set_position(head_location)
 
 
 func _physics_process(_delta: float) -> void:
 	camera.set_rotation(look.pitch, look.yaw, 0)
+
+
+func _spawn() -> void:
+	await get_tree().create_timer(1.5).timeout
+	var y:int =  chunk_manager.get_spawn_height(spawn_x, spawn_z) + 2
+	global_position = Vector3(spawn_x, y, spawn_z)
 
 
 func _on_add_block() -> void:

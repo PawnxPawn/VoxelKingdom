@@ -33,8 +33,9 @@ environment = SubResource("Environment_ab4hr")
 transform = Transform3D(0.7946996, -0.60652995, 0.023959426, -0.4763232, -0.59865826, 0.64399105, -0.37625644, -0.52319187, -0.7646576, -21.947058, 29.13071, 37)
 shadow_enabled = true
 
-[node name="Player" parent="." unique_id=900159298 instance=ExtResource("2_qykia")]
+[node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager") instance=ExtResource("2_qykia")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5216007, 217.0185, 9.799481)
+chunk_manager = NodePath("../ChunkManager")
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
 dimensions = Vector3i(512, 128, 512)

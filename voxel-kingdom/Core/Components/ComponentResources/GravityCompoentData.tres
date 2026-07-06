@@ -5,4 +5,5 @@
 
 [resource]
 script = ExtResource("2_08rl5")
+normal_descending_gravity = 12.0
 metadata/_custom_type_script = "uid://5ub3dmbjdiqe"

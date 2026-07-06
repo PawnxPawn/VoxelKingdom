@@ -42,6 +42,15 @@ func _init(p_owner: Node) -> void:
 		body.gravity_scale = 0.0
 		body.can_sleep = false
 
+
+func ready() -> void:
+	presets[GravityType.NORMAL][&"ascent"] = normal_ascending_gravity
+	presets[GravityType.NORMAL][&"descent"] = normal_ascending_gravity
+	gravity_ascent = normal_ascending_gravity
+	gravity_descent = normal_descending_gravity
+	
+
+
 func physics_process(_delta: float) -> void:
 	if _owner is CharacterBody2D or _owner is CharacterBody3D:
 		apply_characterbody_gravity()

@@ -1,4 +1,7 @@
 class_name ChunkManager extends Node
+
+signal first_chunk_ready
+
 var instance: ChunkManager
 @export var dimensions: Vector3i = Vector3i(128, 64, 128)
 @export var colors: Dictionary[TerrianData.TerrianType, Color]
@@ -18,6 +21,7 @@ var chunk_coords: Array[Vector3i] = []
 var task_id: int = -1
 var cubes: int = 0
 var _start_time: float = 0.0
+var is_first_chunk_added: bool = false
 
 
 func _ready() -> void:
@@ -42,8 +46,8 @@ func _ready() -> void:
 			for z in range(number_of_chunks.z):
 				chunk_coords.append(Vector3i(x, y, z))
 	
-	task_id = WorkerThreadPool.add_group_task(_generate_chunk_by_index, chunk_coords.size(), max(1, OS.get_processor_count() - 1), false, "chunk_generation")
-
+	var worker_count: int = max(1, OS.get_processor_count() / 2.0)
+	task_id = WorkerThreadPool.add_group_task(_generate_chunk_by_index, chunk_coords.size(), worker_count, false, "chunk_generation")
 
 func _process(_delta: float) -> void:
 	var to_add: Array[Chunk] = []
@@ -56,6 +60,10 @@ func _process(_delta: float) -> void:
 	
 	for chunk in to_add:
 		add_child(chunk)
+		
+		if not is_first_chunk_added:
+			is_first_chunk_added = true
+			first_chunk_ready.emit()
 
 
 func _generate_chunk_by_index(index: int) -> void:
@@ -119,9 +127,46 @@ func _world_to_chunk_key(world_position: Vector3) -> Vector3i:
 func _world_to_local_voxel_centered(world_position: Vector3, chunk_key: Vector3i) -> Vector3i:
 	return Vector3i(
 		roundi(world_position.x) - chunk_key.x,
-		roundi(world_position.y) - chunk_key.y,
-		roundi(world_position.z) - chunk_key.z
-	)
+		roundi(world_position.y) - chunk_key.y, 
+		roundi(world_position.z) - chunk_key.z)
+
+
+func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
+	var base_key := _world_to_chunk_key(Vector3(world_x, 0, world_z))
+	var highest_world_y := -INF
+	
+	for y_chunk in range(number_of_chunks.y):
+		var chunk_key := Vector3i(base_key.x, y_chunk * chunk_size, base_key.z)
+		
+		chunks_mutex.lock()
+		var chunk: Chunk = chunks.get(chunk_key)
+		chunks_mutex.unlock()
+		
+		if chunk == null:
+			continue
+			
+		var local_x := roundi(world_x) - chunk_key.x
+		var local_z := roundi(world_z) - chunk_key.z
+		
+		for local_y in range(chunk_size - 1, -1, -1):
+			var voxel: TerrianData.TerrianType = chunk.chunk_data.get_voxel(Vector3i(local_x, local_y, local_z))
+			if voxel != TerrianData.TerrianType.AIR:
+				var world_y := float(chunk_key.y) + float(local_y)
+				if world_y > highest_world_y:
+					highest_world_y = world_y
+				break
+				
+	if highest_world_y == -INF:
+		return 0
+		
+	return highest_world_y
+
+
+func get_spawn_height(x: float, z: float) -> int:
+	var voxel_y =  int(get_highest_voxel_at_xz(x, z))
+	print(voxel_y)
+	return voxel_y
+
 
 
 func _exit_tree() -> void:

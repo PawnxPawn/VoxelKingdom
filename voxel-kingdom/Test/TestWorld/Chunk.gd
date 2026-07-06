@@ -361,7 +361,7 @@ func _on_rebuild_complete() -> void:
 	_rebuild_dirty = false
 	if needs_another_pass:
 		_rebuild_mutex.unlock()
-		_active_task_id = WorkerThreadPool.add_task(_rebuild_threaded)
+		_active_task_id = WorkerThreadPool.add_task(_rebuild_threaded, true, "chunk_edit_rebuild")
 	else:
 		_rebuild_running = false
 		_active_task_id = -1

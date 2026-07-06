@@ -2,6 +2,7 @@ class_name MoveComponent extends Component
 
 signal velocity_zeroed
 
+
 enum move_mode {
 	Walk,
 	Run,
@@ -18,8 +19,9 @@ var fly_fast_speed: float = 900.0
 
 var _input_direction: Vector2 = Vector2.ZERO
 
-var speed: float = 60.0
+var speed: float = walk_speed
 var slow_down_speed: float = 20.0
+var current_velocity = Vector3.ZERO
 
 var move_mode_results: Dictionary = {
 	move_mode.Walk: walk_speed,
@@ -28,6 +30,11 @@ var move_mode_results: Dictionary = {
 	move_mode.FlyFast: fly_fast_speed,
 }
 
+func ready() -> void:
+	move_mode_results[move_mode.Walk] = walk_speed
+	move_mode_results[move_mode.Run] = run_speed
+	move_mode_results[move_mode.Fly] = fly_speed
+	move_mode_results[move_mode.FlyFast] = fly_fast_speed
 
 
 func physics_process(_delta: float) -> void:
@@ -43,6 +50,7 @@ func _move_char2d(direction: Vector2) -> void:
 	var body := _owner as CharacterBody2D
 	if not body: return
 	body.velocity.x = direction.x * speed
+	current_velocity = body.velocity
 	if is_zero_approx(body.velocity.x):
 		velocity_zeroed.emit()
 
