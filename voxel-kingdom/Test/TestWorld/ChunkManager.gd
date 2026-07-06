@@ -118,9 +118,9 @@ func remove_voxel_at_hit(hit_position: Vector3, hit_normal: Vector3) -> void:
 
 func _world_to_chunk_key(world_position: Vector3) -> Vector3i:
 	return Vector3i(
-		floori(world_position.x / chunk_size) * chunk_size,
-		floori(world_position.y / chunk_size) * chunk_size,
-		floori(world_position.z / chunk_size) * chunk_size
+		floori((world_position.x + 0.5) / chunk_size) * chunk_size,
+		floori((world_position.y + 0.5) / chunk_size) * chunk_size,
+		floori((world_position.z + 0.5) / chunk_size) * chunk_size
 	)
 
 
