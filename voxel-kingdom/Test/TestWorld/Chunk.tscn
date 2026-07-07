@@ -1,13 +1,20 @@
 [gd_scene format=3 uid="uid://vqyykbxy7a60"]
 
 [ext_resource type="Script" uid="uid://dqbkvxrwq8ccf" path="res://Test/TestWorld/Chunk.gd" id="1_sc5a4"]
+[ext_resource type="Shader" uid="uid://dgk1ppwrqs2sb" path="res://Scenes/Blocks/Shaders/voxel_atlas.gdshader" id="2_yrfl5"]
+[ext_resource type="Texture2D" uid="uid://bx0qb40yv57kb" path="res://Assets/BlockTextures/assets for game jam.png" id="3_hseme"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sc5a4"]
-vertex_color_use_as_albedo = true
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yrfl5"]
+render_priority = 0
+shader = ExtResource("2_yrfl5")
+shader_parameter/atlas_texture = ExtResource("3_hseme")
+shader_parameter/tile_size = 0.25
+shader_parameter/canvas_size = 128.0
 
 [node name="Chunk" type="StaticBody3D" unique_id=1940101697]
 script = ExtResource("1_sc5a4")
-material = SubResource("StandardMaterial3D_sc5a4")
+material = SubResource("ShaderMaterial_yrfl5")
+atlas_columns = 4
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1274664315]
 

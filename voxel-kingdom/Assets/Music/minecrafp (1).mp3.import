@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://lblty5d1hbi5"
+path="res://.godot/imported/minecrafp (1).mp3-5e589a3d745ab8c2a6ca5068f04a2f41.mp3str"
+
+[deps]
+
+source_file="res://Assets/Music/minecrafp (1).mp3"
+dest_files=["res://.godot/imported/minecrafp (1).mp3-5e589a3d745ab8c2a6ca5068f04a2f41.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

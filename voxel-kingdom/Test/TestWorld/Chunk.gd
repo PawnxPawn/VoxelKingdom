@@ -16,6 +16,7 @@ enum Face {
 @export var stone_height: int = 45
 @export var dirt_depth: int = 3      
 @export var bedrock_height: int = 2
+@export var atlas_columns: int = 3  
 
 
 @onready var collision_shape_3d: CollisionShape3D = $CollisionShape3D
@@ -57,9 +58,49 @@ var face_axes: Dictionary[Face, FaceAxes] = {
 
 var _provisional_shape: CollisionShape3D = null
 
+var atlas_tiles: Dictionary[TerrianData.TerrianType, BlockFaceAtlas] = {}
+
+# How many 90-degree steps to rotate each face's texture (0-3).
+var face_uv_rotation: Dictionary[Face, int] = {
+	Face.FRONT: 2,
+	Face.BACK: 2,
+	Face.RIGHT: 1,
+	Face.LEFT: 2,
+	Face.TOP: 0,
+	Face.BOTTOM: 0,
+}
+
+func _init() -> void:
+	var grass := BlockFaceAtlas.new()
+	grass.top = Vector2i(2, 0)
+	grass.side = Vector2i(1, 0)
+	grass.bottom = Vector2i(0, 0)
+	atlas_tiles[TerrianData.TerrianType.GRASS] = grass
+
+	var dirt := BlockFaceAtlas.new()
+	dirt.top = Vector2i(0, 0)
+	dirt.side = Vector2i(0, 0)
+	dirt.bottom = Vector2i(0, 0)
+	atlas_tiles[TerrianData.TerrianType.DIRT] = dirt
+
+	var stone := BlockFaceAtlas.new()
+	stone.top = Vector2i(0, 1)
+	stone.side = Vector2i(0, 1)
+	stone.bottom = Vector2i(0, 1)
+	atlas_tiles[TerrianData.TerrianType.STONE] = stone
+
+	var bedrock := BlockFaceAtlas.new()
+	bedrock.top = Vector2i(0, 2)
+	bedrock.side = Vector2i(0, 2)
+	bedrock.bottom = Vector2i(0, 2)
+	atlas_tiles[TerrianData.TerrianType.BEDROCK] = bedrock
+
+
 func _ready() -> void:
 	mesh_instance.mesh = ArrayMesh.new()
 	collision_shape_3d.disabled = true
+	if material is ShaderMaterial:
+		material.set_shader_parameter("tile_size", 1.0 / atlas_columns)
 	if chunk_data.is_empty():
 		return
 	commit_mesh()
@@ -187,10 +228,10 @@ func merge_mask(mask: PackedInt32Array, face: Face, axes: FaceAxes, layer: int) 
 				for dy: int in range(height):
 					visited[(across + dx) * chunk_size + (up + dy)] = 1
 					
-			add_quad(face, axes, layer, across, up, width, height, voxel_colors[voxel as TerrianData.TerrianType])
+			add_quad(face, axes, layer, across, up, width, height, voxel as TerrianData.TerrianType)
 
 
-func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, width: int, height: int, color: Color) -> void:
+func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, width: int, height: int, voxel: TerrianData.TerrianType) -> void:
 	var across_dir: Vector3 = Vector3.ZERO
 	across_dir[axes.across_axis] = axes.across_sign
 	var up_dir: Vector3 = Vector3.ZERO
@@ -209,9 +250,72 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 	var normal: Vector3 = face_normals[face]
 	var corners: Array[Vector3] = [bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
 	
-	for corner: Vector3 in corners:
-		mesh_data.add_data(corner, normal, color)
-		collision_faces.append(corner)
+	var color: Color = voxel_colors[voxel] if face == Face.TOP else Color.WHITE
+	var atlas: BlockFaceAtlas = atlas_tiles[voxel]
+	var tile: Vector2i = _tile_for_face(face, atlas)
+	var tile_size: float = 1.0 / atlas_columns
+	var tile_origin: Vector2 = Vector2(tile.x, tile.y) * tile_size
+	
+	var u0: float = width if axes.across_sign < 0 else 0
+	var u1: float = 0 if axes.across_sign < 0 else width
+	var v0: float = height if axes.up_sign < 0 else 0
+	var v1: float = 0 if axes.up_sign < 0 else height
+	
+	# Base corner (a, b) positions: a=0/1 selects across-extreme, b=0/1
+	# selects up-extreme. BL=(0,0), TL=(0,1), TR=(1,1), BR=(1,0).
+	var repeat_uvs: Array[Vector2] = [
+		_face_uv(0, 0, u0, u1, v0, v1, face_uv_rotation[face]),
+		_face_uv(0, 1, u0, u1, v0, v1, face_uv_rotation[face]),
+		_face_uv(1, 1, u0, u1, v0, v1, face_uv_rotation[face]),
+		_face_uv(0, 0, u0, u1, v0, v1, face_uv_rotation[face]),
+		_face_uv(1, 1, u0, u1, v0, v1, face_uv_rotation[face]),
+		_face_uv(1, 0, u0, u1, v0, v1, face_uv_rotation[face]),
+	]
+	
+	for i in range(corners.size()):
+		mesh_data.add_data(corners[i], normal, color, repeat_uvs[i], tile_origin)
+		collision_faces.append(corners[i])
+
+
+func _face_uv(a: int, b: int, u0: float, u1: float, v0: float, v1: float, rotation_steps: int) -> Vector2:
+	var k: int = ((rotation_steps % 4) + 4) % 4
+	var p: int
+	var q: int
+	match k:
+		0:
+			p = a
+			q = b
+		1:
+			p = b
+			q = 1 - a
+		2:
+			p = 1 - a
+			q = 1 - b
+		_:
+			p = 1 - b
+			q = a
+	
+	if k % 2 == 0:
+		var u: float = u0 if p == 0 else u1
+		var v: float = v0 if q == 0 else v1
+		return Vector2(u, v)
+	else:
+		# Odd rotations (90/270) swap which physical dimension u vs v
+		# draws from — otherwise the texture repeats at the wrong rate
+		# whenever width != height on a greedy-merged quad.
+		var u: float = v0 if p == 0 else v1
+		var v: float = u0 if q == 0 else u1
+		return Vector2(u, v)
+
+
+func _tile_for_face(face: Face, atlas: BlockFaceAtlas) -> Vector2i:
+	match face:
+		Face.TOP:
+			return atlas.top
+		Face.BOTTOM:
+			return atlas.bottom
+		_:
+			return atlas.side
 
 
 func compute_collision_boxes() -> void:
@@ -306,12 +410,14 @@ func commit_mesh() -> void:
 
 
 func set_voxel(pos: Vector3i, voxel: TerrianData.TerrianType) -> void:
+	#TODO: If something is put ontop of a grass block it should be turned into a dirt block.
 	chunk_data.add_voxel(pos, voxel)
 	_add_provisional_collision(pos)
 	_request_rebuild()
 
 
 func remove_voxel_at_local(pos: Vector3i) -> void:
+	if chunk_data.get_voxel(pos) == TerrianData.TerrianType.BEDROCK: return
 	chunk_data.remove_voxel(pos)
 	_request_rebuild()
 

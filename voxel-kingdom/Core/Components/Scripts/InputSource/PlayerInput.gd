@@ -62,7 +62,7 @@ func _process_input() -> void:
 
 
 func input(event: InputEvent) -> void:
-	if event is InputEventMouseButton or event is InputEventMouseMotion:
+	if event.is_action_pressed("Add_Block"):
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	#TODO: DELETE after pause menu is added

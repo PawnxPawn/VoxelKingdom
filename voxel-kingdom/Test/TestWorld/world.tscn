@@ -3,19 +3,22 @@
 [ext_resource type="Script" uid="uid://bha0ybw7k60v3" path="res://Test/TestWorld/world.gd" id="1_7cwmi"]
 [ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="2_qykia"]
 [ext_resource type="PackedScene" uid="uid://4rqt7q4iep3m" path="res://Test/TestWorld/ChunkManager.tscn" id="3_gs4kv"]
+[ext_resource type="AudioStream" uid="uid://ucajyunnv11n" path="res://Assets/Music/c4188 (1).mp3" id="4_6qn7x"]
+[ext_resource type="AudioStream" uid="uid://lblty5d1hbi5" path="res://Assets/Music/minecrafp (1).mp3" id="5_4mhdq"]
+[ext_resource type="AudioStream" uid="uid://bf6hdj40jwk5a" path="res://Assets/Music/more c418 tests, i like this one too but idk if this is straight up copying or inspiration atp.mp3" id="6_6fedw"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_qykia"]
-sky_top_color = Color(0.31285283, 0.34551787, 0.8410348, 1)
-sky_horizon_color = Color(0.80490446, 0.86119324, 0.947792, 1)
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gs4kv"]
+sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
+sky_horizon_color = Color(0.6306914, 0.68657374, 0.7738287, 1)
 ground_bottom_color = Color(0, 0, 0, 1)
-ground_horizon_color = Color(0.8245915, 0.8728588, 0.9511173, 1)
+ground_horizon_color = Color(0.6306914, 0.68657374, 0.7738287, 1)
 
-[sub_resource type="Sky" id="Sky_gs4kv"]
-sky_material = SubResource("ProceduralSkyMaterial_qykia")
+[sub_resource type="Sky" id="Sky_ab4hr"]
+sky_material = SubResource("ProceduralSkyMaterial_gs4kv")
 
-[sub_resource type="Environment" id="Environment_ab4hr"]
+[sub_resource type="Environment" id="Environment_b330u"]
 background_mode = 2
-sky = SubResource("Sky_gs4kv")
+sky = SubResource("Sky_ab4hr")
 glow_enabled = true
 
 [sub_resource type="LabelSettings" id="LabelSettings_gs4kv"]
@@ -23,14 +26,21 @@ font_size = 32
 shadow_color = Color(0, 0, 0, 1)
 shadow_offset = Vector2(5, 5)
 
+[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_e0yiv"]
+playback_mode = 1
+streams_count = 3
+stream_0/stream = ExtResource("4_6qn7x")
+stream_1/stream = ExtResource("5_4mhdq")
+stream_2/stream = ExtResource("6_6fedw")
+
 [node name="World" type="Node3D" unique_id=1147436933]
 script = ExtResource("1_7cwmi")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1365840279]
-environment = SubResource("Environment_ab4hr")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=742342461]
+environment = SubResource("Environment_b330u")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1774491407]
-transform = Transform3D(0.7946996, -0.60652995, 0.023959426, -0.4763232, -0.59865826, 0.64399105, -0.37625644, -0.52319187, -0.7646576, -21.947058, 29.13071, 37)
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=358367093]
+transform = Transform3D(0.97437006, -0.22236276, -0.034026258, 0, -0.15126072, 0.9884939, -0.22495106, -0.9631589, -0.14738391, 0, 3.9366724, -9.205248)
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager") instance=ExtResource("2_qykia")]
@@ -57,6 +67,12 @@ offset_right = 40.0
 offset_bottom = 23.0
 text = "Seed: 0"
 label_settings = SubResource("LabelSettings_gs4kv")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=2088320426]
+stream = SubResource("AudioStreamRandomizer_e0yiv")
+volume_db = -10.0
+autoplay = true
+bus = &"Music"
 
 [connection signal="add_block" from="Player" to="ChunkManager" method="_on_player_add_block"]
 [connection signal="remove_block" from="Player" to="ChunkManager" method="_on_player_remove_block"]

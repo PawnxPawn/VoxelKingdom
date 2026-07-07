@@ -19,7 +19,7 @@ func set_size(size: int) -> void:
 
 func add_voxel(pos: Vector3i, voxel_type: TerrianData.TerrianType) -> void:
 	if pos.x < 0 or pos.y < 0 or pos.z < 0 or  pos.x >= chunk_size or pos.y >= chunk_size or pos.z >= chunk_size:
-		return 
+		return
 	voxels[_position_to_index(pos)] = voxel_type
 	if voxel_type != TerrianData.TerrianType.AIR:
 		voxel_amount += 1

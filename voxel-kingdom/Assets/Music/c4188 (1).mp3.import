@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://ucajyunnv11n"
+path="res://.godot/imported/c4188 (1).mp3-b1e1161463c524ebe3817f6bbe7c7c92.mp3str"
+
+[deps]
+
+source_file="res://Assets/Music/c4188 (1).mp3"
+dest_files=["res://.godot/imported/c4188 (1).mp3-b1e1161463c524ebe3817f6bbe7c7c92.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

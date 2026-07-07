@@ -62,9 +62,10 @@ func _physics_process(_delta: float) -> void:
 
 
 func _spawn() -> void:
-	await get_tree().create_timer(1.5).timeout
-	var y:int =  chunk_manager.get_spawn_height(spawn_x, spawn_z) + 2
-	global_position = Vector3(spawn_x, y, spawn_z)
+	pass
+	#await get_tree().create_timer(3.0).timeout
+	#var y:int =  chunk_manager.get_spawn_height(spawn_x, spawn_z) + 2
+	#global_position = Vector3(spawn_x, y, spawn_z)
 
 
 func _on_add_block() -> void:
