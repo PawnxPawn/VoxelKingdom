@@ -1,5 +1,6 @@
 class_name Player extends Entity
 
+enum HighlightMode { REMOVE, PLACE } 
 signal add_block(position:Vector3i, normal:Vector3i, terrian:TerrianData.TerrianType)
 signal remove_block(position)
 
@@ -8,6 +9,7 @@ signal remove_block(position)
 @onready var _handler: ComponentHandler = %ComponentHandler
 @onready var _sm: StateMachine = %StateMachine
 @onready var ray_cast: RayCast3D = $RayCast3D
+@onready var block_highlight: MeshInstance3D = $BlockHighlight
 
 var is_fly_active:bool = false
 
@@ -18,6 +20,8 @@ var look: LookComponent = null
 
 var spawn_x = 10
 var spawn_z = 10
+
+var highlight_mode: HighlightMode = HighlightMode.PLACE
 
 
 func _ready() -> void:
@@ -55,6 +59,22 @@ func _setup_camera() -> void:
 	ray_cast.position = Vector3.ZERO
 	var head_location = Vector3(0.0, 1.8, 0.0)
 	camera.set_position(head_location)
+
+
+func _process(_delta: float) -> void:
+	var hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
+	if hit == null:
+		block_highlight.hide_highlight()
+		return
+	var hit_pos: Vector3 = hit.hit_position
+	var normal: Vector3 = hit.hit_normal
+	
+	var hit_block: Vector3i = Vector3i(round(hit_pos - normal * 0.5))
+	var normal_dir := Vector3i(round(normal.x), round(normal.y), round(normal.z))
+	
+	var target_block: Vector3i = hit_block if highlight_mode == HighlightMode.REMOVE else hit_block + normal_dir
+
+	block_highlight.show_at_block(target_block)
 
 
 func _physics_process(_delta: float) -> void:

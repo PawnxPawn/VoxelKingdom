@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://celih626t4r46" path="res://Core/States/Player/PlayerJumpState.gd" id="11_74mp2"]
 [ext_resource type="Script" uid="uid://mokv377dhvq5" path="res://Core/States/Player/PlayerFlyingState.gd" id="12_oikmp"]
 [ext_resource type="Script" uid="uid://bbypqo8ffuhss" path="res://Scenes/Player/BlockDetectionRayCast.gd" id="13_06tpx"]
+[ext_resource type="Script" uid="uid://c0ngd7j6j2vl3" path="res://Scenes/Player/BlockHighlight.gd" id="14_7g0yx"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_w45gy"]
 radius = 0.4
@@ -64,3 +65,7 @@ size_flags_vertical = 4
 [node name="RayCast3D" type="RayCast3D" parent="." unique_id=1585101922]
 target_position = Vector3(0, 0, -5)
 script = ExtResource("13_06tpx")
+
+[node name="BlockHighlight" type="MeshInstance3D" parent="." unique_id=1962566818]
+top_level = true
+script = ExtResource("14_7g0yx")
