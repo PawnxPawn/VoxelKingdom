@@ -14,6 +14,7 @@
 [ext_resource type="Script" uid="uid://mokv377dhvq5" path="res://Core/States/Player/PlayerFlyingState.gd" id="12_oikmp"]
 [ext_resource type="Script" uid="uid://bbypqo8ffuhss" path="res://Scenes/Player/BlockDetectionRayCast.gd" id="13_06tpx"]
 [ext_resource type="Script" uid="uid://c0ngd7j6j2vl3" path="res://Scenes/Player/BlockHighlight.gd" id="14_7g0yx"]
+[ext_resource type="PackedScene" uid="uid://c6yyee7na55t2" path="res://Scenes/Blocks/VisualBlocks/DefaultBlock.tscn" id="15_dey5f"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_w45gy"]
 radius = 0.4
@@ -69,3 +70,35 @@ script = ExtResource("13_06tpx")
 [node name="BlockHighlight" type="MeshInstance3D" parent="." unique_id=1962566818]
 top_level = true
 script = ExtResource("14_7g0yx")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1020413013]
+offset_left = 5.0
+offset_top = 823.0
+offset_right = 261.0
+offset_bottom = 1079.0
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=531835647]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(256, 256)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" unique_id=1176292309]
+transform = Transform3D(1, 0, 0, 0, 0.8979991, 0.43999735, 0, -0.43999735, 0.8979991, 0, 1.31, 2.458156)
+cull_mask = 524288
+
+[node name="SubViewportinfo" type="Node3D" parent="." unique_id=847236374]
+top_level = true
+
+[node name="DefaultCubeMesh" parent="SubViewportinfo" unique_id=637774305 instance=ExtResource("15_dey5f")]
+transform = Transform3D(1, 0, 0, 0, 0.97384346, 0.22721997, 0, -0.22721997, 0.97384346, 0, 0, 0)
+layers = 524288
+
+[node name="OmniLight3D" type="AreaLight3D" parent="SubViewportinfo" unique_id=1048440753]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12030864, 2.09867)
+layers = 524288
+light_energy = 2.74
+light_indirect_energy = 1.885
+light_volumetric_fog_energy = 1.59
+light_cull_mask = 4294443008

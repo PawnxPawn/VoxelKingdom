@@ -88,6 +88,12 @@ func _spawn() -> void:
 	#global_position = Vector3(spawn_x, y, spawn_z)
 
 
+func get_mode() -> HighlightMode:
+	if input.is_place_mode_active:
+		return HighlightMode.PLACE
+	return HighlightMode.REMOVE
+
+
 func _on_add_block() -> void:
 	var ray_hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if ray_hit != null:

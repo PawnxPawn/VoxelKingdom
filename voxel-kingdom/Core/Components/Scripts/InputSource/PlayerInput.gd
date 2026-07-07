@@ -7,6 +7,8 @@ var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
 
 var direction: Vector2 = Vector2.ZERO
 
+var is_place_mode_active: bool = false
+
 var _look_direction: Vector2 = Vector2.ZERO
 var _new_look_direction: Vector2 = Vector2.ZERO
 
@@ -54,10 +56,14 @@ func _process_input() -> void:
 	if Input.is_action_just_released(&"Crouch"):
 		crouch_released.emit()
 	
-	if Input.is_action_just_pressed("Add_Block"):
-		add_block_pressed.emit()
-	if Input.is_action_just_pressed("Remove_Block"):
-		remove_block_pressed.emit()
+	if Input.is_action_just_pressed(&"Add_Block"):
+		if is_place_mode_active:
+			add_block_pressed.emit()
+		else:
+			remove_block_pressed.emit()
+	
+	if Input.is_action_just_pressed(&"Change_Mode"):
+		is_place_mode_active = !is_place_mode_active
 
 
 

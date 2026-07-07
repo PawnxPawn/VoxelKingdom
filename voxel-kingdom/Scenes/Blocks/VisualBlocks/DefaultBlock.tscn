@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://c6yyee7na55t2"]
+
+[ext_resource type="Script" uid="uid://diokhd8145rhq" path="res://Scenes/Blocks/VisualBlocks/Cube.gd" id="1_75rwo"]
+[ext_resource type="Shader" uid="uid://dgk1ppwrqs2sb" path="res://Scenes/Blocks/Shaders/voxel_atlas.gdshader" id="3_woq8i"]
+[ext_resource type="Texture2D" uid="uid://bx0qb40yv57kb" path="res://Assets/BlockTextures/assets for game jam.png" id="4_0a1mp"]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_ikeca"]
+
+[node name="DefaultCubeMesh" type="MeshInstance3D" unique_id=637774305]
+transform = Transform3D(1, 0, 0, 0, 0.97384346, 0.22721997, 0, -0.22721997, 0.97384346, 0, 0.41108525, 1.6352806)
+mesh = SubResource("ArrayMesh_ikeca")
+script = ExtResource("1_75rwo")
+block_type = 1
+atlas_columns = 4
+atlas_texture = ExtResource("4_0a1mp")
+voxel_shader = ExtResource("3_woq8i")

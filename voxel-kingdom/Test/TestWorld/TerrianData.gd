@@ -1,11 +1,42 @@
+# TerrianData.gd
 class_name TerrianData
+extends Resource
 
-enum TerrianType { 
-	GRASS,
-	SAND,
-	DIRT,
-	STONE,
-	WATER,
-	AIR,
-	BEDROCK,
-}
+enum TerrianType { DIRT, GRASS, STONE, BEDROCK, AIR }
+
+static var atlas_tiles: Dictionary[TerrianType, BlockFaceAtlas] = {}
+
+static func _static_init() -> void:
+	var grass := BlockFaceAtlas.new()
+	grass.top = Vector2i(2, 0)
+	grass.side = Vector2i(1, 0)
+	grass.bottom = Vector2i(0, 0)
+	atlas_tiles[TerrianType.GRASS] = grass
+
+	var dirt := BlockFaceAtlas.new()
+	dirt.top = Vector2i(0, 0)
+	dirt.side = Vector2i(0, 0)
+	dirt.bottom = Vector2i(0, 0)
+	atlas_tiles[TerrianType.DIRT] = dirt
+
+	var stone := BlockFaceAtlas.new()
+	stone.top = Vector2i(0, 1)
+	stone.side = Vector2i(0, 1)
+	stone.bottom = Vector2i(0, 1)
+	atlas_tiles[TerrianType.STONE] = stone
+
+	var bedrock := BlockFaceAtlas.new()
+	bedrock.top = Vector2i(0, 2)
+	bedrock.side = Vector2i(0, 2)
+	bedrock.bottom = Vector2i(0, 2)
+	atlas_tiles[TerrianType.BEDROCK] = bedrock
+
+static func get_tile(block_type: TerrianType, location: int) -> Vector2i:
+	var atlas: BlockFaceAtlas = atlas_tiles.get(block_type)
+	if atlas == null:
+		return Vector2i.ZERO
+	match location:
+		0: return atlas.top     # matches your pickup script's Location.TOP
+		1: return atlas.bottom  # Location.BOTTOM
+		2: return atlas.side    # Location.SIDES
+	return Vector2i.ZERO
