@@ -2,7 +2,9 @@ class_name PlayerInput extends InputSource
 
 const PIXEL_SCALE:float = 0.002
 
-#Resource Exports
+#==================================
+#     Resource Exports
+#==================================
 var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
 
 var direction: Vector2 = Vector2.ZERO
@@ -64,6 +66,7 @@ func _process_input() -> void:
 	
 	if Input.is_action_just_pressed(&"Change_Mode"):
 		is_place_mode_active = !is_place_mode_active
+	
 
 
 
@@ -77,6 +80,12 @@ func input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var look_direction = (event.screen_relative * PIXEL_SCALE) * mouse_sensitivity
 		look_direction_changed.emit(look_direction)
+	
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP && event.pressed == true:
+			item_switched_up.emit()
+		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN && event.pressed == true:
+			item_switched_down.emit()
 		
 
 

@@ -1,4 +1,4 @@
-extends MeshInstance3D
+class_name Cube extends MeshInstance3D
 
 @export var block_type: TerrianData.TerrianType = TerrianData.TerrianType.DIRT
 @export var atlas_columns: int = 3
@@ -125,3 +125,13 @@ func _apply_material() -> void:
 	mat.set_shader_parameter("atlas_texture", atlas_texture)
 	mat.set_shader_parameter("tile_size", 1.0 / atlas_columns)
 	material_override = mat
+
+
+func change_block_type(new_type: TerrianData.TerrianType) -> void:
+	if new_type == block_type:
+		return
+	if not TerrianData.atlas_tiles.has(new_type):
+		push_warning("No atlas entry for block type: %s" % TerrianData.TerrianType.keys()[new_type])
+		return
+	block_type = new_type
+	_build_cube()

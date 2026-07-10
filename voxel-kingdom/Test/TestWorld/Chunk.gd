@@ -9,8 +9,6 @@ enum Face {
 	BACK,
 }
 
-
-
 @export var use_centered_voxels: bool = false
 @export var material: Material
 @export var stone_height: int = 45
@@ -58,7 +56,6 @@ var face_axes: Dictionary[Face, FaceAxes] = {
 
 var _provisional_shape: CollisionShape3D = null
 
-var atlas_tiles: Dictionary[TerrianData.TerrianType, BlockFaceAtlas] = {}
 
 # How many 90-degree steps to rotate each face's texture (0-3).
 var face_uv_rotation: Dictionary[Face, int] = {
@@ -69,31 +66,6 @@ var face_uv_rotation: Dictionary[Face, int] = {
 	Face.TOP: 0,
 	Face.BOTTOM: 0,
 }
-
-func _init() -> void:
-	var grass := BlockFaceAtlas.new()
-	grass.top = Vector2i(2, 0)
-	grass.side = Vector2i(1, 0)
-	grass.bottom = Vector2i(0, 0)
-	atlas_tiles[TerrianData.TerrianType.GRASS] = grass
-
-	var dirt := BlockFaceAtlas.new()
-	dirt.top = Vector2i(0, 0)
-	dirt.side = Vector2i(0, 0)
-	dirt.bottom = Vector2i(0, 0)
-	atlas_tiles[TerrianData.TerrianType.DIRT] = dirt
-
-	var stone := BlockFaceAtlas.new()
-	stone.top = Vector2i(0, 1)
-	stone.side = Vector2i(0, 1)
-	stone.bottom = Vector2i(0, 1)
-	atlas_tiles[TerrianData.TerrianType.STONE] = stone
-
-	var bedrock := BlockFaceAtlas.new()
-	bedrock.top = Vector2i(0, 2)
-	bedrock.side = Vector2i(0, 2)
-	bedrock.bottom = Vector2i(0, 2)
-	atlas_tiles[TerrianData.TerrianType.BEDROCK] = bedrock
 
 
 func _ready() -> void:
@@ -133,6 +105,8 @@ func generate_date(size: int, max_height: int, noise: Noise, color_array: Dictio
 				var terrain_type: TerrianData.TerrianType
 				var global_y: int = int(position.y) + y
 				
+				
+				#TerrianType { DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, BEDROCK, AIR }
 				if global_y <= bedrock_height:
 					terrain_type = TerrianData.TerrianType.BEDROCK
 				elif global_y >= stone_height:
@@ -186,10 +160,19 @@ func mesh_face(face: Face, flat_voxels: PackedInt32Array) -> void:
 					continue
 				
 				var neighbor_voxel: int = flat_voxels[neighbor.x + neighbor.z * chunk_size + neighbor.y * chunk_size * chunk_size]
-				if neighbor_voxel != TerrianData.TerrianType.AIR:
+				
+				if neighbor_voxel == TerrianData.TerrianType.AIR:
+					mask[mask_index] = voxel
 					continue
 				
-				mask[mask_index] = voxel
+				var neighbor_is_transparent: bool = TerrianData.is_transparent(neighbor_voxel as TerrianData.TerrianType)
+				if neighbor_is_transparent:
+					if neighbor_voxel == voxel:
+						continue 
+					mask[mask_index] = voxel
+					continue
+				
+				continue
 				
 		merge_mask(mask, face, axes, layer)
 
@@ -250,8 +233,8 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 	var normal: Vector3 = face_normals[face]
 	var corners: Array[Vector3] = [bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
 	
-	var color: Color = voxel_colors[voxel] if face == Face.TOP else Color.WHITE
-	var atlas: BlockFaceAtlas = atlas_tiles[voxel]
+	var color: Color = Color.WHITE
+	var atlas: BlockFaceAtlas = TerrianData.atlas_tiles[voxel]
 	var tile: Vector2i = _tile_for_face(face, atlas)
 	var tile_size: float = 1.0 / atlas_columns
 	var tile_origin: Vector2 = Vector2(tile.x, tile.y) * tile_size
@@ -261,8 +244,7 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 	var v0: float = height if axes.up_sign < 0 else 0
 	var v1: float = 0 if axes.up_sign < 0 else height
 	
-	# Base corner (a, b) positions: a=0/1 selects across-extreme, b=0/1
-	# selects up-extreme. BL=(0,0), TL=(0,1), TR=(1,1), BR=(1,0).
+	
 	var repeat_uvs: Array[Vector2] = [
 		_face_uv(0, 0, u0, u1, v0, v1, face_uv_rotation[face]),
 		_face_uv(0, 1, u0, u1, v0, v1, face_uv_rotation[face]),
@@ -410,15 +392,31 @@ func commit_mesh() -> void:
 
 
 func set_voxel(pos: Vector3i, voxel: TerrianData.TerrianType) -> void:
-	#TODO: If something is put ontop of a grass block it should be turned into a dirt block.
 	chunk_data.add_voxel(pos, voxel)
+	#_convert_grass_below_to_dirt(pos, voxel)
 	_add_provisional_collision(pos)
 	_request_rebuild()
 
 
+#func _convert_grass_below_to_dirt(pos: Vector3i, placed_voxel: TerrianData.TerrianType) -> void:
+	#if placed_voxel == TerrianData.TerrianType.AIR:
+		#return
+	#var below: Vector3i = pos + Vector3i(0, -1, 0)
+	#if chunk_data.get_voxel(below) == TerrianData.TerrianType.GRASS:
+		#chunk_data.change_voxel(below, TerrianData.TerrianType.DIRT) *
+
+
 func remove_voxel_at_local(pos: Vector3i) -> void:
-	if chunk_data.get_voxel(pos) == TerrianData.TerrianType.BEDROCK: return
+	if chunk_data.get_voxel(pos) == TerrianData.TerrianType.BEDROCK:
+		return
 	chunk_data.remove_voxel(pos)
+	_request_rebuild()
+
+
+func change_voxel_at_local(pos: Vector3i, new_type: TerrianData.TerrianType) -> void:
+	if chunk_data.get_voxel(pos) == TerrianData.TerrianType.BEDROCK:
+		return
+	chunk_data.change_voxel(pos, new_type)
 	_request_rebuild()
 
 

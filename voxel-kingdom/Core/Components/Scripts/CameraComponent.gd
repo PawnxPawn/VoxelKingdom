@@ -27,6 +27,11 @@ func set_position(position: Vector3) -> void:
 	camera.position = position
 
 
+func set_camera_cull_layers(layers: Dictionary[int, bool]) -> void:
+	for layer in layers:
+		camera.set_cull_mask_value(layer, is_active)
+
+
 func set_rotation(pitch:float, yaw:float, roll:float) -> void:
 	camera.rotation = Vector3(pitch, 0, roll)
 	_owner.rotation.y = yaw

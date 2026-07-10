@@ -40,7 +40,7 @@ script = ExtResource("1_7cwmi")
 environment = SubResource("Environment_b330u")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=358367093]
-transform = Transform3D(0.97437006, -0.22236276, -0.034026258, 0, -0.15126072, 0.9884939, -0.22495106, -0.9631589, -0.14738391, 0, 3.9366724, -9.205248)
+transform = Transform3D(0.97437, -0.22236277, -0.03402626, -0.14685833, -0.7433727, 0.6525562, -0.17039837, -0.6308342, -0.7569759, 0, 3.9366724, -9.205248)
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager") instance=ExtResource("2_qykia")]

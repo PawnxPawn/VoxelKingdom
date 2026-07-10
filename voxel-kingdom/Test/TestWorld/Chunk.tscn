@@ -10,6 +10,7 @@ shader = ExtResource("2_yrfl5")
 shader_parameter/atlas_texture = ExtResource("3_hseme")
 shader_parameter/tile_size = 0.25
 shader_parameter/canvas_size = 128.0
+shader_parameter/alpha_scissor_threshold = 0.5
 
 [node name="Chunk" type="StaticBody3D" unique_id=1940101697]
 script = ExtResource("1_sc5a4")

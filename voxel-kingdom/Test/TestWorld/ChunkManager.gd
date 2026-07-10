@@ -8,7 +8,11 @@ var instance: ChunkManager
 @export var chunk_size: int = 32
 @export var noise_frequency: float = 0.003
 @export var noise_seed: int = randi()
-@export var chunks_per_frame: int = 2
+
+@export var chunks_per_frame: int = 12
+@export var view_distance: int = 10
+@export var unload_buffer: int = 4
+
 @onready var seed_label: Label = %SeedLabel
 var noise = FastNoiseLite.new()
 var number_of_chunks: Vector3i
@@ -17,11 +21,17 @@ var chunks: Dictionary[Vector3i, Chunk] = {}
 var chunks_mutex: Mutex = Mutex.new()
 var pending_chunks: Array[Chunk] = []
 var pending_mutex: Mutex = Mutex.new()
-var chunk_coords: Array[Vector3i] = []
-var task_id: int = -1
 var cubes: int = 0
 var _start_time: float = 0.0
 var is_first_chunk_added: bool = false
+
+var stream_target: Node3D = null
+
+var loading_chunks: Dictionary[Vector3i, bool] = {}
+var loading_mutex: Mutex = Mutex.new()
+var load_queue: Array[Vector3i] = []
+var active_tasks: Array[int] = []
+var _last_center_coord: Vector3i = Vector3i(1 << 30, 0, 1 << 30)
 
 
 func _ready() -> void:
@@ -41,15 +51,19 @@ func _ready() -> void:
 		ceili(float(dimensions.z) / chunk_size)
 	)
 	
-	for x in range(number_of_chunks.x):
-		for y in range(number_of_chunks.y):
-			for z in range(number_of_chunks.z):
-				chunk_coords.append(Vector3i(x, y, z))
-	
-	var worker_count: int = max(1, OS.get_processor_count() / 2.0)
-	task_id = WorkerThreadPool.add_group_task(_generate_chunk_by_index, chunk_coords.size(), worker_count, false, "chunk_generation")
+	_update_streaming()
+
 
 func _process(_delta: float) -> void:
+	if stream_target == null:
+		stream_target = get_tree().get_first_node_in_group("player")
+	
+	_flush_pending_chunks()
+	_update_streaming()
+	_dispatch_load_queue()
+
+
+func _flush_pending_chunks() -> void:
 	var to_add: Array[Chunk] = []
 	
 	pending_mutex.lock()
@@ -66,11 +80,106 @@ func _process(_delta: float) -> void:
 			first_chunk_ready.emit()
 
 
-func _generate_chunk_by_index(index: int) -> void:
-	var coord: Vector3i = chunk_coords[index]
+func _get_grid_coord(world_pos: Vector3) -> Vector3i:
+	return Vector3i(floori(world_pos.x / chunk_size), 0, floori(world_pos.z / chunk_size))
+
+
+func _update_streaming() -> void:
+	var center_world: Vector3 = stream_target.global_position if stream_target != null else Vector3.ZERO
+	var center: Vector3i = _get_grid_coord(center_world)
 	
+	if center == _last_center_coord:
+		return
+	_last_center_coord = center
+	
+	_queue_needed_chunks(center)
+	_unload_distant_chunks(center)
+
+
+func _queue_needed_chunks(center: Vector3i) -> void:
+	var needed: Array[Vector3i] = []
+	
+	for x in range(center.x - view_distance, center.x + view_distance + 1):
+		for z in range(center.z - view_distance, center.z + view_distance + 1):
+			if maxi(absi(x - center.x), absi(z - center.z)) > view_distance:
+				continue
+			for y in range(number_of_chunks.y):
+				var key: Vector3i = Vector3i(x * chunk_size, y * chunk_size, z * chunk_size)
+				
+				chunks_mutex.lock()
+				var already_loaded: bool = chunks.has(key)
+				chunks_mutex.unlock()
+				
+				if already_loaded:
+					continue
+					
+				loading_mutex.lock()
+				var already_loading: bool = loading_chunks.has(key)
+				loading_mutex.unlock()
+				
+				if already_loading:
+					continue
+					
+				if key in load_queue:
+					continue
+					
+				needed.append(key)
+				
+	if needed.is_empty():
+		return
+		
+	load_queue.append_array(needed)
+	
+	var center_key_value: Vector3i = center_key(center)
+	load_queue.sort_custom(func(a, b):
+		return a.distance_squared_to(center_key_value) < b.distance_squared_to(center_key_value)
+	)
+
+
+func center_key(center: Vector3i) -> Vector3i:
+	return Vector3i(center.x * chunk_size, 0, center.z * chunk_size)
+
+
+func _dispatch_load_queue() -> void:
+	var count: int = min(chunks_per_frame, load_queue.size())
+	for i in range(count):
+		var key: Vector3i = load_queue.pop_front()
+		
+		loading_mutex.lock()
+		loading_chunks[key] = true
+		loading_mutex.unlock()
+		
+		var grid_coord: Vector3i = Vector3i(int(key.x / float(chunk_size)), int(key.y / float(chunk_size)), int(key.z / float(chunk_size)))
+		var task_id: int = WorkerThreadPool.add_task(_generate_chunk_at.bind(grid_coord), false, "chunk_generation")
+		active_tasks.append(task_id)
+
+
+func _unload_distant_chunks(center: Vector3i) -> void:
+	var unload_dist: int = view_distance + unload_buffer
+	
+	chunks_mutex.lock()
+	var keys: Array = chunks.keys()
+	chunks_mutex.unlock()
+	
+	for key in keys:
+		var grid_x: int = key.x / chunk_size
+		var grid_z: int = key.z / chunk_size
+		var dist: int = maxi(absi(grid_x - center.x), absi(grid_z - center.z))
+		
+		if dist > unload_dist:
+			chunks_mutex.lock()
+			var chunk: Chunk = chunks.get(key)
+			if chunk != null:
+				chunks.erase(key)
+			chunks_mutex.unlock()
+			
+			if chunk != null:
+				chunk.queue_free()
+
+
+func _generate_chunk_at(grid_coord: Vector3i) -> void:
 	var new_chunk: Chunk = chunk_scene.instantiate()
-	new_chunk.position = Vector3(coord.x, coord.y, coord.z) * chunk_size
+	new_chunk.position = Vector3(grid_coord.x, grid_coord.y, grid_coord.z) * chunk_size
 	new_chunk.generate_date(chunk_size, dimensions.y, noise, colors)
 	new_chunk.generate_mesh()
 	new_chunk.compute_collision_boxes()
@@ -84,6 +193,10 @@ func _generate_chunk_by_index(index: int) -> void:
 	pending_mutex.lock()
 	pending_chunks.append(new_chunk)
 	pending_mutex.unlock()
+	
+	loading_mutex.lock()
+	loading_chunks.erase(key)
+	loading_mutex.unlock()
 
 
 func add_voxel_at_hit(hit_position: Vector3, hit_normal: Vector3, voxel: TerrianData.TerrianType) -> void:
@@ -96,7 +209,7 @@ func add_voxel_at_hit(hit_position: Vector3, hit_normal: Vector3, voxel: Terrian
 	
 	if chunk == null:
 		return
-	
+		
 	var local_pos: Vector3i = _world_to_local_voxel_centered(sample, chunk_key)
 	chunk.set_voxel(local_pos, voxel)
 
@@ -111,7 +224,7 @@ func remove_voxel_at_hit(hit_position: Vector3, hit_normal: Vector3) -> void:
 	
 	if chunk == null:
 		return
-	
+		
 	var local_pos: Vector3i = _world_to_local_voxel_centered(sample, chunk_key)
 	chunk.remove_voxel_at_local(local_pos)
 
@@ -127,14 +240,14 @@ func _world_to_chunk_key(world_position: Vector3) -> Vector3i:
 func _world_to_local_voxel_centered(world_position: Vector3, chunk_key: Vector3i) -> Vector3i:
 	return Vector3i(
 		roundi(world_position.x) - chunk_key.x,
-		roundi(world_position.y) - chunk_key.y, 
+		roundi(world_position.y) - chunk_key.y,
 		roundi(world_position.z) - chunk_key.z)
 
 
 func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
 	var base_key := _world_to_chunk_key(Vector3(world_x, 0, world_z))
 	var highest_world_y := -INF
-	
+
 	for y_chunk in range(number_of_chunks.y):
 		var chunk_key := Vector3i(base_key.x, y_chunk * chunk_size, base_key.z)
 		
@@ -163,15 +276,24 @@ func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
 
 
 func get_spawn_height(x: float, z: float) -> int:
-	var voxel_y =  int(get_highest_voxel_at_xz(x, z))
+	var voxel_y = int(get_highest_voxel_at_xz(x, z))
 	print(voxel_y)
 	return voxel_y
 
 
+func is_chunk_loaded_at(world_pos: Vector3) -> bool:
+	var chunk_key: Vector3i = _world_to_chunk_key(world_pos)
+	
+	chunks_mutex.lock()
+	var loaded: bool = chunks.has(chunk_key)
+	chunks_mutex.unlock()
+	
+	return loaded
+
 
 func _exit_tree() -> void:
-	if task_id != -1:
-		WorkerThreadPool.wait_for_group_task_completion(task_id)
+	for id in active_tasks:
+		WorkerThreadPool.wait_for_task_completion(id)
 
 
 func _on_player_add_block(hit_position: Vector3, hit_normal: Vector3, terrian: TerrianData.TerrianType) -> void:

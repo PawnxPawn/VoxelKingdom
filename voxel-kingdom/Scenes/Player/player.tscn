@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://uj3fpyqghe2v" path="res://Core/Systems/ComponentHandler.gd" id="1_a3d8c"]
 [ext_resource type="Script" uid="uid://mobt30lvr51y" path="res://Scenes/Player/Player.gd" id="1_jhyir"]
+[ext_resource type="PackedScene" uid="uid://d2446disfv5f6" path="res://Assets/Models/Character/20260418_193043_rikafinished.gltf" id="2_r5xpd"]
 [ext_resource type="Script" uid="uid://cgduh0h7grupy" path="res://Core/Systems/StateMachine.gd" id="2_xpcdj"]
 [ext_resource type="Resource" uid="uid://bfyar8d3nqwpr" path="res://Core/Components/ComponentResources/CameraComponentData.tres" id="3_oikmp"]
 [ext_resource type="Resource" uid="uid://bsaad20l8i0ch" path="res://Core/Components/ComponentResources/GravityCompoentData.tres" id="4_06tpx"]
@@ -16,23 +17,28 @@
 [ext_resource type="Script" uid="uid://c0ngd7j6j2vl3" path="res://Scenes/Player/BlockHighlight.gd" id="14_7g0yx"]
 [ext_resource type="PackedScene" uid="uid://c6yyee7na55t2" path="res://Scenes/Blocks/VisualBlocks/DefaultBlock.tscn" id="15_dey5f"]
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_w45gy"]
-radius = 0.4
-height = 1.8
-
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_w45gy"]
 radius = 0.4
 height = 1.8
 
-[node name="Player" type="CharacterBody3D" unique_id=900159298]
+[sub_resource type="ArrayMesh" id="ArrayMesh_dey5f"]
+
+[node name="Player" type="CharacterBody3D" unique_id=900159298 groups=["player"]]
 script = ExtResource("1_jhyir")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=875408619]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-mesh = SubResource("CapsuleMesh_w45gy")
+[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1311281193]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0.29966736, 0)
+light_color = Color(0, 0, 0, 1)
+spot_range = 0.4
+
+[node name="20260418_193043_rikafinished" parent="." unique_id=155209410 instance=ExtResource("2_r5xpd")]
+transform = Transform3D(-0.16, 0, -1.3987644e-08, 0, 0.16, 0, 1.3987644e-08, 0, -0.16, 0, -0.18663752, -0.12886858)
+
+[node name="Mesh" parent="20260418_193043_rikafinished" index="0" unique_id=1471053659]
+cast_shadow = 3
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=801005380]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9238043, 0)
 shape = SubResource("CapsuleShape3D_w45gy")
 
 [node name="ComponentHandler" type="Node" parent="." unique_id=643640741]
@@ -69,6 +75,7 @@ script = ExtResource("13_06tpx")
 
 [node name="BlockHighlight" type="MeshInstance3D" parent="." unique_id=1962566818]
 top_level = true
+mesh = SubResource("ArrayMesh_dey5f")
 script = ExtResource("14_7g0yx")
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1020413013]
@@ -102,3 +109,13 @@ light_energy = 2.74
 light_indirect_energy = 1.885
 light_volumetric_fog_energy = 1.59
 light_cull_mask = 4294443008
+
+[node name="OmniLight3D2" type="AreaLight3D" parent="SubViewportinfo" unique_id=557701348]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.12030864, -3.1965036)
+layers = 524288
+light_energy = 2.74
+light_indirect_energy = 1.885
+light_volumetric_fog_energy = 1.59
+light_cull_mask = 4294443008
+
+[editable path="20260418_193043_rikafinished"]
