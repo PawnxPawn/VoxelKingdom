@@ -44,7 +44,7 @@ transform = Transform3D(0.97437, -0.22236277, -0.03402626, -0.14685833, -0.74337
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager") instance=ExtResource("2_qykia")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5216007, 217.0185, 9.799481)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.522, 64, 9.799)
 chunk_manager = NodePath("../ChunkManager")
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]

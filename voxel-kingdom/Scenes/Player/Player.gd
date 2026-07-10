@@ -26,12 +26,15 @@ var highlight_mode: HighlightMode = HighlightMode.PLACE
 var current_slot: int = 0
 var terrian_type: TerrianData.TerrianType = TerrianData.TerrianType.DIRT
 
+var _last_valid_position: Vector3
 
 
 func _ready() -> void:
 	_connect_components()
 	_setup_sm()
 	default_cube_mesh.change_block_type(terrian_type)
+	
+	_last_valid_position = global_position
 
 
 func _connect_components() -> void:
@@ -91,8 +94,18 @@ func _process(_delta: float) -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	_loaded_chunk_bounds()
 	camera.set_rotation(look.pitch, look.yaw, 0)
 
+
+func _loaded_chunk_bounds() -> void:
+	if chunk_manager == null:
+		return
+	
+	if chunk_manager.is_chunk_loaded_at(global_position):
+		_last_valid_position = global_position
+	else:
+		global_position = _last_valid_position
 
 
 func get_mode() -> HighlightMode:
