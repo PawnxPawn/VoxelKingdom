@@ -6,7 +6,7 @@ signal first_chunk_ready
 var instance: ChunkManager
 
 #-###########################################
-# World / generation settings
+#         World / generation settings
 #-###########################################
 
 @export var world_dimensions: Vector3i = Vector3i(12800, 736, 12800)
@@ -36,7 +36,7 @@ var instance: ChunkManager
 @export var unload_buffer_in_chunks_y: int = 2
 
 #-###########################################
-# Terrain Generation Settings
+#       Terrain Generation Settings
 #-###########################################
 
 @export_group("Terrain Shape")
@@ -44,7 +44,7 @@ var instance: ChunkManager
 @export var terrain_amplitude: float = 60.0
 
 #-###########################################
-# Cave Generation Settings
+#        Cave Generation Settings
 #-###########################################
 
 @export_group("Cave Generation")
@@ -62,7 +62,7 @@ var cave_min_y: int = 0
 var cave_max_y: int = 0
 
 #-###########################################
-# Noise / generation helpers
+#       Noise / generation helpers
 #-###########################################
 
 var terrain_noise: FastNoiseLite = FastNoiseLite.new()
@@ -74,7 +74,7 @@ var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
 
 #-###########################################
-# Chunk storage / threading
+#         Chunk storage / threading
 #-###########################################
 
 var chunks_by_key: Dictionary[Vector3i, Chunk] = {}
@@ -88,7 +88,7 @@ var start_time_usec: float = 0.0
 var is_first_chunk_added: bool = false
 
 #-###########################################
-# Streaming / movement state
+#        Streaming / movement state
 #-###########################################
 
 var stream_target: Node3D = null
@@ -112,64 +112,64 @@ var modified_chunks: Dictionary[Vector3i, PackedInt32Array] = {}
 var vertical_streaming_locked_to_spawn: bool = true
 
 #-###########################################
-# Lifecycle
+#                 Lifecycle
 #-###########################################
 
 func _ready() -> void:
 	instance = self
-
+	
 	if noise_seed == 0:
 		noise_seed = randi()
-
+		
 	start_time_usec = Time.get_ticks_usec()
-
+	
 	# Terrain noise
 	terrain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	terrain_noise.frequency = noise_frequency
 	terrain_noise.seed = noise_seed
-
+	
 	# Cave noise
 	cave_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_noise.frequency = cave_frequency
 	cave_noise.seed = noise_seed + 1
-
+	
 	# Cave entrance region noise
 	cave_entrance_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_entrance_noise.frequency = cave_entrance_frequency
 	cave_entrance_noise.seed = noise_seed + 2
-
+	
 	# Mountain biome noise (large-scale regions)
 	mountain_biome_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	mountain_biome_noise.frequency = 0.0015
 	mountain_biome_noise.seed = noise_seed + 50
-
+	
 	seed_label.text = "Seed: %s" % noise_seed
-
+	
 	number_of_chunks = Vector3i(
 		ceili(float(world_dimensions.x) / float(chunk_size)),
 		ceili(float(world_dimensions.y) / float(chunk_size)),
 		ceili(float(world_dimensions.z) / float(chunk_size))
 	)
-
+	
 	_update_streaming()
 
 
 func _process(_delta: float) -> void:
 	if stream_target == null:
 		stream_target = get_tree().get_first_node_in_group("player")
-
+		
 	_flush_pending_chunks()
 	_update_movement_direction()
 	_update_streaming()
 	_dispatch_load_queue()
 
 #-###########################################
-# Pending chunk addition
+#          Pending chunk addition
 #-###########################################
 
 func _flush_pending_chunks() -> void:
 	var chunks_to_add: Array[Chunk] = []
-
+	
 	pending_chunks_mutex.lock()
 	var count: int = min(add_chunks_per_frame, pending_chunks_to_add.size())
 	for index: int in range(count):
@@ -177,16 +177,16 @@ func _flush_pending_chunks() -> void:
 		if is_instance_valid(chunk):
 			chunks_to_add.append(chunk)
 	pending_chunks_mutex.unlock()
-
+	
 	for chunk: Chunk in chunks_to_add:
 		add_child(chunk)
-
+		
 		if not is_first_chunk_added:
 			is_first_chunk_added = true
 			first_chunk_ready.emit()
 
 #-###########################################
-# Coordinate helpers
+#            Coordinate helpers
 #-###########################################
 
 func _world_to_chunk_grid_coord(world_position: Vector3) -> Vector3i:
@@ -205,179 +205,179 @@ func _chunk_grid_to_world_key(grid_coord: Vector3i) -> Vector3i:
 	)
 
 #-###########################################
-# Movement direction tracking
+#       Movement direction tracking
 #-###########################################
 
 func _update_movement_direction() -> void:
 	if stream_target == null:
 		return
-
+		
 	var current_position: Vector3 = stream_target.global_position
-
+	
 	if not has_last_stream_position:
 		last_stream_world_position = current_position
 		has_last_stream_position = true
 		return
-
+		
 	var delta_xz: Vector2 = Vector2(
 		current_position.x - last_stream_world_position.x,
 		current_position.z - last_stream_world_position.z
 	)
 	last_stream_world_position = current_position
-
+	
 	if delta_xz.length() < 0.01:
 		return
-
+		
 	var new_direction: Vector2 = delta_xz.normalized()
-
+	
 	if movement_direction_xz.dot(new_direction) < direction_change_dot_threshold:
 		load_queue.clear()
-
+		
 	movement_direction_xz = new_direction
 
 #-###########################################
-# Streaming update
+#             Streaming update
 #-###########################################
 
 func _update_streaming() -> void:
 	var center_world_position: Vector3 = stream_target.global_position if stream_target != null else Vector3.ZERO
 	var center_chunk_grid: Vector3i = _world_to_chunk_grid_coord(center_world_position)
-
+	
 	if center_chunk_grid == last_center_chunk_coord:
 		return
-
+		
 	last_center_chunk_coord = center_chunk_grid
-
+	
 	_queue_needed_chunks(center_chunk_grid)
 	_unload_distant_chunks(center_chunk_grid)
 
 #-###########################################
-# Forward cone helper
+#           Forward cone helper
 #-###########################################
 
 func _is_chunk_ahead(offset_grid_2d: Vector2i) -> bool:
 	if offset_grid_2d == Vector2i.ZERO:
 		return true
-
+		
 	var offset_direction: Vector2 = Vector2(offset_grid_2d.x, offset_grid_2d.y).normalized()
 	var alignment: float = offset_direction.dot(movement_direction_xz)
 	return alignment >= forward_dot_threshold
 
 #-###########################################
-# Queueing chunks to load
+#          Queueing chunks to load
 #-###########################################
 
 func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 	var needed_chunk_keys: Array[Vector3i] = []
-
+	
 	for grid_x: int in range(center_chunk_grid.x - view_distance_in_chunks, center_chunk_grid.x + view_distance_in_chunks + 1):
 		for grid_z: int in range(center_chunk_grid.z - view_distance_in_chunks, center_chunk_grid.z + view_distance_in_chunks + 1):
 			var offset_grid_2d: Vector2i = Vector2i(grid_x - center_chunk_grid.x, grid_z - center_chunk_grid.z)
 			var distance_in_chunks: int = maxi(absi(offset_grid_2d.x), absi(offset_grid_2d.y))
-
+			
 			if distance_in_chunks > view_distance_in_chunks:
 				continue
-
+				
 			if grid_x < 0 or grid_x >= number_of_chunks.x:
 				continue
 			if grid_z < 0 or grid_z >= number_of_chunks.z:
 				continue
-
+				
 			if distance_in_chunks > core_radius_in_chunks and not _is_chunk_ahead(offset_grid_2d):
 				continue
-
+				
 			var min_grid_y: int = max(0, center_chunk_grid.y - 1)
 			var max_grid_y: int = min(number_of_chunks.y - 1, center_chunk_grid.y + 1)
-
+			
 			for grid_y: int in range(min_grid_y, max_grid_y + 1):
 				var chunk_grid_coord: Vector3i = Vector3i(grid_x, grid_y, grid_z)
 				var chunk_world_key: Vector3i = _chunk_grid_to_world_key(chunk_grid_coord)
-
+				
 				chunks_mutex.lock()
 				var already_loaded: bool = chunks_by_key.has(chunk_world_key)
 				chunks_mutex.unlock()
 				if already_loaded:
 					continue
-
+					
 				loading_chunks_mutex.lock()
 				var already_loading: bool = loading_chunks_flags.has(chunk_world_key)
 				loading_chunks_mutex.unlock()
 				if already_loading:
 					continue
-
+					
 				if chunk_world_key in load_queue:
 					continue
-
+					
 				needed_chunk_keys.append(chunk_world_key)
-
+				
 	if needed_chunk_keys.is_empty():
 		return
-
+		
 	load_queue.append_array(needed_chunk_keys)
-
+	
 	var center_world_x: int = center_chunk_grid.x * chunk_size
 	var center_world_z: int = center_chunk_grid.z * chunk_size
 	var movement_direction: Vector2 = movement_direction_xz
-
+	
 	load_queue.sort_custom(func(first_key: Vector3i, second_key: Vector3i) -> bool:
 		var first_grid_offset: Vector2i = Vector2i(int(first_key.x / float(chunk_size)) - center_chunk_grid.x, int(first_key.z / float(chunk_size)) - center_chunk_grid.z)
 		var second_grid_offset: Vector2i = Vector2i(int(second_key.x / float(chunk_size)) - center_chunk_grid.x, int(second_key.z / float(chunk_size)) - center_chunk_grid.z)
-
+		
 		var first_distance: int = maxi(absi(first_grid_offset.x), absi(first_grid_offset.y))
 		var second_distance: int = maxi(absi(second_grid_offset.x), absi(second_grid_offset.y))
-
+		
 		var first_is_core: bool = first_distance <= core_radius_in_chunks
 		var second_is_core: bool = second_distance <= core_radius_in_chunks
-
+		
 		if first_is_core != second_is_core:
 			return first_is_core
-
+			
 		var first_alignment: float = Vector2(first_grid_offset.x, first_grid_offset.y).normalized().dot(movement_direction) if first_grid_offset != Vector2i.ZERO else 1.0
 		var second_alignment: float = Vector2(second_grid_offset.x, second_grid_offset.y).normalized().dot(movement_direction) if second_grid_offset != Vector2i.ZERO else 1.0
-
+		
 		if not is_equal_approx(first_alignment, second_alignment):
 			return first_alignment > second_alignment
-
+			
 		var first_squared_distance: int = (first_key.x - center_world_x) * (first_key.x - center_world_x) + (first_key.z - center_world_z) * (first_key.z - center_world_z)
 		var second_squared_distance: int = (second_key.x - center_world_x) * (second_key.x - center_world_x) + (second_key.z - center_world_z) * (second_key.z - center_world_z)
 		return first_squared_distance < second_squared_distance
 	)
 
 #-###########################################
-# Dispatching chunk generation
+#       Dispatching chunk generation
 #-###########################################
 
 func _dispatch_load_queue() -> void:
 	var count: int = min(dispatch_chunks_per_frame, load_queue.size())
 	for index: int in range(count):
 		var chunk_world_key: Vector3i = load_queue.pop_front()
-
+		
 		loading_chunks_mutex.lock()
 		loading_chunks_flags[chunk_world_key] = true
 		loading_chunks_mutex.unlock()
-
+		
 		var grid_coord: Vector3i = Vector3i(
 			int(chunk_world_key.x / float(chunk_size)),
 			int(chunk_world_key.y / float(chunk_size)),
 			int(chunk_world_key.z / float(chunk_size))
 		)
-
+		
 		var task_id: int = WorkerThreadPool.add_task(_generate_chunk_at.bind(grid_coord), false, "chunk_generation")
 		active_task_ids.append(task_id)
 
 #-###########################################
-# Unloading distant chunks
+#        Unloading distant chunks
 #-###########################################
 
 func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 	var ahead_unload_distance_in_chunks: int = view_distance_in_chunks + unload_buffer_in_chunks
 	var behind_unload_distance_in_chunks: int = core_radius_in_chunks + behind_unload_buffer_in_chunks
 	var vertical_unload_distance: int = view_distance_in_chunks_y + unload_buffer_in_chunks_y
-
+	
 	chunks_mutex.lock()
 	var keys: Array = chunks_by_key.keys()
 	chunks_mutex.unlock()
-
+	
 	for key in keys:
 		var grid_x: int = key.x / chunk_size
 		var grid_y: int = key.y / chunk_size
@@ -385,16 +385,16 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 		var offset_grid_2d: Vector2i = Vector2i(grid_x - center_chunk_grid.x, grid_z - center_chunk_grid.z)
 		var distance_in_chunks: int = maxi(absi(offset_grid_2d.x), absi(offset_grid_2d.y))
 		var vertical_distance: int = absi(grid_y - center_chunk_grid.y)
-
+		
 		var should_unload: bool = false
-
+		
 		if vertical_distance > vertical_unload_distance:
 			should_unload = true
 		elif distance_in_chunks > core_radius_in_chunks:
 			var unload_distance: int = ahead_unload_distance_in_chunks if _is_chunk_ahead(offset_grid_2d) else behind_unload_distance_in_chunks
 			if distance_in_chunks > unload_distance:
 				should_unload = true
-
+				
 		if should_unload:
 			chunks_mutex.lock()
 			var chunk: Chunk = chunks_by_key.get(key)
@@ -402,23 +402,23 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 			if chunk != null and not still_pending:
 				chunks_by_key.erase(key)
 			chunks_mutex.unlock()
-
+			
 			if chunk != null and not still_pending:
 				chunk.queue_free()
 
 #-###########################################
-# Chunk generation (threaded)
+#        Chunk generation (threaded)
 #-###########################################
 
 func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 	var new_chunk: Chunk = chunk_scene.instantiate() as Chunk
-
+	
 	new_chunk.position = Vector3(
 		chunk_grid_coord.x,
 		chunk_grid_coord.y,
 		chunk_grid_coord.z
 	) * float(chunk_size)
-
+	
 	new_chunk.generate_date(
 		chunk_size,
 		terrain_base_height,
@@ -434,31 +434,31 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		cave_entrance_surface_reach,
 		mountain_biome_noise
 	)
-
+	
 	var chunk_world_key: Vector3i = Vector3i(new_chunk.position)
-
+	
 	if modified_chunks.has(chunk_world_key):
 		var saved_voxels: PackedInt32Array = modified_chunks[chunk_world_key]
 		new_chunk.chunk_data.voxels = saved_voxels
 		new_chunk.chunk_data.voxel_amount = _count_non_air(saved_voxels)
-
+		
 	new_chunk.generate_mesh()
 	new_chunk.compute_collision_boxes()
-
+	
 	chunks_mutex.lock()
 	chunks_by_key[chunk_world_key] = new_chunk
 	chunks_mutex.unlock()
-
+	
 	pending_chunks_mutex.lock()
 	pending_chunks_to_add.append(new_chunk)
 	pending_chunks_mutex.unlock()
-
+	
 	loading_chunks_mutex.lock()
 	loading_chunks_flags.erase(chunk_world_key)
 	loading_chunks_mutex.unlock()
 
 #-###########################################
-# Voxel editing helpers
+#          Voxel editing helpers
 #-###########################################
 
 func _voxel_to_chunk_key(voxel_position: Vector3i) -> Vector3i:
@@ -471,14 +471,14 @@ func _voxel_to_chunk_key(voxel_position: Vector3i) -> Vector3i:
 
 func add_voxel_at_position(target_block: Vector3i, voxel_type: TerrianData.TerrianType) -> void:
 	var chunk_world_key: Vector3i = _voxel_to_chunk_key(target_block)
-
+	
 	chunks_mutex.lock()
 	var chunk: Chunk = chunks_by_key.get(chunk_world_key)
 	chunks_mutex.unlock()
-
+	
 	if chunk == null:
 		return
-
+		
 	var local_voxel_position: Vector3i = target_block - chunk_world_key
 	chunk.set_voxel(local_voxel_position, voxel_type)
 	_store_modified_chunk(chunk_world_key, chunk)
@@ -486,20 +486,20 @@ func add_voxel_at_position(target_block: Vector3i, voxel_type: TerrianData.Terri
 
 func remove_voxel_at_position(target_block: Vector3i) -> void:
 	var chunk_world_key: Vector3i = _voxel_to_chunk_key(target_block)
-
+	
 	chunks_mutex.lock()
 	var chunk: Chunk = chunks_by_key.get(chunk_world_key)
 	chunks_mutex.unlock()
-
+	
 	if chunk == null:
 		return
-
+		
 	var local_voxel_position: Vector3i = target_block - chunk_world_key
 	chunk.remove_voxel_at_local(local_voxel_position)
 	_store_modified_chunk(chunk_world_key, chunk)
 
 #-###########################################
-# World/local conversion
+#          World/local conversion
 #-###########################################
 
 func _world_to_chunk_key(world_position: Vector3) -> Vector3i:
@@ -518,30 +518,30 @@ func _world_to_local_voxel_centered(world_position: Vector3, chunk_world_key: Ve
 	)
 
 #-###########################################
-# Spawn height / column checks
+#        Spawn height / column checks
 #-###########################################
 
 func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
 	var base_chunk_world_key: Vector3i = _world_to_chunk_key(Vector3(world_x, 0.0, world_z))
 	var highest_world_y: float = -INF
-
+	
 	for y_chunk_index: int in range(number_of_chunks.y):
 		var chunk_world_key: Vector3i = Vector3i(
 			base_chunk_world_key.x,
 			y_chunk_index * chunk_size,
 			base_chunk_world_key.z
 		)
-
+		
 		chunks_mutex.lock()
 		var chunk: Chunk = chunks_by_key.get(chunk_world_key)
 		chunks_mutex.unlock()
-
+		
 		if chunk == null:
 			continue
-
+			
 		var local_x: int = roundi(world_x) - chunk_world_key.x
 		var local_z: int = roundi(world_z) - chunk_world_key.z
-
+		
 		for local_y: int in range(chunk_size - 1, -1, -1):
 			var voxel_type: TerrianData.TerrianType = chunk.chunk_data.get_voxel(Vector3i(local_x, local_y, local_z))
 			if voxel_type != TerrianData.TerrianType.AIR:
@@ -549,10 +549,10 @@ func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
 				if world_y > highest_world_y:
 					highest_world_y = world_y
 				break
-
+				
 	if highest_world_y == -INF:
 		return 0.0
-
+		
 	return highest_world_y
 
 
@@ -563,17 +563,17 @@ func get_spawn_height(world_x: float, world_z: float) -> int:
 
 func is_chunk_loaded_at(world_position: Vector3) -> bool:
 	var chunk_world_key: Vector3i = _world_to_chunk_key(world_position)
-
+	
 	chunks_mutex.lock()
 	var loaded: bool = chunks_by_key.has(chunk_world_key)
 	chunks_mutex.unlock()
-
+	
 	return loaded
 
 
 func is_column_loaded_at(world_x: float, world_z: float) -> bool:
 	var base_chunk_world_key: Vector3i = _world_to_chunk_key(Vector3(world_x, 0.0, world_z))
-
+	
 	chunks_mutex.lock()
 	for y_chunk_index: int in range(number_of_chunks.y):
 		var chunk_world_key: Vector3i = Vector3i(
@@ -585,11 +585,11 @@ func is_column_loaded_at(world_x: float, world_z: float) -> bool:
 			chunks_mutex.unlock()
 			return false
 	chunks_mutex.unlock()
-
+	
 	return true
 
 #-###########################################
-# Cleanup
+#               Cleanup
 #-###########################################
 
 func _exit_tree() -> void:
@@ -597,15 +597,15 @@ func _exit_tree() -> void:
 		WorkerThreadPool.wait_for_task_completion(id)
 
 #-###########################################
-# Modified Chunk
+#              Modified Chunk
 #-###########################################
 
 func _store_modified_chunk(chunk_world_key: Vector3i, chunk: Chunk) -> void:
 	modified_chunks[chunk_world_key] = chunk.chunk_data.get_voxels_copy()
 
-# =========================
-# Other Helpers
-# =========================
+#-###########################################
+#            Other Helpers
+#-###########################################
 
 func _count_non_air(voxels: PackedInt32Array) -> int:
 	var count: int = 0
@@ -619,7 +619,7 @@ func notify_player_spawned() -> void:
 	vertical_streaming_locked_to_spawn = false
 
 #-###########################################
-# Player signals
+#           Player signals
 #-###########################################
 
 func _on_player_add_block(target_block: Vector3i, _normal: Vector3i, terrain_type: TerrianData.TerrianType) -> void:

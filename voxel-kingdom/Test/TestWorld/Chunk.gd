@@ -1,8 +1,5 @@
 class_name Chunk extends StaticBody3D
 
-#-###########################################
-#              Enums & Constants
-#-###########################################
 enum Face {
 	BOTTOM,
 	FRONT,
@@ -21,14 +18,11 @@ enum Face {
 
 const MOUNTAIN_GRASS_CHANCE: float = 0.20
 
-#-###########################################
-#              Node References
-#-###########################################
 @onready var collision_shape_3d: CollisionShape3D = $CollisionShape3D
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 
 #-###########################################
-#              Chunk Data & State
+#             Chunk Data & State
 #-###########################################
 static var cube_count: int = 0
 
@@ -48,7 +42,7 @@ var active_task_id: int = -1
 var provisional_shape: CollisionShape3D = null
 
 #-###########################################
-#              Face Data
+#             Face Data
 #-###########################################
 var face_normals: Dictionary[Face, Vector3] = {
 	Face.FRONT: Vector3(0, 0, 1),
@@ -117,7 +111,7 @@ func _ready() -> void:
 	commit_mesh()
 
 #-###########################################
-#              Terrain Helpers
+#             Terrain Helpers
 #-###########################################
 func get_directional_slope_mask(world_x: float, world_z: float) -> float:
 	var direction_x: float = abs(world_x * 0.0008)
@@ -197,7 +191,7 @@ func get_final_height(
 	return final_height
 
 #-###########################################
-#              Terrain Generation
+#             Terrain Generation
 #-###########################################
 func generate_date(
 	size: int,
@@ -339,7 +333,7 @@ func generate_date(
 				cube_count += 1
 
 #-###########################################
-#              Mesh Generation
+#            Mesh Generation
 #-###########################################
 func generate_mesh() -> void:
 	if chunk_data.is_empty():
@@ -483,7 +477,7 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 		collision_faces.append(corners[index])
 
 #-###########################################
-#              UV & Atlas Helpers
+#             UV & Atlas Helpers
 #-###########################################
 
 func face_uv(a: int, b: int, u0: float, u1: float, v0: float, v1: float, rotation_steps: int) -> Vector2:
@@ -525,7 +519,7 @@ func tile_for_face(face: Face, atlas: BlockFaceAtlas) -> Vector2i:
 			return atlas.side
 
 #-###########################################
-#              Collision Generation
+#           Collision Generation
 #-###########################################
 func compute_collision_boxes() -> void:
 	if chunk_data.is_empty():
@@ -607,7 +601,7 @@ func apply_collision_boxes(boxes: Array[Dictionary]) -> void:
 	collision_shape_3d.disabled = true
 
 #-###########################################
-#              Mesh Commit
+#             Mesh Commit
 #-###########################################
 func commit_mesh() -> void:
 	mesh_data.commit()
@@ -622,7 +616,7 @@ func commit_mesh() -> void:
 	apply_collision_boxes(pending_collision_boxes)
 
 #-###########################################
-#              Editing & Rebuild
+#           Editing & Rebuild
 #-###########################################
 func set_voxel(position_index: Vector3i, voxel_type: TerrianData.TerrianType) -> void:
 	chunk_data.add_voxel(position_index, voxel_type)
@@ -701,7 +695,7 @@ func _exit_tree() -> void:
 		WorkerThreadPool.wait_for_task_completion(active_task_id)
 
 #-###########################################
-#              FaceAxes Class
+#             FaceAxes Class
 #-###########################################
 class FaceAxes:
 	var normal_axis: int
