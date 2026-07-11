@@ -33,7 +33,9 @@ func _ready() -> void:
 	_connect_components()
 	_setup_sm()
 	default_cube_mesh.change_block_type(terrian_type)
-	
+	var world_spawn: Vector3 = Vector3(chunk_manager.world_dimensions.x / 2.0, global_position.y, chunk_manager.world_dimensions.z / 2.0) 
+	#global_position = Vector3(1,32,1)
+	global_position = world_spawn
 	_last_valid_position = global_position
 
 
@@ -139,21 +141,16 @@ func _on_add_block() -> void:
 	var normal_dir: Vector3i = Vector3i(round(ray_hit.hit_normal.x), round(ray_hit.hit_normal.y), round(ray_hit.hit_normal.z))
 	var target_block: Vector3i = Vector3i(round(ray_hit.hit_position - ray_hit.hit_normal * 0.5)) + normal_dir
 	
-	
-	print(
-		"Global: ", global_position,
-		"\nGlobal Rounded: ", Vector3i(round(global_position.x), ceil(global_position.y), round(global_position.z)),
-		"\nTarget: ", target_block,
-		"\nOverlap? ", _would_overlap_player(target_block)
-	)
-	
 	if _would_overlap_player(target_block):
 		return
 	
-	add_block.emit(ray_hit.hit_position, ray_hit.hit_normal, terrian_type)
+	add_block.emit(target_block, normal_dir, terrian_type)
 
 
 func _on_remove_block() -> void:
 	var ray_hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
-	if ray_hit != null:
-		remove_block.emit(ray_hit.hit_position, ray_hit.hit_normal)
+	if ray_hit == null:
+		return
+	
+	var hit_block: Vector3i = Vector3i(round(ray_hit.hit_position - ray_hit.hit_normal * 0.5))
+	remove_block.emit(hit_block)

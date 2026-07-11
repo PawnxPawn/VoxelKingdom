@@ -55,8 +55,8 @@ func _swap_scene(scene: Scenes) -> void:
 	_loaded_scenes[scene] = instance
 
 
-func _add_to_scene(scene: Scenes) -> void:
-	print(scene)
+func _add_to_scene(_scene: Scenes) -> void:
+	pass
 	#Place holder for level streaming
 
 

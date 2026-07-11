@@ -67,6 +67,10 @@ func _process_input() -> void:
 	if Input.is_action_just_pressed(&"Change_Mode"):
 		is_place_mode_active = !is_place_mode_active
 	
+	if Input.is_action_just_pressed("Switch_Item_Up"):
+		item_switched_up.emit()
+	if Input.is_action_just_pressed("Switch_Item_Down"):
+		item_switched_down.emit()
 
 
 
@@ -86,7 +90,6 @@ func input(event: InputEvent) -> void:
 			item_switched_up.emit()
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN && event.pressed == true:
 			item_switched_down.emit()
-		
 
 
 func change_mouse_mode(mouse_mode) -> void:
