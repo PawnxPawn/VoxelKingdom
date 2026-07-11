@@ -2,7 +2,7 @@
 class_name TerrianData
 extends Resource
 
-enum TerrianType { DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, BEDROCK, AIR }
+enum TerrianType { DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, WATER, BEDROCK, AIR }
 
 static var atlas_tiles: Dictionary[TerrianType, BlockFaceAtlas] = {}
 
@@ -42,6 +42,12 @@ static func _static_init() -> void:
 	leaves.side = Vector2i(3,3)
 	leaves.bottom = Vector2i(3, 3)
 	atlas_tiles[TerrianType.LEAVES] = leaves
+	
+	var water: BlockFaceAtlas  = BlockFaceAtlas.new()
+	water.top = Vector2i(1, 2)
+	water.side = Vector2i(1,2)
+	water.bottom = Vector2i(1, 2)
+	atlas_tiles[TerrianType.WATER] = water
 	
 	var bedrock := BlockFaceAtlas.new()
 	bedrock.top = Vector2i(0, 2)

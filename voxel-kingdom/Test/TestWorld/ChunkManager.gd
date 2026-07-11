@@ -6,7 +6,7 @@ signal first_chunk_ready
 var instance: ChunkManager
 
 #-###########################################
-#         World / generation settings
+#        World / generation settings
 #-###########################################
 
 @export var world_dimensions: Vector3i = Vector3i(12800, 736, 12800)
@@ -32,11 +32,21 @@ var instance: ChunkManager
 @onready var seed_label: Label = %SeedLabel
 
 @export_group("Vertical Streaming")
-@export var view_distance_in_chunks_y: int = 2
+@export var view_distance_in_chunks_y: int = 3
 @export var unload_buffer_in_chunks_y: int = 2
 
+@export_group("Surface Visibility While Flying")
+## How many chunks below the estimated surface chunk stay loaded (for a bit
+## of ground depth so you're not looking at a single floating slab).
+@export var surface_visible_chunks_below: int = 2
+
+## Lightweight, never added to the tree - exists only so we can call
+## get_final_height() to estimate terrain height per column without
+## generating an actual chunk.
+var _height_probe: Chunk = null
+
 #-###########################################
-#       Terrain Generation Settings
+#      Terrain Generation Settings
 #-###########################################
 
 @export_group("Terrain Shape")
@@ -62,7 +72,7 @@ var cave_min_y: int = 0
 var cave_max_y: int = 0
 
 #-###########################################
-#       Noise / generation helpers
+#         Noise / generation helpers
 #-###########################################
 
 var terrain_noise: FastNoiseLite = FastNoiseLite.new()
@@ -74,7 +84,7 @@ var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
 
 #-###########################################
-#         Chunk storage / threading
+#          Chunk storage / threading
 #-###########################################
 
 var chunks_by_key: Dictionary[Vector3i, Chunk] = {}
@@ -88,7 +98,7 @@ var start_time_usec: float = 0.0
 var is_first_chunk_added: bool = false
 
 #-###########################################
-#        Streaming / movement state
+#         Streaming / movement state
 #-###########################################
 
 var stream_target: Node3D = null
@@ -112,7 +122,7 @@ var modified_chunks: Dictionary[Vector3i, PackedInt32Array] = {}
 var vertical_streaming_locked_to_spawn: bool = true
 
 #-###########################################
-#                 Lifecycle
+#                Lifecycle
 #-###########################################
 
 func _ready() -> void:
@@ -151,7 +161,26 @@ func _ready() -> void:
 		ceili(float(world_dimensions.z) / float(chunk_size))
 	)
 	
+	_height_probe = Chunk.new()
+	
 	_update_streaming()
+
+#-###########################################
+#     Surface height estimation
+#-###########################################
+
+func _estimate_surface_grid_y(world_x: float, world_z: float) -> int:
+	var estimated_height: float = _height_probe.get_final_height(
+		world_x,
+		world_z,
+		terrain_base_height,
+		terrain_amplitude,
+		terrain_noise,
+		mountain_biome_noise,
+		_height_probe.mountain_shape_noise,
+		_height_probe.steep_noise
+	)
+	return clampi(floori(estimated_height / float(chunk_size)), 0, number_of_chunks.y - 1)
 
 
 func _process(_delta: float) -> void:
@@ -164,7 +193,7 @@ func _process(_delta: float) -> void:
 	_dispatch_load_queue()
 
 #-###########################################
-#          Pending chunk addition
+#         Pending chunk addition
 #-###########################################
 
 func _flush_pending_chunks() -> void:
@@ -186,7 +215,7 @@ func _flush_pending_chunks() -> void:
 			first_chunk_ready.emit()
 
 #-###########################################
-#            Coordinate helpers
+#           Coordinate helpers
 #-###########################################
 
 func _world_to_chunk_grid_coord(world_position: Vector3) -> Vector3i:
@@ -205,7 +234,7 @@ func _chunk_grid_to_world_key(grid_coord: Vector3i) -> Vector3i:
 	)
 
 #-###########################################
-#       Movement direction tracking
+#        Movement direction tracking
 #-###########################################
 
 func _update_movement_direction() -> void:
@@ -236,7 +265,7 @@ func _update_movement_direction() -> void:
 	movement_direction_xz = new_direction
 
 #-###########################################
-#             Streaming update
+#            Streaming update
 #-###########################################
 
 func _update_streaming() -> void:
@@ -252,7 +281,7 @@ func _update_streaming() -> void:
 	_unload_distant_chunks(center_chunk_grid)
 
 #-###########################################
-#           Forward cone helper
+#             Forward cone helper
 #-###########################################
 
 func _is_chunk_ahead(offset_grid_2d: Vector2i) -> bool:
@@ -264,8 +293,32 @@ func _is_chunk_ahead(offset_grid_2d: Vector2i) -> bool:
 	return alignment >= forward_dot_threshold
 
 #-###########################################
-#          Queueing chunks to load
+#           Queueing chunks to load
 #-###########################################
+
+func _get_needed_grid_y_values(center_chunk_grid_y: int, grid_x: int, grid_z: int) -> Array[int]:
+	# Near-player vertical range (unchanged original behavior), plus just
+	# the real surface chunk for this specific column (+ a small buffer
+	# below it) so the ground is visible from high altitude without
+	# loading a wide fixed band across every column.
+	var grid_y_values: Array[int] = []
+	
+	var player_min_grid_y: int = max(0, center_chunk_grid_y - 1)
+	var player_max_grid_y: int = min(number_of_chunks.y - 1, center_chunk_grid_y + 1)
+	for grid_y: int in range(player_min_grid_y, player_max_grid_y + 1):
+		grid_y_values.append(grid_y)
+		
+	var world_x: float = grid_x * chunk_size + chunk_size * 0.5
+	var world_z: float = grid_z * chunk_size + chunk_size * 0.5
+	var surface_grid_y: int = _estimate_surface_grid_y(world_x, world_z)
+	var surface_min_grid_y: int = max(0, surface_grid_y - surface_visible_chunks_below)
+	
+	for grid_y: int in range(surface_min_grid_y, surface_grid_y + 1):
+		if not grid_y_values.has(grid_y):
+			grid_y_values.append(grid_y)
+			
+	return grid_y_values
+
 
 func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 	var needed_chunk_keys: Array[Vector3i] = []
@@ -286,10 +339,9 @@ func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 			if distance_in_chunks > core_radius_in_chunks and not _is_chunk_ahead(offset_grid_2d):
 				continue
 				
-			var min_grid_y: int = max(0, center_chunk_grid.y - 1)
-			var max_grid_y: int = min(number_of_chunks.y - 1, center_chunk_grid.y + 1)
+			var grid_y_values: Array[int] = _get_needed_grid_y_values(center_chunk_grid.y, grid_x, grid_z)
 			
-			for grid_y: int in range(min_grid_y, max_grid_y + 1):
+			for grid_y: int in grid_y_values:
 				var chunk_grid_coord: Vector3i = Vector3i(grid_x, grid_y, grid_z)
 				var chunk_world_key: Vector3i = _chunk_grid_to_world_key(chunk_grid_coord)
 				
@@ -344,7 +396,7 @@ func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 	)
 
 #-###########################################
-#       Dispatching chunk generation
+#      Dispatching chunk generation
 #-###########################################
 
 func _dispatch_load_queue() -> void:
@@ -366,7 +418,7 @@ func _dispatch_load_queue() -> void:
 		active_task_ids.append(task_id)
 
 #-###########################################
-#        Unloading distant chunks
+#      Unloading distant chunks
 #-###########################################
 
 func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
@@ -386,9 +438,15 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 		var distance_in_chunks: int = maxi(absi(offset_grid_2d.x), absi(offset_grid_2d.y))
 		var vertical_distance: int = absi(grid_y - center_chunk_grid.y)
 		
+		var world_x: float = grid_x * chunk_size + chunk_size * 0.5
+		var world_z: float = grid_z * chunk_size + chunk_size * 0.5
+		var surface_grid_y: int = _estimate_surface_grid_y(world_x, world_z)
+		var surface_min_grid_y: int = max(0, surface_grid_y - surface_visible_chunks_below)
+		var is_surface_chunk: bool = grid_y >= surface_min_grid_y and grid_y <= surface_grid_y
+		
 		var should_unload: bool = false
 		
-		if vertical_distance > vertical_unload_distance:
+		if not is_surface_chunk and vertical_distance > vertical_unload_distance:
 			should_unload = true
 		elif distance_in_chunks > core_radius_in_chunks:
 			var unload_distance: int = ahead_unload_distance_in_chunks if _is_chunk_ahead(offset_grid_2d) else behind_unload_distance_in_chunks
@@ -407,7 +465,7 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 				chunk.queue_free()
 
 #-###########################################
-#        Chunk generation (threaded)
+#       Chunk generation (threaded)
 #-###########################################
 
 func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
@@ -419,7 +477,10 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		chunk_grid_coord.z
 	) * float(chunk_size)
 	
-	new_chunk.generate_date(
+	
+	#TODO: Break layers and biomes into resources/ own scripts and pass through an array that contains them all
+	#Terrian colors is an artifact of the original system 
+	new_chunk.generate_data(
 		chunk_size,
 		terrain_base_height,
 		terrain_amplitude,
@@ -458,7 +519,7 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 	loading_chunks_mutex.unlock()
 
 #-###########################################
-#          Voxel editing helpers
+#         Voxel editing helpers
 #-###########################################
 
 func _voxel_to_chunk_key(voxel_position: Vector3i) -> Vector3i:
@@ -499,7 +560,7 @@ func remove_voxel_at_position(target_block: Vector3i) -> void:
 	_store_modified_chunk(chunk_world_key, chunk)
 
 #-###########################################
-#          World/local conversion
+#           World/local conversion
 #-###########################################
 
 func _world_to_chunk_key(world_position: Vector3) -> Vector3i:
@@ -518,7 +579,7 @@ func _world_to_local_voxel_centered(world_position: Vector3, chunk_world_key: Ve
 	)
 
 #-###########################################
-#        Spawn height / column checks
+#       Spawn height / column checks
 #-###########################################
 
 func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
@@ -589,7 +650,7 @@ func is_column_loaded_at(world_x: float, world_z: float) -> bool:
 	return true
 
 #-###########################################
-#               Cleanup
+#            Cleanup
 #-###########################################
 
 func _exit_tree() -> void:
@@ -597,14 +658,14 @@ func _exit_tree() -> void:
 		WorkerThreadPool.wait_for_task_completion(id)
 
 #-###########################################
-#              Modified Chunk
+#               Modified Chunk
 #-###########################################
 
 func _store_modified_chunk(chunk_world_key: Vector3i, chunk: Chunk) -> void:
 	modified_chunks[chunk_world_key] = chunk.chunk_data.get_voxels_copy()
 
 #-###########################################
-#            Other Helpers
+#           Other Helpers
 #-###########################################
 
 func _count_non_air(voxels: PackedInt32Array) -> int:
@@ -619,7 +680,7 @@ func notify_player_spawned() -> void:
 	vertical_streaming_locked_to_spawn = false
 
 #-###########################################
-#           Player signals
+#            Player signals
 #-###########################################
 
 func _on_player_add_block(target_block: Vector3i, _normal: Vector3i, terrain_type: TerrianData.TerrianType) -> void:

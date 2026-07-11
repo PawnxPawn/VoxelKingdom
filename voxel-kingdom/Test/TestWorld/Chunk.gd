@@ -193,7 +193,7 @@ func get_final_height(
 #-###########################################
 #             Terrain Generation
 #-###########################################
-func generate_date(
+func generate_data(
 	size: int,
 	terrain_base_height: float,
 	terrain_amplitude: float,

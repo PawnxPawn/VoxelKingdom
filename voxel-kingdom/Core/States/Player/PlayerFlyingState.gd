@@ -47,6 +47,7 @@ func connect_components() -> void:
 
 func disconnect_components() -> void:
 	if _move:
+		_move.stop()
 		_handler.set_active(MoveComponent, false)
 		if _input:
 			_input.moved.disconnect(_move.set_direction)

@@ -65,8 +65,9 @@ func _move_char3d(direction: Vector2) -> void:
 		facing_direction = facing_direction.normalized()
 		forward_direction = facing_direction * speed * _owner.get_physics_process_delta_time()
 	else:
-		forward_direction.x = move_toward(body.velocity.x, 0, speed)
-		forward_direction.z = move_toward(body.velocity.z, 0, speed)
+		var decel := speed * _owner.get_physics_process_delta_time()
+		forward_direction.x = move_toward(body.velocity.x, 0, decel)
+		forward_direction.z = move_toward(body.velocity.z, 0, decel)
 	
 	body.velocity = Vector3(forward_direction.x, body.velocity.y, forward_direction.z)
 	
@@ -115,6 +116,13 @@ func _move_node3d(direction:Vector3):
 	#velocity_zeroed.emit()
 
 #TODO: Add integrate_forces3D
+
+
+func stop() -> void:
+	var body: CharacterBody3D = _owner as CharacterBody3D
+	if not body: return
+	body.velocity.x = 0.0
+	body.velocity.z = 0.0
 
 
 func set_move_mode(move_type: move_mode) -> void:

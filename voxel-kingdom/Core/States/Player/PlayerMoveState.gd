@@ -2,6 +2,10 @@ extends State
 
 var state_name:StringName = &"MoveState"
 
+#-##############################
+#           Components
+#-##############################
+
 var _input: InputSource = null
 var _move: MoveComponent = null
 
@@ -15,6 +19,7 @@ func exit() -> void:
 func connect_components() -> void:
 	_input = _handler.get_component(InputSource)
 	_move = _handler.get_component(MoveComponent)
+	
 	if _move:
 		_handler.set_active(MoveComponent, true)
 		_move.velocity_zeroed.connect(transition_to.bind(&"IdleState"))
@@ -29,6 +34,7 @@ func connect_components() -> void:
 
 func disconnect_components() -> void:
 	if _move:
+		_move.stop()
 		_handler.set_active(MoveComponent, false)
 		_move.velocity_zeroed.disconnect(transition_to.bind(&"IdleState"))
 		if _input:

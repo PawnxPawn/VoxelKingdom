@@ -1,5 +1,7 @@
 extends State
 
+var state_name: StringName = &"FallState"
+
 var _input: InputSource = null
 var _move: MoveComponent = null
 var _gravity: GravityComponent = null
@@ -33,6 +35,7 @@ func change_state_logic() -> void:
 		transition_to(&"IdleState")
 	else:
 		transition_to(&"MoveState")
+
 
 func disconnect_components() -> void:
 	_input.moved.connect(_move.set_direction)

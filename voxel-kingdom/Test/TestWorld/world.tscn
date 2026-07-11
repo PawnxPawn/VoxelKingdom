@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bha0ybw7k60v3" path="res://Test/TestWorld/world.gd" id="1_7cwmi"]
 [ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="2_qykia"]
 [ext_resource type="PackedScene" uid="uid://4rqt7q4iep3m" path="res://Test/TestWorld/ChunkManager.tscn" id="3_gs4kv"]
+[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="4_4mhdq"]
 [ext_resource type="AudioStream" uid="uid://ucajyunnv11n" path="res://Assets/Music/c4188 (1).mp3" id="4_6qn7x"]
 [ext_resource type="AudioStream" uid="uid://lblty5d1hbi5" path="res://Assets/Music/minecrafp (1).mp3" id="5_4mhdq"]
 [ext_resource type="AudioStream" uid="uid://bf6hdj40jwk5a" path="res://Assets/Music/more c418 tests, i like this one too but idk if this is straight up copying or inspiration atp.mp3" id="6_6fedw"]
@@ -22,6 +23,7 @@ sky = SubResource("Sky_ab4hr")
 glow_enabled = true
 
 [sub_resource type="LabelSettings" id="LabelSettings_gs4kv"]
+font = ExtResource("4_4mhdq")
 font_size = 32
 shadow_color = Color(0, 0, 0, 1)
 shadow_offset = Vector2(5, 5)
@@ -40,7 +42,7 @@ script = ExtResource("1_7cwmi")
 environment = SubResource("Environment_b330u")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=358367093]
-transform = Transform3D(0.97437, -0.22236277, -0.03402626, -0.14685833, -0.7433727, 0.6525562, -0.17039837, -0.6308342, -0.7569759, 0, 3.9366724, -9.205248)
+transform = Transform3D(0.97437006, -0.2223626, -0.034026153, -0.14685825, -0.7433727, 0.65255624, -0.1703982, -0.6308343, -0.75697577, 0, 3.9366724, -9.205248)
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager") instance=ExtResource("2_qykia")]

@@ -23,7 +23,7 @@ func connect_components() -> void:
 	_input = _handler.get_component(InputSource)
 	_move = _handler.get_component(MoveComponent)
 	_gravity = _handler.get_component(GravityComponent)
-
+	
 	if _move:
 		_handler.set_active(MoveComponent, true)
 		if _input:
@@ -32,19 +32,21 @@ func connect_components() -> void:
 	
 	if _input:
 		_input.fly_pressed.connect(transition_to.bind(&"FlyState"))
-
-
+	
 	if _gravity:
 		_gravity.grounded.connect(_on_grounded)
+		#if _gravity.is_falling:
+			#transition_to(&"FallState")
 
 func disconnect_components() -> void:
 	if _move:
+		_move.stop()
 		_handler.set_active(MoveComponent, false)
 		if _input:
 			_input.moved.disconnect(_move.set_direction)
 	
 	if _input:
 		_input.fly_pressed.disconnect(transition_to.bind(&"FlyState"))
-
+		
 	if _gravity:
 		_gravity.grounded.disconnect(_on_grounded)

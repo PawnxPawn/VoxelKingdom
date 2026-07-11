@@ -10,6 +10,7 @@ var gravity_ascent: float = 15.0
 var gravity_descent: float = 30.0
 
 var is_on_floor: bool = false
+var is_falling: bool
 var _was_on_floor: bool = false
 var is_flying: bool = false
 var _ascend_input: bool = false
@@ -81,6 +82,7 @@ func is_on_floor_check(state: PhysicsDirectBodyState2D) -> void:
 func apply_characterbody_gravity() -> void:
 	if _owner.is_on_floor() and not is_flying:
 		if not _was_on_floor:
+			is_falling = false
 			grounded.emit()
 		_was_on_floor = true
 		return
@@ -92,6 +94,9 @@ func apply_characterbody_gravity() -> void:
 		var direction: float = float(_ascend_input) - float(_descend_input)
 		_owner.velocity.y = direction * fly_up_down_speed
 		return
+	
+	if _owner.velocity.y < 0.0:
+		is_falling = true
 	
 	var gravity: float = gravity_ascent if _owner.velocity.y > 0.0 else gravity_descent
 	_owner.velocity.y = max(_owner.velocity.y - gravity * _owner.get_physics_process_delta_time(), -max_fall_speed)
