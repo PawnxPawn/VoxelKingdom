@@ -115,4 +115,9 @@ light_indirect_energy = 1.885
 light_volumetric_fog_energy = 1.59
 light_cull_mask = 4294443008
 
+[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=128926134]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1725464, 0)
+light_energy = 0.25
+light_indirect_energy = 0.25
+
 [editable path="20260418_193043_rikafinished"]
