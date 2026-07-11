@@ -1,0 +1,21 @@
+{
+ "asset": { "version": "2.0" },
+ "scene": 0,
+ "scenes": [{ "nodes": [0,1,2] }],
+ "nodes": [{"mesh":0},{"mesh":1},{"mesh":2}],
+ "meshes": [{"name":"body","primitives":[{"attributes":{"POSITION":0,"NORMAL":1,"TEXCOORD_0":2},"indices":3,"material":0}]},{"name":"tail","primitives":[{"attributes":{"POSITION":4,"NORMAL":5,"TEXCOORD_0":6},"indices":7,"material":0}]},{"name":"wings","primitives":[{"attributes":{"POSITION":8,"NORMAL":9,"TEXCOORD_0":10},"indices":11,"material":0}]}],
+ "materials": [{
+ "name" : "unnamed_5",
+ "pbrMetallicRoughness": {
+ "baseColorTexture": { "index": 0 },
+ "metallicFactor": 0.0,
+ "roughnessFactor": 1.0
+ }
+ }],
+ "samplers": [{ "magFilter": 9728, "minFilter": 9728 }],
+ "textures": [{ "source": 0, "sampler": 0 }],
+ "images": [{ "uri": "unnamed_5.png" }],
+ "accessors": [{"bufferView":0,"byteOffset":0,"componentType":5126,"count":96,"type":"VEC3","min":[-0.392777198,-1,-0.5],"max":[0.26804773,1,0.5]},{"bufferView":1,"byteOffset":0,"componentType":5126,"count":96,"type":"VEC3"},{"bufferView":2,"byteOffset":0,"componentType":5126,"count":96,"type":"VEC2"},{"bufferView":3,"byteOffset":0,"componentType":5123,"count":96,"type":"SCALAR"},{"bufferView":4,"byteOffset":0,"componentType":5126,"count":6,"type":"VEC3","min":[-0.386850023,-2,-1.75],"max":[-0.386850023,-0.5,-0]},{"bufferView":5,"byteOffset":0,"componentType":5126,"count":6,"type":"VEC3"},{"bufferView":6,"byteOffset":0,"componentType":5126,"count":6,"type":"VEC2"},{"bufferView":7,"byteOffset":0,"componentType":5123,"count":6,"type":"SCALAR"},{"bufferView":8,"byteOffset":0,"componentType":5126,"count":12,"type":"VEC3","min":[-0.380195366,-1,-1.40625],"max":[-0.380195366,1,1.40659095]},{"bufferView":9,"byteOffset":0,"componentType":5126,"count":12,"type":"VEC3"},{"bufferView":10,"byteOffset":0,"componentType":5126,"count":12,"type":"VEC2"},{"bufferView":11,"byteOffset":0,"componentType":5123,"count":12,"type":"SCALAR"}],
+ "bufferViews": [{"buffer":0,"byteOffset":0,"byteLength":1152,"target":34962},{"buffer":0,"byteOffset":1152,"byteLength":1152,"target":34962},{"buffer":0,"byteOffset":2304,"byteLength":768,"target":34962},{"buffer":0,"byteOffset":3072,"byteLength":192,"target":34963},{"buffer":0,"byteOffset":3264,"byteLength":72,"target":34962},{"buffer":0,"byteOffset":3336,"byteLength":72,"target":34962},{"buffer":0,"byteOffset":3408,"byteLength":48,"target":34962},{"buffer":0,"byteOffset":3456,"byteLength":12,"target":34963},{"buffer":0,"byteOffset":3468,"byteLength":144,"target":34962},{"buffer":0,"byteOffset":3612,"byteLength":144,"target":34962},{"buffer":0,"byteOffset":3756,"byteLength":96,"target":34962},{"buffer":0,"byteOffset":3852,"byteLength":24,"target":34963}],
+ "buffers": [{ "uri": "unnamed_5.bin", "byteLength": 3876 }]
+}

@@ -1,0 +1,21 @@
+{
+ "asset": { "version": "2.0" },
+ "scene": 0,
+ "scenes": [{ "nodes": [0,1] }],
+ "nodes": [{"mesh":0},{"mesh":1}],
+ "meshes": [{"name":"body","primitives":[{"attributes":{"POSITION":0,"NORMAL":1,"TEXCOORD_0":2},"indices":3,"material":0}]},{"name":"wings","primitives":[{"attributes":{"POSITION":4,"NORMAL":5,"TEXCOORD_0":6},"indices":7,"material":0}]}],
+ "materials": [{
+ "name" : "unnamed_9",
+ "pbrMetallicRoughness": {
+ "baseColorTexture": { "index": 0 },
+ "metallicFactor": 0.0,
+ "roughnessFactor": 1.0
+ }
+ }],
+ "samplers": [{ "magFilter": 9728, "minFilter": 9728 }],
+ "textures": [{ "source": 0, "sampler": 0 }],
+ "images": [{ "uri": "unnamed_9.png" }],
+ "accessors": [{"bufferView":0,"byteOffset":0,"componentType":5126,"count":144,"type":"VEC3","min":[-0.1171875,-0.265625,-0.346404265],"max":[0.681340784,0.657331553,0.354216765]},{"bufferView":1,"byteOffset":0,"componentType":5126,"count":144,"type":"VEC3"},{"bufferView":2,"byteOffset":0,"componentType":5126,"count":144,"type":"VEC2"},{"bufferView":3,"byteOffset":0,"componentType":5123,"count":144,"type":"SCALAR"},{"bufferView":4,"byteOffset":0,"componentType":5126,"count":12,"type":"VEC3","min":[0.109375,0.460774136,-0.671875],"max":[0.609375,0.462679842,0.68350205]},{"bufferView":5,"byteOffset":0,"componentType":5126,"count":12,"type":"VEC3"},{"bufferView":6,"byteOffset":0,"componentType":5126,"count":12,"type":"VEC2"},{"bufferView":7,"byteOffset":0,"componentType":5123,"count":12,"type":"SCALAR"}],
+ "bufferViews": [{"buffer":0,"byteOffset":0,"byteLength":1728,"target":34962},{"buffer":0,"byteOffset":1728,"byteLength":1728,"target":34962},{"buffer":0,"byteOffset":3456,"byteLength":1152,"target":34962},{"buffer":0,"byteOffset":4608,"byteLength":288,"target":34963},{"buffer":0,"byteOffset":4896,"byteLength":144,"target":34962},{"buffer":0,"byteOffset":5040,"byteLength":144,"target":34962},{"buffer":0,"byteOffset":5184,"byteLength":96,"target":34962},{"buffer":0,"byteOffset":5280,"byteLength":24,"target":34963}],
+ "buffers": [{ "uri": "unnamed_9.bin", "byteLength": 5304 }]
+}
