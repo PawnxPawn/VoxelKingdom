@@ -7,6 +7,7 @@
 [ext_resource type="AudioStream" uid="uid://ucajyunnv11n" path="res://Assets/Music/c4188 (1).mp3" id="4_6qn7x"]
 [ext_resource type="AudioStream" uid="uid://lblty5d1hbi5" path="res://Assets/Music/minecrafp (1).mp3" id="5_4mhdq"]
 [ext_resource type="AudioStream" uid="uid://bf6hdj40jwk5a" path="res://Assets/Music/more c418 tests, i like this one too but idk if this is straight up copying or inspiration atp.mp3" id="6_6fedw"]
+[ext_resource type="Script" uid="uid://da06rduc8cbas" path="res://Test/TestWorld/WaterDetect.gd" id="8_6fedw"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gs4kv"]
 sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
@@ -49,6 +50,17 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.522, 150, 9.799)
 chunk_manager = NodePath("../ChunkManager")
 
+[node name="WaterOverlay" parent="Player/CanvasLayer" parent_id_path=PackedInt32Array(900159298, 768392587) index="0" unique_id=241175340]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
@@ -66,5 +78,15 @@ volume_db = -10.0
 autoplay = true
 bus = &"Music"
 
+[node name="WaterDetector" type="Node" parent="." unique_id=2084025762 node_paths=PackedStringArray("chunk_manager", "eye_point")]
+script = ExtResource("8_6fedw")
+chunk_manager = NodePath("../ChunkManager")
+eye_point = NodePath("../Player/Marker3D")
+metadata/_custom_type_script = "uid://da06rduc8cbas"
+
 [connection signal="add_block" from="Player" to="ChunkManager" method="_on_player_add_block"]
 [connection signal="remove_block" from="Player" to="ChunkManager" method="_on_player_remove_block"]
+[connection signal="submerged_changed" from="WaterDetector" to="Player/CanvasLayer/WaterOverlay" method="set_submerged"]
+
+[editable path="Player"]
+[editable path="Player/20260418_193043_rikafinished"]

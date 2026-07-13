@@ -1,7 +1,16 @@
-class_name BlockRayCast extends RayCast3D
+#-###########################################
+# Block RayCast
+#-###########################################
 
+class_name BlockRayCast
+extends RayCast3D
+
+
+#----------------
+# Get Ray Hit
+#----------------
 func get_ray_hit() -> RayHit:
-	var collider = get_collider()
+	var collider := get_collider()
 	if collider is not Chunk:
 		return null
 	
@@ -11,6 +20,9 @@ func get_ray_hit() -> RayHit:
 	return RayHit.new(point, normal)
 
 
+#----------------
+# RayHit Class
+#----------------
 class RayHit:
 	var hit_position: Vector3
 	var hit_normal: Vector3

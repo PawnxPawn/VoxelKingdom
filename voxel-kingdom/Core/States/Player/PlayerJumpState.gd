@@ -1,24 +1,41 @@
-# JumpState
+#-###########################################
+# Jump State
+#-###########################################
+
 extends State
+
 var state_name: StringName = &"JumpState"
 
-var _input: InputSource
-var _move: MoveComponent
-var _gravity: GravityComponent
+var _input: InputSource = null
+var _move: MoveComponent = null
+var _gravity: GravityComponent = null
 
+
+#----------------
+# Lifecycle
+#----------------
 func enter() -> void:
 	connect_components()
 	_gravity.jump()
 
+
 func exit() -> void:
 	disconnect_components()
 
-func _on_grounded() -> void:
-	if _owner.input and _owner.input.direction != Vector2.ZERO:
-		transition_to("MoveState")
-	else:
-		transition_to("IdleState")
 
+#----------------
+# Grounded Callback
+#----------------
+func _on_grounded() -> void:
+	if _input and _input.movement_direction != Vector2.ZERO:
+		transition_to(&"MoveState")
+	else:
+		transition_to(&"IdleState")
+
+
+#----------------
+# Connect
+#----------------
 func connect_components() -> void:
 	_input = _handler.get_component(InputSource)
 	_move = _handler.get_component(MoveComponent)
@@ -26,22 +43,29 @@ func connect_components() -> void:
 	
 	if _move:
 		_handler.set_active(MoveComponent, true)
+		
 		if _input:
 			_input.moved.connect(_move.set_direction)
-			_move.set_direction(_owner.input.direction)
+			_move.set_direction(_input.movement_direction)
 	
 	if _input:
 		_input.fly_pressed.connect(transition_to.bind(&"FlyState"))
 	
 	if _gravity:
 		_gravity.grounded.connect(_on_grounded)
-		#if _gravity.is_falling:
-			#transition_to(&"FallState")
+		# If falling logic is needed later:
+		# if _gravity.is_falling:
+		#     transition_to(&"FallState")
 
+
+#----------------
+# Disconnect
+#----------------
 func disconnect_components() -> void:
 	if _move:
 		_move.stop()
 		_handler.set_active(MoveComponent, false)
+		
 		if _input:
 			_input.moved.disconnect(_move.set_direction)
 	

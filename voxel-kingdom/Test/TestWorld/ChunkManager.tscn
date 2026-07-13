@@ -4,3 +4,4 @@
 
 [node name="ChunkManager" type="Node" unique_id=1434710344]
 script = ExtResource("1_01u55")
+water_level = 130.0

@@ -1,4 +1,9 @@
-class_name Chunk extends StaticBody3D
+#-###########################################
+# Chunk
+#-###########################################
+
+class_name Chunk
+extends StaticBody3D
 
 enum Face {
 	BOTTOM,
@@ -11,6 +16,7 @@ enum Face {
 
 @export var use_centered_voxels: bool = false
 @export var material: Material
+@export var water_material: Material
 @export var stone_height: int = 45
 @export var dirt_depth: int = 3
 @export var bedrock_height: int = 2
@@ -22,8 +28,9 @@ const MOUNTAIN_GRASS_CHANCE: float = 0.20
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 
 #-###########################################
-#             Chunk Data & State
+# Chunk Data & State
 #-###########################################
+
 static var cube_count: int = 0
 
 var chunk_data: ChunkData = ChunkData.new()
@@ -31,6 +38,7 @@ var voxel_colors: Dictionary[TerrianData.TerrianType, Color] = {}
 var chunk_size: int = 0
 
 var mesh_data: MeshData = MeshData.new()
+var water_mesh_data: MeshData = MeshData.new()
 var collision_faces: PackedVector3Array = PackedVector3Array()
 var pending_collision_boxes: Array[Dictionary] = []
 
@@ -42,8 +50,9 @@ var active_task_id: int = -1
 var provisional_shape: CollisionShape3D = null
 
 #-###########################################
-#             Face Data
+# Face Data
 #-###########################################
+
 var face_normals: Dictionary[Face, Vector3] = {
 	Face.FRONT: Vector3(0, 0, 1),
 	Face.BACK: Vector3(0, 0, -1),
@@ -62,7 +71,6 @@ var face_axes: Dictionary[Face, FaceAxes] = {
 	Face.BOTTOM: FaceAxes.new(1, -1, 0, 1, 2, 1),
 }
 
-# How many 90-degree steps to rotate each face's texture (0-3).
 var face_uv_rotation: Dictionary[Face, int] = {
 	Face.FRONT: 2,
 	Face.BACK: 2,
@@ -75,7 +83,12 @@ var face_uv_rotation: Dictionary[Face, int] = {
 var mountain_shape_noise: FastNoiseLite
 var steep_noise: FastNoiseLite
 
+var chunk_manager: ChunkManager = null
+var chunk_world_origin: Vector3i = Vector3i.ZERO
 
+#----------------
+# Init
+#----------------
 func _init() -> void:
 	mountain_shape_noise = FastNoiseLite.new()
 	mountain_shape_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
@@ -87,13 +100,17 @@ func _init() -> void:
 	steep_noise.frequency = 0.004
 	steep_noise.seed = 55512
 
-
+#----------------
+# Ready
+#----------------
 func _ready() -> void:
 	mesh_instance.mesh = ArrayMesh.new()
 	collision_shape_3d.disabled = true
 	
 	if material is ShaderMaterial:
 		material.set_shader_parameter("tile_size", 1.0 / atlas_columns)
+	if water_material is ShaderMaterial:
+		water_material.set_shader_parameter("tile_size", 1.0 / atlas_columns)
 		
 	mountain_shape_noise = FastNoiseLite.new()
 	mountain_shape_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
@@ -110,9 +127,11 @@ func _ready() -> void:
 		
 	commit_mesh()
 
+
 #-###########################################
-#             Terrain Helpers
+# Terrain Helpers
 #-###########################################
+
 func get_directional_slope_mask(world_x: float, world_z: float) -> float:
 	var direction_x: float = abs(world_x * 0.0008)
 	var direction_z: float = abs(world_z * 0.0008)
@@ -145,17 +164,14 @@ func get_final_height(
 	mountain_shape_noise_local: FastNoiseLite,
 	steep_noise_local: FastNoiseLite
 ) -> float:
-	
 	var ground_level: float = terrain_base_height
 	
-	# Hills
 	var hill_noise_value: float = terrain_noise.get_noise_2d(world_x, world_z)
 	var hill_normalized: float = (hill_noise_value + 1.0) * 0.5
 	var hill_curve: float = pow(hill_normalized, 1.8)
 	var hill_height: float = (hill_curve - 0.5) * (terrain_amplitude * 0.4)
 	var final_height: float = ground_level + hill_height
 	
-	# Mountain biome
 	var biome_value: float = mountain_biome_noise.get_noise_2d(world_x, world_z)
 	var biome_normalized: float = (biome_value + 1.0) * 0.5
 	var is_mountain: bool = biome_normalized > 0.80
@@ -184,21 +200,27 @@ func get_final_height(
 		
 		var biome_falloff: float = clamp((biome_normalized - 0.80) / 0.20, 0.0, 1.0)
 		
-		var mountain_height: float = base_curve * (terrain_amplitude * 1.2) * biome_falloff * directional_multiplier + ramp_curve * (terrain_amplitude * 1.8) * biome_falloff * directional_multiplier + peak_curve * (terrain_amplitude * 1.2) * biome_falloff * steep_multiplier + detail_curve * (terrain_amplitude * 0.6) * biome_falloff
+		var mountain_height: float = (
+			base_curve * (terrain_amplitude * 1.2) * 
+			biome_falloff * directional_multiplier + ramp_curve * (terrain_amplitude * 1.8) * 
+			biome_falloff * directional_multiplier + peak_curve * (terrain_amplitude * 1.2) * 
+			biome_falloff * steep_multiplier + detail_curve * (terrain_amplitude * 0.6) * biome_falloff
+			)
 		
 		final_height += mountain_height
 		
 	return final_height
 
+
 #-###########################################
-#             Terrain Generation
+# Terrain Generation
 #-###########################################
-func generate_data(
+
+func generate_date(
 	size: int,
 	terrain_base_height: float,
 	terrain_amplitude: float,
 	terrain_noise: Noise,
-	terrain_colors: Dictionary[TerrianData.TerrianType, Color],
 	cave_noise: Noise = null,
 	cave_threshold: float = 0.62,
 	cave_below_surface_minimum: int = 8,
@@ -206,41 +228,45 @@ func generate_data(
 	cave_entrance_noise: Noise = null,
 	cave_entrance_region_threshold: float = 0.72,
 	cave_entrance_surface_reach: int = 6,
-	mountain_biome_noise: Noise = null
+	mountain_biome_noise: Noise = null,
+	water_level: float = -1.0
 ) -> void:
-	
 	chunk_size = size
 	chunk_data.set_size(size)
-	voxel_colors = terrain_colors
 	
-	# Height cache
 	var height_cache: Array[Array] = []
 	height_cache.resize(size)
 	for x_index in range(size):
 		height_cache[x_index] = []
 		height_cache[x_index].resize(size)
 		
-	# Biome cache
 	var biome_cache: Array[Array] = []
 	biome_cache.resize(size)
 	for x_index in range(size):
 		biome_cache[x_index] = []
 		biome_cache[x_index].resize(size)
 		
-	# Cave entrance cache
 	var cave_entrance_cache: Array[Array] = []
 	cave_entrance_cache.resize(size)
 	for x_index in range(size):
 		cave_entrance_cache[x_index] = []
 		cave_entrance_cache[x_index].resize(size)
 		
-	# Precompute heights, biomes, cave entrance flags
 	for voxel_x: int in range(size):
 		for voxel_z: int in range(size):
-			
 			var world_position: Vector3 = position + Vector3(voxel_x, 0, voxel_z)
 			
-			var terrain_height: float = get_final_height(world_position.x, world_position.z, terrain_base_height, terrain_amplitude, terrain_noise, mountain_biome_noise, mountain_shape_noise, steep_noise)
+			var terrain_height: float = get_final_height(
+				world_position.x,
+				world_position.z,
+				terrain_base_height,
+				terrain_amplitude,
+				terrain_noise,
+				mountain_biome_noise,
+				mountain_shape_noise,
+				steep_noise
+			)
+			
 			height_cache[voxel_x][voxel_z] = terrain_height
 			
 			var biome_value: float = mountain_biome_noise.get_noise_2d(world_position.x, world_position.z)
@@ -256,91 +282,102 @@ func generate_data(
 					cave_entrance_allowed = true
 			cave_entrance_cache[voxel_x][voxel_z] = cave_entrance_allowed
 			
-	# Fill voxels
 	for voxel_x: int in range(size):
 		for voxel_z: int in range(size):
 			
 			var terrain_height: float = height_cache[voxel_x][voxel_z]
-			if terrain_height < position.y:
-				continue
-				
 			var local_column_height: float = terrain_height - position.y
-			var world_surface_y: float = position.y + local_column_height
 			
-			var left_x: int = max(voxel_x - 1, 0)
-			var right_x: int = min(voxel_x + 1, size - 1)
-			var up_z: int = min(voxel_z + 1, size - 1)
-			var down_z: int = max(voxel_z - 1, 0)
-			
-			var height_left: float = height_cache[left_x][voxel_z]
-			var height_right: float = height_cache[right_x][voxel_z]
-			var height_up: float = height_cache[voxel_x][up_z]
-			var height_down: float = height_cache[voxel_x][down_z]
-			
-			var slope_x: float = abs(height_left - height_right)
-			var slope_z: float = abs(height_up - height_down)
-			var column_slope: float = clamp(max(slope_x, slope_z) / 12.0, 0.0, 1.0)
-			
-			var is_mountain: bool = biome_cache[voxel_x][voxel_z]
-			var cave_entrance_allowed: bool = cave_entrance_cache[voxel_x][voxel_z]
-			
-			var cave_minimum_depth_adjusted: int = cave_below_surface_minimum
-			if cave_entrance_allowed:
-				cave_minimum_depth_adjusted = -cave_entrance_surface_reach
+			if terrain_height >= position.y:
+				var world_surface_y: float = position.y + local_column_height
 				
-			var cave_upper_y: int = int(world_surface_y) - cave_minimum_depth_adjusted
-			var cave_lower_y: int = int(world_surface_y) - cave_below_surface_maximum
-			
-			for voxel_y: int in range(min(local_column_height, size)):
+				var left_x: int = max(voxel_x - 1, 0)
+				var right_x: int = min(voxel_x + 1, size - 1)
+				var up_z: int = min(voxel_z + 1, size - 1)
+				var down_z: int = max(voxel_z - 1, 0)
 				
-				var depth_from_surface: int = int(local_column_height) - 1 - voxel_y
-				var world_y: int = int(position.y) + voxel_y
+				var height_left: float = height_cache[left_x][voxel_z]
+				var height_right: float = height_cache[right_x][voxel_z]
+				var height_up: float = height_cache[voxel_x][up_z]
+				var height_down: float = height_cache[voxel_x][down_z]
 				
-				var terrain_type: TerrianData.TerrianType
+				var slope_x: float = abs(height_left - height_right)
+				var slope_z: float = abs(height_up - height_down)
+				var column_slope: float = clamp(max(slope_x, slope_z) / 12.0, 0.0, 1.0)
 				
-				if world_y <= bedrock_height:
-					terrain_type = TerrianData.TerrianType.BEDROCK
+				var is_mountain: bool = biome_cache[voxel_x][voxel_z]
+				var cave_entrance_allowed: bool = cave_entrance_cache[voxel_x][voxel_z]
+				
+				var cave_minimum_depth_adjusted: int = cave_below_surface_minimum
+				if cave_entrance_allowed:
+					cave_minimum_depth_adjusted = -cave_entrance_surface_reach
 					
-				elif cave_entrance_allowed:
-					terrain_type = TerrianData.TerrianType.STONE
+				var cave_upper_y: int = int(world_surface_y) - cave_minimum_depth_adjusted
+				var cave_lower_y: int = int(world_surface_y) - cave_below_surface_maximum
+				
+				for voxel_y: int in range(min(local_column_height, size)):
 					
-				elif depth_from_surface == 0:
+					var depth_from_surface: int = int(local_column_height) - 1 - voxel_y
+					var world_y: int = int(position.y) + voxel_y
 					
-					var grass_chance: float = get_grass_probability(world_y, terrain_base_height, terrain_amplitude)
-					var mountain_grass_chance: float = MOUNTAIN_GRASS_CHANCE if is_mountain else  1.0
-					var final_grass_chance: float = grass_chance * mountain_grass_chance
+					var terrain_type: TerrianData.TerrianType
 					
-					if column_slope >= 0.55:
+					if world_y <= bedrock_height:
+						terrain_type = TerrianData.TerrianType.BEDROCK
+						
+					elif cave_entrance_allowed:
 						terrain_type = TerrianData.TerrianType.STONE
-					elif column_slope < 0.25:
-						terrain_type = TerrianData.TerrianType.GRASS if randf() < final_grass_chance else TerrianData.TerrianType.STONE
+						
+					elif depth_from_surface == 0:
+						var grass_chance: float = get_grass_probability(world_y, terrain_base_height, terrain_amplitude)
+						var mountain_grass_chance: float = MOUNTAIN_GRASS_CHANCE if is_mountain else 1.0
+						var final_grass_chance: float = grass_chance * mountain_grass_chance
+						
+						if column_slope >= 0.55:
+							terrain_type = TerrianData.TerrianType.STONE
+						elif column_slope < 0.25:
+							terrain_type = TerrianData.TerrianType.GRASS if randf() < final_grass_chance else TerrianData.TerrianType.STONE
+						else:
+							terrain_type = TerrianData.TerrianType.GRASS if randf() < final_grass_chance * 0.4 else TerrianData.TerrianType.STONE
+							
+					elif depth_from_surface <= dirt_depth:
+						terrain_type = TerrianData.TerrianType.DIRT
+						
 					else:
-						terrain_type = TerrianData.TerrianType.GRASS if randf() < final_grass_chance * 0.4 else TerrianData.TerrianType.STONE
+						terrain_type = TerrianData.TerrianType.STONE
 						
-				elif depth_from_surface <= dirt_depth:
-					terrain_type = TerrianData.TerrianType.DIRT
+					if cave_noise != null and terrain_type != TerrianData.TerrianType.BEDROCK and world_y >= max(bedrock_height + 1, cave_lower_y) and world_y <= cave_upper_y:
+						var cave_value: float = cave_noise.get_noise_3d(position.x + voxel_x, float(world_y), position.z + voxel_z)
+						var cave_normalized: float = clampf((cave_value + 1.0) * 0.5, 0.0, 1.0)
+						if cave_normalized > cave_threshold:
+							continue
+							
+					chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), terrain_type)
+					cube_count += 1
 					
-				else:
-					terrain_type = TerrianData.TerrianType.STONE
-					
-				if cave_noise != null and terrain_type != TerrianData.TerrianType.BEDROCK and world_y >= max(bedrock_height + 1, cave_lower_y) and world_y <= cave_upper_y:
-					var cave_value: float = cave_noise.get_noise_3d(position.x + voxel_x, float(world_y), position.z + voxel_z)
-					var cave_normalized: float = clampf((cave_value + 1.0) * 0.5, 0.0, 1.0)
-					if cave_normalized > cave_threshold:
+			if water_level > position.y and terrain_height < water_level:
+				var water_fill_start_local_y: int = int(max(floori(local_column_height), 0))
+				var water_fill_end_local_y: int = int(min(water_level - position.y, size))
+				
+				for voxel_y: int in range(water_fill_start_local_y, water_fill_end_local_y):
+					if chunk_data.get_voxel(Vector3i(voxel_x, voxel_y, voxel_z)) != TerrianData.TerrianType.AIR:
 						continue
-						
-				chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), terrain_type)
-				cube_count += 1
+					chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), TerrianData.TerrianType.WATER)
+					cube_count += 1
+
 
 #-###########################################
-#            Mesh Generation
+# Mesh Generation
 #-###########################################
+
 func generate_mesh() -> void:
 	if chunk_data.is_empty():
 		mesh_data.reset()
+		water_mesh_data.reset()
 		return
 		
 	mesh_data.reset()
+	water_mesh_data.reset()
 	collision_faces.clear()
 	
 	var flat_voxels: PackedInt32Array = chunk_data.get_voxels_copy()
@@ -365,18 +402,42 @@ func mesh_face(face: Face, flat_voxels: PackedInt32Array) -> void:
 				position_index[axes.across_axis] = across
 				position_index[axes.up_axis] = up
 				
-				var voxel_value: int = flat_voxels[position_index.x + position_index.z * chunk_size + position_index.y * chunk_size * chunk_size]
+				var voxel_value: int = flat_voxels[
+					position_index.x +
+					position_index.z * chunk_size +
+					position_index.y * chunk_size * chunk_size
+				]
+				
 				if voxel_value == TerrianData.TerrianType.AIR:
 					continue
 					
+				var is_water_voxel: bool = TerrianData.is_water(voxel_value as TerrianData.TerrianType)
 				var neighbor_position: Vector3i = position_index + Vector3i(normal)
 				var mask_index: int = across * chunk_size + up
 				
-				if neighbor_position.x < 0 or neighbor_position.y < 0 or neighbor_position.z < 0 or neighbor_position.x >= chunk_size or neighbor_position.y >= chunk_size or neighbor_position.z >= chunk_size:
+				if (
+					neighbor_position.x < 0 or 
+					neighbor_position.y < 0 or 
+					neighbor_position.z < 0 or
+					neighbor_position.x >= chunk_size or 
+					neighbor_position.y >= chunk_size or 
+					neighbor_position.z >= chunk_size
+					):
+					
+					if is_water_voxel and chunk_manager != null:
+						var neighbor_world_position: Vector3i = chunk_world_origin + neighbor_position
+						var cross_chunk_neighbor_value: int = chunk_manager.get_voxel_type_at(neighbor_world_position)
+						if TerrianData.is_water(cross_chunk_neighbor_value as TerrianData.TerrianType):
+							continue
+					
 					mask[mask_index] = voxel_value
 					continue
 					
-				var neighbor_voxel_value: int = flat_voxels[neighbor_position.x + neighbor_position.z * chunk_size + neighbor_position.y * chunk_size * chunk_size]
+				var neighbor_voxel_value: int = flat_voxels[
+					neighbor_position.x +
+					neighbor_position.z * chunk_size +
+					neighbor_position.y * chunk_size * chunk_size
+				]
 				
 				if neighbor_voxel_value == TerrianData.TerrianType.AIR:
 					mask[mask_index] = voxel_value
@@ -384,7 +445,8 @@ func mesh_face(face: Face, flat_voxels: PackedInt32Array) -> void:
 					
 				var neighbor_is_transparent: bool = TerrianData.is_transparent(neighbor_voxel_value as TerrianData.TerrianType)
 				if neighbor_is_transparent:
-					if neighbor_voxel_value == voxel_value:
+					var both_water: bool = is_water_voxel and TerrianData.is_water(neighbor_voxel_value as TerrianData.TerrianType)
+					if neighbor_voxel_value == voxel_value or both_water:
 						continue
 					mask[mask_index] = voxel_value
 					continue
@@ -392,6 +454,7 @@ func mesh_face(face: Face, flat_voxels: PackedInt32Array) -> void:
 				continue
 				
 		merge_mask(mask, face, axes, layer)
+
 
 
 func merge_mask(mask: PackedInt32Array, face: Face, axes: FaceAxes, layer: int) -> void:
@@ -432,7 +495,16 @@ func merge_mask(mask: PackedInt32Array, face: Face, axes: FaceAxes, layer: int) 
 			add_quad(face, axes, layer, across, up, width, height, voxel_value as TerrianData.TerrianType)
 
 
-func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, width: int, height: int, voxel_type: TerrianData.TerrianType) -> void:
+func add_quad(
+	face: Face,
+	axes: FaceAxes,
+	layer: int,
+	across: int,
+	up: int,
+	width: int,
+	height: int,
+	voxel_type: TerrianData.TerrianType
+) -> void:
 	var across_direction: Vector3 = Vector3.ZERO
 	across_direction[axes.across_axis] = axes.across_sign
 	
@@ -450,7 +522,10 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 	var bottom_right: Vector3 = bottom_left + across_direction * width
 	
 	var normal: Vector3 = face_normals[face]
-	var corners: Array[Vector3] = [bottom_left, top_left, top_right, bottom_left, top_right, bottom_right]
+	var corners: Array[Vector3] = [
+		bottom_left, top_left, top_right,
+		bottom_left, top_right, bottom_right
+	]
 	
 	var color: Color = Color.WHITE
 	var atlas: BlockFaceAtlas = TerrianData.atlas_tiles[voxel_type]
@@ -472,15 +547,28 @@ func add_quad(face: Face, axes: FaceAxes, layer: int, across: int, up: int, widt
 		face_uv(1, 0, u0, u1, v0, v1, face_uv_rotation[face]),
 	]
 	
+	var is_water_quad: bool = TerrianData.is_water(voxel_type)
+	var target_mesh_data: MeshData = water_mesh_data if is_water_quad else mesh_data
+	
 	for index in range(corners.size()):
-		mesh_data.add_data(corners[index], normal, color, repeat_uvs[index], tile_origin)
-		collision_faces.append(corners[index])
+		target_mesh_data.add_data(corners[index], normal, color, repeat_uvs[index], tile_origin)
+		if not is_water_quad:
+			collision_faces.append(corners[index])
+
 
 #-###########################################
-#             UV & Atlas Helpers
+# UV & Atlas Helpers
 #-###########################################
 
-func face_uv(a: int, b: int, u0: float, u1: float, v0: float, v1: float, rotation_steps: int) -> Vector2:
+func face_uv(
+	a: int,
+	b: int,
+	u0: float,
+	u1: float,
+	v0: float,
+	v1: float,
+	rotation_steps: int
+) -> Vector2:
 	var normalized_rotation: int = ((rotation_steps % 4) + 4) % 4
 	var p: int
 	var q: int
@@ -518,9 +606,19 @@ func tile_for_face(face: Face, atlas: BlockFaceAtlas) -> Vector2i:
 		_:
 			return atlas.side
 
+
 #-###########################################
-#           Collision Generation
+# Collision Generation
 #-###########################################
+
+func _is_solid_for_collision(voxel_value: int) -> bool:
+	if voxel_value == TerrianData.TerrianType.AIR:
+		return false
+	if TerrianData.is_water(voxel_value as TerrianData.TerrianType):
+		return false
+	return true
+
+
 func compute_collision_boxes() -> void:
 	if chunk_data.is_empty():
 		pending_collision_boxes = []
@@ -536,18 +634,18 @@ func compute_collision_boxes() -> void:
 		for y: int in range(chunk_size):
 			for z: int in range(chunk_size):
 				var start_index: int = x + z * chunk_size + y * chunk_size * chunk_size
-				if flat_voxels[start_index] == TerrianData.TerrianType.AIR or visited[start_index]:
+				if not _is_solid_for_collision(flat_voxels[start_index]) or visited[start_index]:
 					continue
 					
 				var max_x: int = x
-				while max_x + 1 < chunk_size and flat_voxels[(max_x + 1) + z * chunk_size + y * chunk_size * chunk_size] != TerrianData.TerrianType.AIR:
+				while max_x + 1 < chunk_size and _is_solid_for_collision(flat_voxels[(max_x + 1) + z * chunk_size + y * chunk_size * chunk_size]):
 					max_x += 1
 					
 				var max_z: int = z
 				var can_grow_z: bool = true
 				while can_grow_z and max_z + 1 < chunk_size:
 					for scan_x: int in range(x, max_x + 1):
-						if flat_voxels[scan_x + (max_z + 1) * chunk_size + y * chunk_size * chunk_size] == TerrianData.TerrianType.AIR:
+						if not _is_solid_for_collision(flat_voxels[scan_x + (max_z + 1) * chunk_size + y * chunk_size * chunk_size]):
 							can_grow_z = false
 							break
 					if can_grow_z:
@@ -558,7 +656,7 @@ func compute_collision_boxes() -> void:
 				while can_grow_y and max_y + 1 < chunk_size:
 					for scan_x: int in range(x, max_x + 1):
 						for scan_z: int in range(z, max_z + 1):
-							if flat_voxels[scan_x + scan_z * chunk_size + (max_y + 1) * chunk_size * chunk_size] == TerrianData.TerrianType.AIR:
+							if not _is_solid_for_collision(flat_voxels[scan_x + scan_z * chunk_size + (max_y + 1) * chunk_size * chunk_size]):
 								can_grow_y = false
 								break
 						if not can_grow_y:
@@ -600,24 +698,33 @@ func apply_collision_boxes(boxes: Array[Dictionary]) -> void:
 		
 	collision_shape_3d.disabled = true
 
+
 #-###########################################
-#             Mesh Commit
+# Mesh Commit
 #-###########################################
+
 func commit_mesh() -> void:
 	mesh_data.commit()
+	water_mesh_data.commit()
 	
 	var array_mesh: ArrayMesh = mesh_instance.mesh as ArrayMesh
 	array_mesh.clear_surfaces()
 	
 	if not mesh_data.is_empty():
 		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, mesh_data.get_surface_array())
-		mesh_instance.mesh.surface_set_material(0, material)
+		array_mesh.surface_set_material(array_mesh.get_surface_count() - 1, material)
+		
+	if not water_mesh_data.is_empty():
+		array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, water_mesh_data.get_surface_array())
+		array_mesh.surface_set_material(array_mesh.get_surface_count() - 1, water_material)
 		
 	apply_collision_boxes(pending_collision_boxes)
 
+
 #-###########################################
-#           Editing & Rebuild
+# Editing & Rebuild
 #-###########################################
+
 func set_voxel(position_index: Vector3i, voxel_type: TerrianData.TerrianType) -> void:
 	chunk_data.add_voxel(position_index, voxel_type)
 	add_provisional_collision(position_index)
@@ -638,6 +745,14 @@ func change_voxel_at_local(position_index: Vector3i, new_type: TerrianData.Terri
 	request_rebuild()
 
 
+func apply_water_voxel_edits(edits: Array) -> void:
+	if edits.is_empty():
+		return
+	for edit: Dictionary in edits:
+		chunk_data.add_voxel(edit["pos"], edit["type"])
+	request_rebuild()
+
+
 func add_provisional_collision(position_index: Vector3i) -> void:
 	remove_provisional_collision()
 	var shape: BoxShape3D = BoxShape3D.new()
@@ -653,6 +768,10 @@ func remove_provisional_collision() -> void:
 		provisional_shape.free()
 	provisional_shape = null
 
+
+#-###########################################
+# Rebuild System
+#-###########################################
 
 func request_rebuild() -> void:
 	rebuild_mutex.lock()
@@ -681,6 +800,7 @@ func _on_rebuild_complete() -> void:
 	rebuild_mutex.lock()
 	var needs_another_pass: bool = rebuild_dirty
 	rebuild_dirty = false
+	
 	if needs_another_pass:
 		rebuild_mutex.unlock()
 		active_task_id = WorkerThreadPool.add_task(rebuild_threaded, true, "chunk_edit_rebuild")
@@ -694,9 +814,11 @@ func _exit_tree() -> void:
 	if active_task_id != -1:
 		WorkerThreadPool.wait_for_task_completion(active_task_id)
 
+
 #-###########################################
-#             FaceAxes Class
+# FaceAxes Class
 #-###########################################
+
 class FaceAxes:
 	var normal_axis: int
 	var normal_sign: int

@@ -1,96 +1,158 @@
+#-###########################################
+# Player Input Component
+#-###########################################
+
 class_name PlayerInput extends InputSource
 
-const PIXEL_SCALE:float = 0.002
+const PIXEL_SCALE: float = 0.002
 
-#==================================
-#     Resource Exports
-#==================================
+# Resource Exports
 var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
 
-var direction: Vector2 = Vector2.ZERO
-
+var movement_direction: Vector2 = Vector2.ZERO
 var is_place_mode_active: bool = false
 
-var _look_direction: Vector2 = Vector2.ZERO
-var _new_look_direction: Vector2 = Vector2.ZERO
+var look_direction: Vector2 = Vector2.ZERO
+var pending_look_direction: Vector2 = Vector2.ZERO
 
 
+#----------------
+# Lifecycle
+#----------------
 func ready() -> void:
 	change_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 
 func process(_delta: float) -> void:
-	_look_direction = _new_look_direction
-	_new_look_direction = Vector2.ZERO
-	_process_move()
-	_process_input()
+	look_direction = pending_look_direction
+	pending_look_direction = Vector2.ZERO
+	
+	_process_movement_input()
+	_process_jump_input()
+	_process_sprint_input()
+	_process_crouch_input()
+	_process_interaction_input()
+	_process_block_input()
+	_process_item_switch_input()
 
 
-func _process_move() -> void:
-	var new_direction: Vector2 = Input.get_vector(&"Move_Left",&"Move_Right", &"Move_Forward", &"Move_Backward")
-	if new_direction != direction:
-		direction = new_direction
-		moved.emit(direction)
+#----------------
+# Movement Input
+#----------------
+func _process_movement_input() -> void:
+	var new_movement_direction: Vector2 = Input.get_vector(
+		&"Move_Left",
+		&"Move_Right",
+		&"Move_Forward",
+		&"Move_Backward"
+	)
+	
+	if new_movement_direction != movement_direction:
+		movement_direction = new_movement_direction
+		moved.emit(movement_direction)
 
 
-func _process_input() -> void:
+#----------------
+# Jump Input
+#----------------
+func _process_jump_input() -> void:
 	if Input.is_action_just_pressed(&"Jump"):
 		jump_pressed.emit()
+		
 	if Input.is_action_just_released(&"Jump"):
 		jump_released.emit()
-	
+
+
+#----------------
+# Sprint Input
+#----------------
+func _process_sprint_input() -> void:
 	if Input.is_action_just_pressed(&"Sprint"):
 		sprinting_pressed.emit()
+		
 	if Input.is_action_just_released(&"Sprint"):
 		sprinting_released.emit()
-	
-	if Input.is_action_just_pressed(&"Interact"):
-		interacted_pressed.emit()
-	
-	if Input.is_action_just_pressed(&"Inventory"):
-		inventory_pressed.emit()
-	
-	if Input.is_action_just_pressed(&"Fly"):
-		fly_pressed.emit()
-	
+
+
+#----------------
+# Crouch Input
+#----------------
+func _process_crouch_input() -> void:
 	if Input.is_action_just_pressed(&"Crouch"):
 		crouch_pressed.emit()
+		
 	if Input.is_action_just_released(&"Crouch"):
 		crouch_released.emit()
-	
+
+
+#----------------
+# Interaction Input
+#----------------
+func _process_interaction_input() -> void:
+	if Input.is_action_just_pressed(&"Interact"):
+		interacted_pressed.emit()
+		
+	if Input.is_action_just_pressed(&"Inventory"):
+		inventory_pressed.emit()
+		
+	if Input.is_action_just_pressed(&"Fly"):
+		fly_pressed.emit()
+
+
+#----------------
+# Block Input
+#----------------
+func _process_block_input() -> void:
 	if Input.is_action_just_pressed(&"Add_Block"):
 		if is_place_mode_active:
 			add_block_pressed.emit()
 		else:
 			remove_block_pressed.emit()
-	
+			
 	if Input.is_action_just_pressed(&"Change_Mode"):
-		is_place_mode_active = !is_place_mode_active
-	
+		is_place_mode_active = not is_place_mode_active
+
+
+#----------------
+# Item Switching Input
+#----------------
+func _process_item_switch_input() -> void:
 	if Input.is_action_just_pressed("Switch_Item_Up"):
 		item_switched_up.emit()
+		
 	if Input.is_action_just_pressed("Switch_Item_Down"):
 		item_switched_down.emit()
 
 
-
+#----------------
+# Raw Input Events
+#----------------
 func input(event: InputEvent) -> void:
 	if event.is_action_pressed("Add_Block"):
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	#TODO: DELETE after pause menu is added
+			
+	# TODO: DELETE after pause menu is added
 	if event.is_action_pressed(&"ui_cancel") and not OS.has_feature("web"):
 		_owner.get_tree().quit()
+		
 	if event is InputEventMouseMotion:
-		var look_direction = (event.screen_relative * PIXEL_SCALE) * mouse_sensitivity
-		look_direction_changed.emit(look_direction)
-	
+		var mouse_motion_event: InputEventMouseMotion = event
+		var computed_look_direction: Vector2 = (mouse_motion_event.screen_relative * PIXEL_SCALE) * mouse_sensitivity
+		look_direction_changed.emit(computed_look_direction)
+		
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP && event.pressed == true:
+		var mouse_button_event: InputEventMouseButton = event
+		
+		if mouse_button_event.button_index == MOUSE_BUTTON_WHEEL_UP and mouse_button_event.pressed:
 			item_switched_up.emit()
-		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN && event.pressed == true:
+			
+		if mouse_button_event.button_index == MOUSE_BUTTON_WHEEL_DOWN and mouse_button_event.pressed:
 			item_switched_down.emit()
 
 
-func change_mouse_mode(mouse_mode) -> void:
-	Input.mouse_mode = mouse_mode
+#----------------
+# Mouse Mode
+#----------------
+func change_mouse_mode(mouse_mode: int) -> void:
+	Input.mouse_mode = mouse_mode as Input.MouseMode

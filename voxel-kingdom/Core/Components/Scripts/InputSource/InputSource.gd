@@ -1,7 +1,11 @@
+#-###########################################
+# Input Source Base
+#-###########################################
+
 @abstract class_name InputSource extends Component
 
-signal moved(direction:Vector2)
-signal look_direction_changed(direction:Vector2)
+signal moved(direction: Vector2)
+signal look_direction_changed(direction: Vector2)
 signal jump_pressed
 signal jump_released
 signal crouch_pressed

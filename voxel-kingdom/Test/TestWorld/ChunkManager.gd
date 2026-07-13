@@ -1,3 +1,7 @@
+#-###########################################
+# ChunkManager
+#-###########################################
+
 class_name ChunkManager
 extends Node
 
@@ -6,12 +10,10 @@ signal first_chunk_ready
 var instance: ChunkManager
 
 #-###########################################
-#        World / generation settings
+# World / Generation Settings
 #-###########################################
 
 @export var world_dimensions: Vector3i = Vector3i(12800, 736, 12800)
-@export var terrain_colors: Dictionary[TerrianData.TerrianType, Color]
-
 @export var chunk_size: int = 16
 
 @export var noise_frequency: float = 0.01
@@ -36,25 +38,27 @@ var instance: ChunkManager
 @export var unload_buffer_in_chunks_y: int = 2
 
 @export_group("Surface Visibility While Flying")
-## How many chunks below the estimated surface chunk stay loaded (for a bit
-## of ground depth so you're not looking at a single floating slab).
 @export var surface_visible_chunks_below: int = 2
 
-## Lightweight, never added to the tree - exists only so we can call
-## get_final_height() to estimate terrain height per column without
-## generating an actual chunk.
 var _height_probe: Chunk = null
 
 #-###########################################
-#      Terrain Generation Settings
+# Terrain Generation Settings
 #-###########################################
 
 @export_group("Terrain Shape")
 @export var terrain_base_height: float = 140.0
 @export var terrain_amplitude: float = 60.0
 
+@export_group("Water")
+@export var water_level: float = 92.0
+@export var water_tick_interval: float = 0.2
+@export var water_max_updates_per_tick: int = 96
+
+var water_flow_manager: WaterFlowManager = null
+
 #-###########################################
-#        Cave Generation Settings
+# Cave Generation Settings
 #-###########################################
 
 @export_group("Cave Generation")
@@ -72,7 +76,7 @@ var cave_min_y: int = 0
 var cave_max_y: int = 0
 
 #-###########################################
-#         Noise / generation helpers
+# Noise / Generation Helpers
 #-###########################################
 
 var terrain_noise: FastNoiseLite = FastNoiseLite.new()
@@ -84,7 +88,7 @@ var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
 
 #-###########################################
-#          Chunk storage / threading
+# Chunk Storage / Threading
 #-###########################################
 
 var chunks_by_key: Dictionary[Vector3i, Chunk] = {}
@@ -98,7 +102,7 @@ var start_time_usec: float = 0.0
 var is_first_chunk_added: bool = false
 
 #-###########################################
-#         Streaming / movement state
+# Streaming / Movement State
 #-###########################################
 
 var stream_target: Node3D = null
@@ -107,7 +111,6 @@ var loading_chunks_flags: Dictionary[Vector3i, bool] = {}
 var loading_chunks_mutex: Mutex = Mutex.new()
 
 var load_queue: Array[Vector3i] = []
-
 var active_task_ids: Array[int] = []
 
 var last_center_chunk_coord: Vector3i = Vector3i(1 << 30, 0, 1 << 30)
@@ -122,7 +125,7 @@ var modified_chunks: Dictionary[Vector3i, PackedInt32Array] = {}
 var vertical_streaming_locked_to_spawn: bool = true
 
 #-###########################################
-#                Lifecycle
+# Lifecycle
 #-###########################################
 
 func _ready() -> void:
@@ -133,22 +136,18 @@ func _ready() -> void:
 		
 	start_time_usec = Time.get_ticks_usec()
 	
-	# Terrain noise
 	terrain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	terrain_noise.frequency = noise_frequency
 	terrain_noise.seed = noise_seed
 	
-	# Cave noise
 	cave_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_noise.frequency = cave_frequency
 	cave_noise.seed = noise_seed + 1
 	
-	# Cave entrance region noise
 	cave_entrance_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_entrance_noise.frequency = cave_entrance_frequency
 	cave_entrance_noise.seed = noise_seed + 2
 	
-	# Mountain biome noise (large-scale regions)
 	mountain_biome_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	mountain_biome_noise.frequency = 0.0015
 	mountain_biome_noise.seed = noise_seed + 50
@@ -163,10 +162,16 @@ func _ready() -> void:
 	
 	_height_probe = Chunk.new()
 	
+	water_flow_manager = WaterFlowManager.new()
+	water_flow_manager.chunk_manager = self
+	water_flow_manager.tick_interval = water_tick_interval
+	water_flow_manager.max_updates_per_tick = water_max_updates_per_tick
+	add_child(water_flow_manager)
+	
 	_update_streaming()
 
 #-###########################################
-#     Surface height estimation
+# Surface Height Estimation (Fly Visibility)
 #-###########################################
 
 func _estimate_surface_grid_y(world_x: float, world_z: float) -> int:
@@ -192,8 +197,9 @@ func _process(_delta: float) -> void:
 	_update_streaming()
 	_dispatch_load_queue()
 
+
 #-###########################################
-#         Pending chunk addition
+# Pending Chunk Addition
 #-###########################################
 
 func _flush_pending_chunks() -> void:
@@ -209,13 +215,56 @@ func _flush_pending_chunks() -> void:
 	
 	for chunk: Chunk in chunks_to_add:
 		add_child(chunk)
+		_wake_water_across_new_chunk_boundary(chunk.chunk_world_origin)
 		
 		if not is_first_chunk_added:
 			is_first_chunk_added = true
 			first_chunk_ready.emit()
 
+
 #-###########################################
-#           Coordinate helpers
+# Wake Water at New Chunk Boundaries
+#-###########################################
+
+func _wake_water_across_new_chunk_boundary(new_chunk_world_key: Vector3i) -> void:
+	if water_flow_manager == null:
+		return
+		
+	var boundary_checks: Array[Dictionary] = [
+		{"offset": Vector3i(chunk_size, 0, 0), "axis": 0, "layer": 0},
+		{"offset": Vector3i(-chunk_size, 0, 0), "axis": 0, "layer": chunk_size - 1},
+		{"offset": Vector3i(0, chunk_size, 0), "axis": 1, "layer": 0},
+		{"offset": Vector3i(0, -chunk_size, 0), "axis": 1, "layer": chunk_size - 1},
+		{"offset": Vector3i(0, 0, chunk_size), "axis": 2, "layer": 0},
+		{"offset": Vector3i(0, 0, -chunk_size), "axis": 2, "layer": chunk_size - 1},
+	]
+	
+	for check: Dictionary in boundary_checks:
+		var neighbor_chunk_key: Vector3i = new_chunk_world_key + check["offset"]
+		var neighbor_chunk: Chunk = get_loaded_chunk(neighbor_chunk_key)
+		if neighbor_chunk == null:
+			continue
+		_wake_water_on_boundary_layer(neighbor_chunk, neighbor_chunk_key, check["axis"], check["layer"])
+
+
+func _wake_water_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Vector3i, axis: int, layer: int) -> void:
+	for a: int in range(chunk_size):
+		for b: int in range(chunk_size):
+			var local_position: Vector3i
+			if axis == 0:
+				local_position = Vector3i(layer, a, b)
+			elif axis == 1:
+				local_position = Vector3i(a, layer, b)
+			else:
+				local_position = Vector3i(a, b, layer)
+				
+			var voxel_type: TerrianData.TerrianType = neighbor_chunk.chunk_data.get_voxel(local_position)
+			if TerrianData.is_water(voxel_type):
+				water_flow_manager.enqueue(neighbor_chunk_key + local_position)
+
+
+#-###########################################
+# Coordinate Helpers
 #-###########################################
 
 func _world_to_chunk_grid_coord(world_position: Vector3) -> Vector3i:
@@ -233,8 +282,9 @@ func _chunk_grid_to_world_key(grid_coord: Vector3i) -> Vector3i:
 		grid_coord.z * chunk_size
 	)
 
+
 #-###########################################
-#        Movement direction tracking
+# Movement Direction Tracking
 #-###########################################
 
 func _update_movement_direction() -> void:
@@ -252,6 +302,7 @@ func _update_movement_direction() -> void:
 		current_position.x - last_stream_world_position.x,
 		current_position.z - last_stream_world_position.z
 	)
+	
 	last_stream_world_position = current_position
 	
 	if delta_xz.length() < 0.01:
@@ -265,7 +316,7 @@ func _update_movement_direction() -> void:
 	movement_direction_xz = new_direction
 
 #-###########################################
-#            Streaming update
+# Streaming Update
 #-###########################################
 
 func _update_streaming() -> void:
@@ -280,8 +331,9 @@ func _update_streaming() -> void:
 	_queue_needed_chunks(center_chunk_grid)
 	_unload_distant_chunks(center_chunk_grid)
 
+
 #-###########################################
-#             Forward cone helper
+# Forward Cone Helper
 #-###########################################
 
 func _is_chunk_ahead(offset_grid_2d: Vector2i) -> bool:
@@ -292,24 +344,23 @@ func _is_chunk_ahead(offset_grid_2d: Vector2i) -> bool:
 	var alignment: float = offset_direction.dot(movement_direction_xz)
 	return alignment >= forward_dot_threshold
 
+
 #-###########################################
-#           Queueing chunks to load
+# Queueing Chunks to Load
 #-###########################################
 
 func _get_needed_grid_y_values(center_chunk_grid_y: int, grid_x: int, grid_z: int) -> Array[int]:
-	# Near-player vertical range (unchanged original behavior), plus just
-	# the real surface chunk for this specific column (+ a small buffer
-	# below it) so the ground is visible from high altitude without
-	# loading a wide fixed band across every column.
 	var grid_y_values: Array[int] = []
 	
 	var player_min_grid_y: int = max(0, center_chunk_grid_y - 1)
 	var player_max_grid_y: int = min(number_of_chunks.y - 1, center_chunk_grid_y + 1)
+	
 	for grid_y: int in range(player_min_grid_y, player_max_grid_y + 1):
 		grid_y_values.append(grid_y)
 		
 	var world_x: float = grid_x * chunk_size + chunk_size * 0.5
 	var world_z: float = grid_z * chunk_size + chunk_size * 0.5
+	
 	var surface_grid_y: int = _estimate_surface_grid_y(world_x, world_z)
 	var surface_min_grid_y: int = max(0, surface_grid_y - surface_visible_chunks_below)
 	
@@ -325,6 +376,7 @@ func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 	
 	for grid_x: int in range(center_chunk_grid.x - view_distance_in_chunks, center_chunk_grid.x + view_distance_in_chunks + 1):
 		for grid_z: int in range(center_chunk_grid.z - view_distance_in_chunks, center_chunk_grid.z + view_distance_in_chunks + 1):
+			
 			var offset_grid_2d: Vector2i = Vector2i(grid_x - center_chunk_grid.x, grid_z - center_chunk_grid.z)
 			var distance_in_chunks: int = maxi(absi(offset_grid_2d.x), absi(offset_grid_2d.y))
 			
@@ -392,11 +444,12 @@ func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 			
 		var first_squared_distance: int = (first_key.x - center_world_x) * (first_key.x - center_world_x) + (first_key.z - center_world_z) * (first_key.z - center_world_z)
 		var second_squared_distance: int = (second_key.x - center_world_x) * (second_key.x - center_world_x) + (second_key.z - center_world_z) * (second_key.z - center_world_z)
+		
 		return first_squared_distance < second_squared_distance
 	)
 
 #-###########################################
-#      Dispatching chunk generation
+# Dispatching Chunk Generation
 #-###########################################
 
 func _dispatch_load_queue() -> void:
@@ -417,8 +470,9 @@ func _dispatch_load_queue() -> void:
 		var task_id: int = WorkerThreadPool.add_task(_generate_chunk_at.bind(grid_coord), false, "chunk_generation")
 		active_task_ids.append(task_id)
 
+
 #-###########################################
-#      Unloading distant chunks
+# Unloading Distant Chunks
 #-###########################################
 
 func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
@@ -434,6 +488,7 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 		var grid_x: int = key.x / chunk_size
 		var grid_y: int = key.y / chunk_size
 		var grid_z: int = key.z / chunk_size
+		
 		var offset_grid_2d: Vector2i = Vector2i(grid_x - center_chunk_grid.x, grid_z - center_chunk_grid.z)
 		var distance_in_chunks: int = maxi(absi(offset_grid_2d.x), absi(offset_grid_2d.y))
 		var vertical_distance: int = absi(grid_y - center_chunk_grid.y)
@@ -464,12 +519,14 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 			if chunk != null and not still_pending:
 				chunk.queue_free()
 
+
 #-###########################################
-#       Chunk generation (threaded)
+# Chunk Generation (Threaded)
 #-###########################################
 
 func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 	var new_chunk: Chunk = chunk_scene.instantiate() as Chunk
+	new_chunk.chunk_manager = self
 	
 	new_chunk.position = Vector3(
 		chunk_grid_coord.x,
@@ -477,15 +534,13 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		chunk_grid_coord.z
 	) * float(chunk_size)
 	
+	new_chunk.chunk_world_origin = chunk_grid_coord * chunk_size
 	
-	#TODO: Break layers and biomes into resources/ own scripts and pass through an array that contains them all
-	#Terrian colors is an artifact of the original system 
-	new_chunk.generate_data(
+	new_chunk.generate_date(
 		chunk_size,
 		terrain_base_height,
 		terrain_amplitude,
 		terrain_noise,
-		terrain_colors,
 		cave_noise,
 		cave_threshold,
 		cave_below_surface_min,
@@ -493,7 +548,8 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		cave_entrance_noise,
 		cave_entrance_region_threshold,
 		cave_entrance_surface_reach,
-		mountain_biome_noise
+		mountain_biome_noise,
+		water_level
 	)
 	
 	var chunk_world_key: Vector3i = Vector3i(new_chunk.position)
@@ -518,8 +574,9 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 	loading_chunks_flags.erase(chunk_world_key)
 	loading_chunks_mutex.unlock()
 
+
 #-###########################################
-#         Voxel editing helpers
+# Voxel Editing Helpers
 #-###########################################
 
 func _voxel_to_chunk_key(voxel_position: Vector3i) -> Vector3i:
@@ -543,6 +600,11 @@ func add_voxel_at_position(target_block: Vector3i, voxel_type: TerrianData.Terri
 	var local_voxel_position: Vector3i = target_block - chunk_world_key
 	chunk.set_voxel(local_voxel_position, voxel_type)
 	_store_modified_chunk(chunk_world_key, chunk)
+	
+	if water_flow_manager != null:
+		if TerrianData.is_water(voxel_type):
+			water_flow_manager.enqueue(target_block)
+		water_flow_manager.wake_neighbors(target_block)
 
 
 func remove_voxel_at_position(target_block: Vector3i) -> void:
@@ -558,9 +620,49 @@ func remove_voxel_at_position(target_block: Vector3i) -> void:
 	var local_voxel_position: Vector3i = target_block - chunk_world_key
 	chunk.remove_voxel_at_local(local_voxel_position)
 	_store_modified_chunk(chunk_world_key, chunk)
+	
+	if water_flow_manager != null:
+		water_flow_manager.wake_neighbors(target_block)
+
 
 #-###########################################
-#           World/local conversion
+# Water Simulation Lookups
+#-###########################################
+
+func get_voxel_type_at(world_position: Vector3i) -> TerrianData.TerrianType:
+	var chunk_world_key: Vector3i = _voxel_to_chunk_key(world_position)
+	
+	chunks_mutex.lock()
+	var chunk: Chunk = chunks_by_key.get(chunk_world_key)
+	chunks_mutex.unlock()
+	
+	if chunk == null:
+		return TerrianData.TerrianType.AIR
+		
+	var local_position: Vector3i = world_position - chunk_world_key
+	return chunk.chunk_data.get_voxel(local_position)
+
+
+func voxel_to_chunk_key(world_position: Vector3i) -> Vector3i:
+	return _voxel_to_chunk_key(world_position)
+
+
+func is_chunk_loaded_at_key(chunk_world_key: Vector3i) -> bool:
+	chunks_mutex.lock()
+	var loaded: bool = chunks_by_key.has(chunk_world_key)
+	chunks_mutex.unlock()
+	return loaded
+
+
+func get_loaded_chunk(chunk_world_key: Vector3i) -> Chunk:
+	chunks_mutex.lock()
+	var chunk: Chunk = chunks_by_key.get(chunk_world_key)
+	chunks_mutex.unlock()
+	return chunk
+
+
+#-###########################################
+# World / Local Conversion
 #-###########################################
 
 func _world_to_chunk_key(world_position: Vector3) -> Vector3i:
@@ -578,8 +680,9 @@ func _world_to_local_voxel_centered(world_position: Vector3, chunk_world_key: Ve
 		roundi(world_position.z) - chunk_world_key.z
 	)
 
+
 #-###########################################
-#       Spawn height / column checks
+# Spawn Height / Column Checks
 #-###########################################
 
 func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
@@ -618,8 +721,7 @@ func get_highest_voxel_at_xz(world_x: float, world_z: float) -> float:
 
 
 func get_spawn_height(world_x: float, world_z: float) -> int:
-	var voxel_y: int = int(get_highest_voxel_at_xz(world_x, world_z))
-	return voxel_y
+	return int(get_highest_voxel_at_xz(world_x, world_z))
 
 
 func is_chunk_loaded_at(world_position: Vector3) -> bool:
@@ -649,23 +751,26 @@ func is_column_loaded_at(world_x: float, world_z: float) -> bool:
 	
 	return true
 
+
 #-###########################################
-#            Cleanup
+# Cleanup
 #-###########################################
 
 func _exit_tree() -> void:
 	for id: int in active_task_ids:
 		WorkerThreadPool.wait_for_task_completion(id)
 
+
 #-###########################################
-#               Modified Chunk
+# Modified Chunk Storage
 #-###########################################
 
 func _store_modified_chunk(chunk_world_key: Vector3i, chunk: Chunk) -> void:
 	modified_chunks[chunk_world_key] = chunk.chunk_data.get_voxels_copy()
 
+
 #-###########################################
-#           Other Helpers
+# Other Helpers
 #-###########################################
 
 func _count_non_air(voxels: PackedInt32Array) -> int:
@@ -679,8 +784,9 @@ func _count_non_air(voxels: PackedInt32Array) -> int:
 func notify_player_spawned() -> void:
 	vertical_streaming_locked_to_spawn = false
 
+
 #-###########################################
-#            Player signals
+# Player Signals
 #-###########################################
 
 func _on_player_add_block(target_block: Vector3i, _normal: Vector3i, terrain_type: TerrianData.TerrianType) -> void:

@@ -1,4 +1,9 @@
-class_name BlockFaceAtlas extends Resource
+#-###########################################
+# Block Face Atlas
+#-###########################################
+
+class_name BlockFaceAtlas
+extends Resource
 
 @export var top: Vector2i = Vector2i.ZERO
 @export var side: Vector2i = Vector2i.ZERO
