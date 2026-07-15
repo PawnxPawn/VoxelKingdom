@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bh2djwpacg08n"]
 
-[ext_resource type="Script" uid="uid://bha0ybw7k60v3" path="res://Test/TestWorld/world.gd" id="1_7cwmi"]
+[ext_resource type="Script" path="res://Test/TestWorld/World.gd" id="1_7cwmi"]
 [ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="2_qykia"]
 [ext_resource type="PackedScene" uid="uid://4rqt7q4iep3m" path="res://Test/TestWorld/ChunkManager.tscn" id="3_gs4kv"]
 [ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="4_4mhdq"]
@@ -46,9 +46,10 @@ environment = SubResource("Environment_b330u")
 transform = Transform3D(0.97437006, -0.2223626, -0.034026153, -0.14685825, -0.7433727, 0.65255624, -0.1703982, -0.6308343, -0.75697577, 0, 3.9366724, -9.205248)
 shadow_enabled = true
 
-[node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager") instance=ExtResource("2_qykia")]
+[node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager", "water_detector") instance=ExtResource("2_qykia")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.522, 150, 9.799)
 chunk_manager = NodePath("../ChunkManager")
+water_detector = NodePath("../WaterDetector")
 
 [node name="WaterOverlay" parent="Player/CanvasLayer" parent_id_path=PackedInt32Array(900159298, 768392587) index="0" unique_id=241175340]
 anchors_preset = 15
@@ -78,15 +79,15 @@ volume_db = -10.0
 autoplay = true
 bus = &"Music"
 
-[node name="WaterDetector" type="Node" parent="." unique_id=2084025762 node_paths=PackedStringArray("chunk_manager", "eye_point")]
+[node name="WaterDetector" type="Node" parent="." unique_id=2084025762 node_paths=PackedStringArray("chunk_manager", "feet_point", "head_point")]
 script = ExtResource("8_6fedw")
 chunk_manager = NodePath("../ChunkManager")
-eye_point = NodePath("../Player/Marker3D")
+feet_point = NodePath("../Player/Feet")
+head_point = NodePath("../Player/Eyes")
 metadata/_custom_type_script = "uid://da06rduc8cbas"
 
 [connection signal="add_block" from="Player" to="ChunkManager" method="_on_player_add_block"]
 [connection signal="remove_block" from="Player" to="ChunkManager" method="_on_player_remove_block"]
-[connection signal="submerged_changed" from="WaterDetector" to="Player/CanvasLayer/WaterOverlay" method="set_submerged"]
 
 [editable path="Player"]
 [editable path="Player/20260418_193043_rikafinished"]

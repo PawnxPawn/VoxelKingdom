@@ -72,6 +72,12 @@ var water_flow_manager: WaterFlowManager = null
 @export var cave_entrance_region_threshold: float = 0.72
 @export var cave_entrance_surface_reach: int = 6
 
+@export_subgroup("Trees")
+@export var tree_frequency: float = 0.02
+@export var tree_threshold: float = 0.65
+@export var tree_min_spacing: int = 8
+
+
 var cave_min_y: int = 0
 var cave_max_y: int = 0
 
@@ -83,6 +89,7 @@ var terrain_noise: FastNoiseLite = FastNoiseLite.new()
 var cave_noise: FastNoiseLite = FastNoiseLite.new()
 var cave_entrance_noise: FastNoiseLite = FastNoiseLite.new()
 var mountain_biome_noise: FastNoiseLite = FastNoiseLite.new()
+var tree_noise: FastNoiseLite = FastNoiseLite.new()
 
 var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
@@ -136,21 +143,31 @@ func _ready() -> void:
 		
 	start_time_usec = Time.get_ticks_usec()
 	
+	# Hills
 	terrain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	terrain_noise.frequency = noise_frequency
 	terrain_noise.seed = noise_seed
 	
+	# Caves
 	cave_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_noise.frequency = cave_frequency
 	cave_noise.seed = noise_seed + 1
 	
+	# Cave Entrances
 	cave_entrance_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_entrance_noise.frequency = cave_entrance_frequency
 	cave_entrance_noise.seed = noise_seed + 2
 	
+	# Mountains
 	mountain_biome_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	mountain_biome_noise.frequency = 0.0015
 	mountain_biome_noise.seed = noise_seed + 50
+	
+	# Trees
+	tree_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	tree_noise.frequency = 0.02
+	tree_noise.seed = noise_seed + 100
+
 	
 	seed_label.text = "Seed: %s" % noise_seed
 	
@@ -549,7 +566,8 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		cave_entrance_region_threshold,
 		cave_entrance_surface_reach,
 		mountain_biome_noise,
-		water_level
+		water_level,
+		tree_noise
 	)
 	
 	var chunk_world_key: Vector3i = Vector3i(new_chunk.position)

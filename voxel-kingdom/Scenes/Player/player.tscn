@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://mokv377dhvq5" path="res://Core/States/Player/PlayerFlyingState.gd" id="12_oikmp"]
 [ext_resource type="Script" uid="uid://bbypqo8ffuhss" path="res://Scenes/Player/BlockDetectionRayCast.gd" id="13_06tpx"]
 [ext_resource type="Script" uid="uid://c0ngd7j6j2vl3" path="res://Scenes/Player/BlockHighlight.gd" id="14_7g0yx"]
+[ext_resource type="Script" uid="uid://c17qkcd8jdwy8" path="res://Core/States/Player/PlayerSwimState.gd" id="14_hnuln"]
 [ext_resource type="PackedScene" uid="uid://c6yyee7na55t2" path="res://Scenes/Blocks/VisualBlocks/DefaultBlock.tscn" id="15_dey5f"]
 [ext_resource type="Script" uid="uid://dqun06oabbeuc" path="res://Test/TestWorld/WaterOverlay.gd" id="17_hnuln"]
 
@@ -42,13 +43,13 @@ shape = SubResource("CapsuleShape3D_w45gy")
 [node name="ComponentHandler" type="Node" parent="." unique_id=643640741]
 unique_name_in_owner = true
 script = ExtResource("1_a3d8c")
-component_data = Array[Resource]([ExtResource("3_oikmp"), ExtResource("4_06tpx"), ExtResource("5_7g0yx"), ExtResource("6_dey5f"), ExtResource("7_r5xpd")])
+component_data = Array[Resource]([ExtResource("3_oikmp"), ExtResource("4_06tpx"), ExtResource("5_7g0yx"), ExtResource("7_r5xpd"), ExtResource("6_dey5f")])
 metadata/_custom_type_script = "uid://uj3fpyqghe2v"
 
 [node name="StateMachine" type="Node" parent="." unique_id=1902570200]
 unique_name_in_owner = true
 script = ExtResource("2_xpcdj")
-state_scripts = Array[GDScript]([ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2"), ExtResource("12_oikmp")])
+state_scripts = Array[GDScript]([ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2"), ExtResource("12_oikmp"), ExtResource("14_hnuln")])
 metadata/_custom_type_script = "uid://cgduh0h7grupy"
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1263752586]
@@ -124,12 +125,16 @@ light_indirect_energy = 0.25
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=768392587]
 
 [node name="WaterOverlay" type="ColorRect" parent="CanvasLayer" unique_id=241175340]
+unique_name_in_owner = true
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("17_hnuln")
 metadata/_custom_type_script = "uid://dqun06oabbeuc"
 
-[node name="Marker3D" type="Marker3D" parent="." unique_id=1934927792]
+[node name="Eyes" type="Marker3D" parent="." unique_id=1934927792]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5362549, 0)
+
+[node name="Feet" type="Marker3D" parent="." unique_id=34513168]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5221753, 0)
 
 [editable path="20260418_193043_rikafinished"]

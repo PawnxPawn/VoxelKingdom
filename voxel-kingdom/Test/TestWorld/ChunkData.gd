@@ -86,7 +86,7 @@ func get_voxel(pos: Vector3i) -> TerrianData.TerrianType:
 
 
 #----------------
-# Position → Index
+# Position -> Index
 #----------------
 func _position_to_index(pos: Vector3i) -> int:
 	return pos.x + pos.z * chunk_size + pos.y * chunk_size * chunk_size

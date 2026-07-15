@@ -20,9 +20,9 @@ func get_ray_hit() -> RayHit:
 	return RayHit.new(point, normal)
 
 
-#----------------
+#-###############
 # RayHit Class
-#----------------
+#-###############
 class RayHit:
 	var hit_position: Vector3
 	var hit_normal: Vector3

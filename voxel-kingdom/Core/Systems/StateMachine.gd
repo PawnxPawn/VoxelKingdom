@@ -15,9 +15,7 @@ var _last_state: State = null
 var _is_transitioning: bool = false
 
 
-#----------------
-# Properties
-#----------------
+
 var current_state: State:
 	get: return _current_state
 
@@ -69,6 +67,14 @@ func change_state(state_name: StringName) -> void:
 	_current_state.enter()
 	
 	_is_transitioning = false
+
+
+#----------------
+# Helpers
+#----------------
+
+func get_current_state() -> StringName:
+	return current_state.state_name
 
 
 #----------------

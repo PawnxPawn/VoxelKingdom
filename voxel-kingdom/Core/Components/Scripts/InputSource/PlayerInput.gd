@@ -8,9 +8,13 @@ const PIXEL_SCALE: float = 0.002
 
 # Resource Exports
 var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
+#-------------- End Resources ---------------------
 
 var movement_direction: Vector2 = Vector2.ZERO
+
 var is_place_mode_active: bool = false
+var is_jump_held: bool = false
+
 
 var look_direction: Vector2 = Vector2.ZERO
 var pending_look_direction: Vector2 = Vector2.ZERO
@@ -68,9 +72,11 @@ func _process_jump_input() -> void:
 #----------------
 func _process_sprint_input() -> void:
 	if Input.is_action_just_pressed(&"Sprint"):
+		is_jump_held = true
 		sprinting_pressed.emit()
 		
 	if Input.is_action_just_released(&"Sprint"):
+		is_jump_held = false
 		sprinting_released.emit()
 
 

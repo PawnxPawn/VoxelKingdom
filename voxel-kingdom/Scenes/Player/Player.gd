@@ -11,6 +11,7 @@ signal add_block(position: Vector3i, normal: Vector3i, terrian: TerrianData.Terr
 signal remove_block(position)
 
 @export var chunk_manager: ChunkManager
+@export var water_detector: WaterDetector
 @export var player_height: float = 1.8
 @export var player_radius: float = 0.4
 
@@ -19,6 +20,7 @@ signal remove_block(position)
 @onready var _sm: StateMachine = %StateMachine
 @onready var block_highlight: MeshInstance3D = $BlockHighlight
 @onready var ray_cast: RayCast3D = $RayCast3D
+@onready var water_overlay: WaterOverlay = %WaterOverlay
 
 var is_fly_active: bool = false
 
@@ -32,6 +34,10 @@ var current_slot: int = 0
 var terrian_type: TerrianData.TerrianType = TerrianData.TerrianType.DIRT
 
 var _last_valid_position: Vector3
+
+# Water state (from WaterDetector)
+var _feet_submerged: bool = false
+var _head_submerged: bool = false
 
 
 #----------------
@@ -51,11 +57,17 @@ func _ready() -> void:
 	global_position = world_spawn
 	_last_valid_position = global_position
 
+	# Water detection
+	if water_detector:
+		water_detector.feet_submerged_changed.connect(_on_feet_submerged)
+		water_detector.head_submerged_changed.connect(_on_head_submerged)
+
 
 #----------------
 # Connect Components
 #----------------
 func _connect_components() -> void:
+	# Input Component
 	input = _handler.get_component(InputSource)
 	if input:
 		_handler.set_active(InputSource, true)
@@ -64,14 +76,18 @@ func _connect_components() -> void:
 		input.item_switched_up.connect(_change_block.bind(1))
 		input.item_switched_down.connect(_change_block.bind(-1))
 	
+	# Look Component
 	look = _handler.get_component(LookComponent)
 	if look and input:
 		input.look_direction_changed.connect(look._on_look)
 	
+	# Gravity Component
 	gravity = _handler.get_component(GravityComponent)
 	if gravity:
 		_handler.set_active(GravityComponent, true)
+		gravity.chunk_manager = chunk_manager
 	
+	#Camera Component
 	_setup_camera()
 
 
@@ -93,7 +109,7 @@ func _setup_camera() -> void:
 	ray_cast.reparent(camera.camera)
 	ray_cast.position = Vector3.ZERO
 	
-	var head_location := Vector3(0.0, 1.8, 0.0)
+	var head_location: Vector3 = Vector3(0.0, player_height, 0.0)
 	camera.set_position(head_location)
 	
 	camera.set_camera_cull_layers({
@@ -156,7 +172,7 @@ func get_mode() -> HighlightMode:
 # Change Block Type
 #----------------
 func _change_block(value: int) -> void:
-	current_slot = wrapi(current_slot + value, 0, TerrianData.TerrianType.size() - 2)
+	current_slot = wrapi(current_slot + value, 0, TerrianData.UseableBlock.size())
 	terrian_type = TerrianData.TerrianType.values()[current_slot]
 	default_cube_mesh.change_block_type(terrian_type)
 
@@ -177,6 +193,10 @@ func _would_overlap_player(target_block: Vector3i) -> bool:
 	
 	return blocks.has(target_block)
 
+
+#-###############
+# Calls
+#-###############
 
 #----------------
 # Add Block
@@ -215,3 +235,46 @@ func _on_remove_block() -> void:
 	)
 	
 	remove_block.emit(hit_block)
+
+
+#----------------
+# Body Submerged
+#----------------
+func _on_feet_submerged(is_submerged: bool) -> void:
+	_feet_submerged = is_submerged
+	
+	if gravity:
+		gravity.set_at_surface(is_at_water_surface())
+	
+	var current: StringName = _sm.get_current_state()
+	
+	if current == &"FlyState": return
+	
+	if is_submerged:
+		if current != &"SwimState":
+			_sm.change_state(&"SwimState")
+	else:
+		if current == &"SwimState":
+			_sm.change_state(&"MoveState")
+
+
+func _on_head_submerged(is_submerged: bool) -> void:
+	_head_submerged = is_submerged
+	
+	if gravity:
+		gravity.set_at_surface(is_at_water_surface())
+	
+	if water_overlay:
+		water_overlay.set_submerged(is_submerged)
+
+
+#----------------
+# Water helpers
+#----------------
+func is_underwater() -> bool:
+	return _feet_submerged and _head_submerged
+
+
+func is_at_water_surface() -> bool:
+	# Feet in water, head out of water ⇒ surface
+	return _feet_submerged and not _head_submerged

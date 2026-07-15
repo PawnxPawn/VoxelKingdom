@@ -101,7 +101,7 @@ func _init() -> void:
 	steep_noise.seed = 55512
 
 #----------------
-# Ready
+# Lifecycle
 #----------------
 func _ready() -> void:
 	mesh_instance.mesh = ArrayMesh.new()
@@ -229,7 +229,8 @@ func generate_date(
 	cave_entrance_region_threshold: float = 0.72,
 	cave_entrance_surface_reach: int = 6,
 	mountain_biome_noise: Noise = null,
-	water_level: float = -1.0
+	water_level: float = -1.0,
+	tree_noise: FastNoiseLite = null
 ) -> void:
 	chunk_size = size
 	chunk_data.set_size(size)
@@ -364,6 +365,84 @@ func generate_date(
 						continue
 					chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), TerrianData.TerrianType.WATER)
 					cube_count += 1
+	_generate_trees(height_cache, biome_cache, tree_noise)
+
+
+#----------------
+# Trees
+#---------------- 
+
+func _generate_trees(
+	height_cache: Array[Array],
+	_biome_cache: Array[Array],
+	tree_noise: FastNoiseLite
+) -> void:
+	var placed_tree_positions: Array[Vector3i] = []
+	for voxel_x: int in range(chunk_size):
+		for voxel_z: int in range(chunk_size):
+			
+			var world_x: float = position.x + voxel_x
+			var world_z: float = position.z + voxel_z
+			
+			var terrain_height: float = height_cache[voxel_x][voxel_z]
+			var local_y: int = int(terrain_height - position.y)
+			
+			if local_y < 0 or local_y >= chunk_size:
+				continue
+			
+			
+			
+			var ground_type: TerrianData.TerrianType = chunk_data.get_voxel(Vector3i(voxel_x, local_y - 1, voxel_z))
+			#print(ground_type)
+			
+			if ground_type != TerrianData.TerrianType.GRASS:
+				continue
+				
+			if terrain_height < chunk_manager.water_level:
+				continue
+				
+			var noise_value: float = tree_noise.get_noise_2d(world_x, world_z)
+			var noise_normalized: float = (noise_value + 1.0) * 0.5
+			
+			if noise_normalized < chunk_manager.tree_threshold:
+				continue
+				
+			var spawn_position: Vector3i = Vector3i(voxel_x, local_y, voxel_z)
+			var too_close: bool = false
+			
+			for existing: Vector3i in placed_tree_positions:
+				if existing.distance_to(spawn_position) < chunk_manager.tree_min_spacing:
+					too_close = true
+					break
+					
+			if too_close:
+				continue
+				
+			_place_tree(spawn_position)
+			placed_tree_positions.append(spawn_position)
+
+
+func _place_tree(spawn_pos: Vector3i) -> void:
+	var trunk_height: int = randi_range(4, 7)
+	var trunk_radius: int = randi_range(1, 2)
+	for dy: int in range(trunk_height):
+		for dx: int in range(-trunk_radius, trunk_radius + 1):
+			for dz: int in range(-trunk_radius, trunk_radius + 1):
+				if abs(dx) + abs(dz) <= trunk_radius:
+					var pos: Vector3i = spawn_pos + Vector3i(dx, dy, dz)
+					if pos.y >= 0 and pos.y < chunk_size:
+						chunk_data.add_voxel(pos, TerrianData.TerrianType.WOOD)
+						
+	var leaf_radius: int = trunk_radius + randi_range(2, 3)
+	
+	for dy: int in range(-1, 3):
+		for dx: int in range(-leaf_radius, leaf_radius + 1):
+			for dz: int in range(-leaf_radius, leaf_radius + 1):
+				if dx * dx + dz * dz <= leaf_radius * leaf_radius:
+					var pos: Vector3i = spawn_pos + Vector3i(dx, trunk_height + dy, dz)
+					if pos.y >= 0 and pos.y < chunk_size:
+						chunk_data.add_voxel(pos, TerrianData.TerrianType.LEAVES)
+
 
 
 #-###########################################

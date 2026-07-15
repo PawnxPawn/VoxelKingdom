@@ -11,9 +11,6 @@ var _surface_tool: SurfaceTool
 var _material: StandardMaterial3D
 
 
-#----------------
-# Ready
-#----------------
 func _ready() -> void:
 	_material = StandardMaterial3D.new()
 	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

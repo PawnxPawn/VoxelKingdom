@@ -15,6 +15,10 @@ enum TerrianType {
 	WATER_FLOW_5, WATER_FLOW_6, WATER_FLOW_7
 }
 
+enum  UseableBlock {
+	DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, WATER,
+}
+
 const MAX_WATER_FLOW_DISTANCE: int = 7
 
 static var atlas_tiles: Dictionary[TerrianType, BlockFaceAtlas] = {}

@@ -10,9 +10,6 @@ var cubes: int = 0
 var data: Dictionary[Vector3, Color] = {}
 
 
-#----------------
-# Ready
-#----------------
 func _ready() -> void:
 	audio_stream_player.finished.connect(_start_next_track)
 
