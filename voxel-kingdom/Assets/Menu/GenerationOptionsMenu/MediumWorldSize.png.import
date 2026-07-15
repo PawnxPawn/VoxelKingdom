@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ccfiqd5ep67d2"
-path="res://.godot/imported/MediumWorldSize.png-4304d8edfae7a9c58cdd6b95df5dc9ec.ctex"
+path="res://.godot/imported/MediumWorldSize.png-c21e1ae2580d598adfd2ce7315b3c004.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Menu/MediumWorldSize.png"
-dest_files=["res://.godot/imported/MediumWorldSize.png-4304d8edfae7a9c58cdd6b95df5dc9ec.ctex"]
+source_file="res://Assets/Menu/GenerationOptionsMenu/MediumWorldSize.png"
+dest_files=["res://.godot/imported/MediumWorldSize.png-c21e1ae2580d598adfd2ce7315b3c004.ctex"]
 
 [params]
 

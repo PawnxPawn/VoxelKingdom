@@ -78,6 +78,12 @@ static func _static_init() -> void:
 	bedrock.side = Vector2i(0, 2)
 	bedrock.bottom = Vector2i(0, 2)
 	atlas_tiles[TerrianType.BEDROCK] = bedrock
+	
+	var air: BlockFaceAtlas = BlockFaceAtlas.new()
+	air.top = Vector2i(3, 0)
+	air.side = Vector2i(3, 0)
+	air.bottom = Vector2i(3, 0)
+	atlas_tiles[TerrianType.AIR] = air
 
 
 #----------------

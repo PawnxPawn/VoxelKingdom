@@ -18,12 +18,236 @@
 [ext_resource type="Script" uid="uid://c17qkcd8jdwy8" path="res://Core/States/Player/PlayerSwimState.gd" id="14_hnuln"]
 [ext_resource type="PackedScene" uid="uid://c6yyee7na55t2" path="res://Scenes/Blocks/VisualBlocks/DefaultBlock.tscn" id="15_dey5f"]
 [ext_resource type="Script" uid="uid://dqun06oabbeuc" path="res://Test/TestWorld/WaterOverlay.gd" id="17_hnuln"]
+[ext_resource type="Texture2D" uid="uid://chktsmn2ayrm1" path="res://Assets/hand/hand-Sheet.png" id="18_rcvs5"]
+[ext_resource type="Texture2D" uid="uid://c6lce08tmy68k" path="res://Assets/hand/hand inventory selection-Sheet.png" id="19_aqm4k"]
+[ext_resource type="Texture2D" uid="uid://p1fovxik4bqa" path="res://Assets/Inventory/inventory slots.png" id="20_h8ma5"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_w45gy"]
 radius = 0.4
 height = 1.8
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_dey5f"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rcvs5"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(0, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h8ma5"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(239, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eksi1"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(478, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jincj"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(717, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rqdc0"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(956, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qr1w5"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(956, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ythyg"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1195, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bmb2s"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1434, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ur3l4"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1673, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2ahak"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1912, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rukb4"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(2151, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4no11"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1912, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fcwna"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1673, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1agin"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1434, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2jnj1"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(1195, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_enij7"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(956, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mwii3"]
+atlas = ExtResource("19_aqm4k")
+region = Rect2(717, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2aanf"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(717, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m6ahd"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(478, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ogmfp"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(239, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ixrbb"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(0, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ei2r2"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(0, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j6uq4"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(239, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h5u0x"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(478, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_po18e"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(717, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v37cr"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(956, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8d028"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(1195, 0, 239, 194)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0liok"]
+atlas = ExtResource("18_rcvs5")
+region = Rect2(717, 0, 239, 194)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_w45gy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rcvs5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h8ma5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eksi1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jincj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rqdc0")
+}],
+"loop": 1,
+"name": &"DisplayBlockIdle",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qr1w5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ythyg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bmb2s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ur3l4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2ahak")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rukb4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4no11")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fcwna")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1agin")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2jnj1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_enij7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mwii3")
+}],
+"loop": 0,
+"name": &"ItemSwap",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2aanf")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m6ahd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ogmfp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ixrbb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ei2r2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j6uq4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h5u0x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_po18e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v37cr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8d028")
+}],
+"loop": 0,
+"name": &"RemoveBlock",
+"speed": 24.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0liok")
+}],
+"loop": 1,
+"name": &"RemoveBlockIdle",
+"speed": 12.0
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_w45gy"]
 
 [node name="Player" type="CharacterBody3D" unique_id=900159298 groups=["player"]]
 script = ExtResource("1_jhyir")
@@ -77,31 +301,40 @@ top_level = true
 mesh = SubResource("ArrayMesh_dey5f")
 script = ExtResource("14_7g0yx")
 
-[node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=1020413013]
-offset_left = 5.0
-offset_top = 823.0
-offset_right = 261.0
-offset_bottom = 1079.0
+[node name="Hand" type="AnimatedSprite2D" parent="." unique_id=1569869357]
+position = Vector2(235, 886)
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_w45gy")
+animation = &"RemoveBlock"
+autoplay = "RemoveBlockIdle"
+
+[node name="DisplayItem" type="SubViewportContainer" parent="." unique_id=1020413013]
+offset_left = 117.0
+offset_top = 763.0
+offset_right = 373.0
+offset_bottom = 1019.0
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="SubViewportContainer" unique_id=531835647]
+[node name="SubViewport" type="SubViewport" parent="DisplayItem" unique_id=531835647]
 transparent_bg = true
 handle_input_locally = false
 size = Vector2i(256, 256)
 render_target_update_mode = 4
 
-[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" unique_id=1176292309]
+[node name="Camera3D" type="Camera3D" parent="DisplayItem/SubViewport" unique_id=1176292309]
 transform = Transform3D(1, 0, 0, 0, 0.8979991, 0.43999735, 0, -0.43999735, 0.8979991, 0, 1.31, 2.458156)
 cull_mask = 524288
 
-[node name="SubViewportinfo" type="Node3D" parent="." unique_id=847236374]
+[node name="DisplayItemViewport" type="Node3D" parent="." unique_id=847236374]
 top_level = true
 
-[node name="DefaultCubeMesh" parent="SubViewportinfo" unique_id=637774305 instance=ExtResource("15_dey5f")]
+[node name="DisplayItem" parent="DisplayItemViewport" unique_id=637774305 instance=ExtResource("15_dey5f")]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 0.97384346, 0.22721997, 0, -0.22721997, 0.97384346, 0, 0, 0)
+visible = false
 layers = 524288
 
-[node name="OmniLight3D" type="AreaLight3D" parent="SubViewportinfo" unique_id=1048440753]
+[node name="OmniLight3D" type="AreaLight3D" parent="DisplayItemViewport" unique_id=1048440753]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12030864, 2.09867)
 layers = 524288
 light_energy = 2.74
@@ -109,7 +342,7 @@ light_indirect_energy = 1.885
 light_volumetric_fog_energy = 1.59
 light_cull_mask = 4294443008
 
-[node name="OmniLight3D2" type="AreaLight3D" parent="SubViewportinfo" unique_id=557701348]
+[node name="OmniLight3D2" type="AreaLight3D" parent="DisplayItemViewport" unique_id=557701348]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.12030864, -3.1965036)
 layers = 524288
 light_energy = 2.74
@@ -124,6 +357,73 @@ light_indirect_energy = 0.25
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=768392587]
 
+[node name="DisplayItem2" type="SubViewportContainer" parent="CanvasLayer" unique_id=1551910986]
+z_index = 1
+offset_left = 568.0
+offset_top = 930.0
+offset_right = 1316.0
+offset_bottom = 1004.0
+
+[node name="SubViewport" type="SubViewport" parent="CanvasLayer/DisplayItem2" unique_id=1388300029]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(748, 74)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="CanvasLayer/DisplayItem2/SubViewport" unique_id=384925859]
+transform = Transform3D(1, 0, 0, 0, 0.8660254, 0.5, 0, -0.5, 0.8660254, 12.42399, 1.31, 2.458156)
+top_level = true
+cull_mask = 524288
+projection = 1
+current = true
+fov = 36.1
+
+[node name="InventoryBar" type="Control" parent="CanvasLayer" unique_id=293181905]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -115.0
+offset_right = 24.0
+offset_bottom = -75.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer/InventoryBar" unique_id=306302045]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 358.0
+grow_horizontal = 2
+grow_vertical = 0
+scale = Vector2(2, 2)
+pivot_offset = Vector2(378, 40)
+color = Color(0.5251013, 0.5251013, 0.5251013, 1)
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/InventoryBar" unique_id=622423813]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 358.0
+grow_horizontal = 2
+grow_vertical = 0
+scale = Vector2(2, 2)
+pivot_offset = Vector2(378, 40)
+texture = ExtResource("20_h8ma5")
+
 [node name="WaterOverlay" type="ColorRect" parent="CanvasLayer" unique_id=241175340]
 unique_name_in_owner = true
 offset_right = 40.0
@@ -136,5 +436,80 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5362549, 0)
 
 [node name="Feet" type="Marker3D" parent="." unique_id=34513168]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5221753, 0)
+
+[node name="InventoryBar" type="Node3D" parent="." unique_id=2105644241]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.42399, 0, 0)
+top_level = true
+
+[node name="InvBar1" parent="InventoryBar" unique_id=1368739411 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -4.44, -0.12, 0)
+layers = 524288
+block_type = 0
+
+[node name="InvBar2" parent="InventoryBar" unique_id=237469503 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -3.395, -0.12, 0)
+layers = 524288
+
+[node name="InvBar3" parent="InventoryBar" unique_id=723969651 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -2.365, -0.12, 0)
+layers = 524288
+block_type = 2
+
+[node name="InvBar4" parent="InventoryBar" unique_id=1650311765 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -1.35, -0.12, 0)
+layers = 524288
+block_type = 3
+
+[node name="InvBar5" parent="InventoryBar" unique_id=1774247641 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -0.425, -0.12, 0)
+layers = 524288
+block_type = 4
+
+[node name="InvBar6" parent="InventoryBar" unique_id=154979839 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 0.59, -0.12, 0)
+layers = 524288
+block_type = 5
+
+[node name="InvBar7" parent="InventoryBar" unique_id=605014772 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 1.51, -0.12, 0)
+layers = 524288
+block_type = 6
+
+[node name="InvBar8" parent="InventoryBar" unique_id=1395133036 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 2.485, -0.12, 0)
+layers = 524288
+block_type = 8
+
+[node name="InvBar9" parent="InventoryBar" unique_id=696452876 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 3.455, -0.12, 0)
+layers = 524288
+block_type = 8
+
+[node name="InvBar10" parent="InventoryBar" unique_id=1514892841 instance=ExtResource("15_dey5f")]
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 4.4, -0.12, 0)
+layers = 524288
+block_type = 8
+
+[node name="OmniLight3D" type="AreaLight3D" parent="InventoryBar" unique_id=1152492798]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.12030864, 2.09867)
+layers = 524288
+light_energy = 2.74
+light_indirect_energy = 1.885
+light_volumetric_fog_energy = 1.59
+light_cull_mask = 4294443008
+
+[node name="OmniLight3D2" type="AreaLight3D" parent="InventoryBar" unique_id=539805597]
+transform = Transform3D(-0.6, 0, -9.059749e-08, 0, 0.6, 0, 9.059749e-08, 0, -0.6, 0, 0.12030864, -3.1965036)
+layers = 524288
+light_energy = 2.74
+light_indirect_energy = 1.885
+light_volumetric_fog_energy = 1.59
+light_cull_mask = 4294443008
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="InventoryBar" unique_id=1173840169]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0)
+visible = false
+layers = 524288
+mesh = SubResource("BoxMesh_w45gy")
 
 [editable path="20260418_193043_rikafinished"]

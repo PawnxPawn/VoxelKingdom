@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cd5pdwcvf3bn2"
-path="res://.godot/imported/ClickBox2.png-1e7dc5c74243718d6f66c35047ee7bc5.ctex"
+uid="uid://dsgrn4b45qwr2"
+path="res://.godot/imported/Boot.png-5420ede45677c6047eb737f408fc1bd1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Menu/ClickBoxsSliders/ClickBox2.png"
-dest_files=["res://.godot/imported/ClickBox2.png-1e7dc5c74243718d6f66c35047ee7bc5.ctex"]
+source_file="res://Assets/Menu/MainMenu/Boot.png"
+dest_files=["res://.godot/imported/Boot.png-5420ede45677c6047eb737f408fc1bd1.ctex"]
 
 [params]
 

@@ -15,12 +15,13 @@ signal remove_block(position)
 @export var player_height: float = 1.8
 @export var player_radius: float = 0.4
 
-@onready var default_cube_mesh: Cube = $SubViewportinfo/DefaultCubeMesh
+@onready var default_cube_mesh: Cube = %DisplayItem
 @onready var _handler: ComponentHandler = %ComponentHandler
 @onready var _sm: StateMachine = %StateMachine
 @onready var block_highlight: MeshInstance3D = $BlockHighlight
 @onready var ray_cast: RayCast3D = $RayCast3D
 @onready var water_overlay: WaterOverlay = %WaterOverlay
+@onready var hand: AnimatedSprite2D = $Hand
 
 var is_fly_active: bool = false
 
@@ -39,6 +40,15 @@ var _last_valid_position: Vector3
 var _feet_submerged: bool = false
 var _head_submerged: bool = false
 
+
+# Animation Swapping
+var _is_swapping: bool = false
+var _is_removing: bool = false
+var _swap_pending_value: int = 0
+var _block_changed_this_swap: bool = false
+var _block_removed_this_swing: bool = false
+var _pending_remove_block: Vector3i = Vector3i.ZERO
+var _has_pending_remove: bool = false
 
 #----------------
 # Ready
@@ -61,6 +71,10 @@ func _ready() -> void:
 	if water_detector:
 		water_detector.feet_submerged_changed.connect(_on_feet_submerged)
 		water_detector.head_submerged_changed.connect(_on_head_submerged)
+	
+	# Animation connections
+	hand.animation_finished.connect(_change_animation)
+	hand.frame_changed.connect(_on_hand_frame_changed)
 
 
 #----------------
@@ -73,8 +87,8 @@ func _connect_components() -> void:
 		_handler.set_active(InputSource, true)
 		input.add_block_pressed.connect(_on_add_block)
 		input.remove_block_pressed.connect(_on_remove_block)
-		input.item_switched_up.connect(_change_block.bind(1))
-		input.item_switched_down.connect(_change_block.bind(-1))
+		input.item_switched_up.connect(play_swap_item.bind(1))
+		input.item_switched_down.connect(play_swap_item.bind(-1))
 	
 	# Look Component
 	look = _handler.get_component(LookComponent)
@@ -122,6 +136,7 @@ func _setup_camera() -> void:
 # Process
 #----------------
 func _process(_delta: float) -> void:
+	
 	var hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if hit == null:
 		block_highlight.hide_highlight()
@@ -136,6 +151,7 @@ func _process(_delta: float) -> void:
 	var target_block: Vector3i = hit_block if get_mode() else hit_block + normal_dir
 	
 	block_highlight.show_at_block(target_block)
+	
 
 
 #----------------
@@ -164,7 +180,11 @@ func _loaded_chunk_bounds() -> void:
 #----------------
 func get_mode() -> HighlightMode:
 	if input.is_place_mode_active:
+		if not _is_swapping and not _is_removing:
+			play_display_idle()
 		return HighlightMode.REMOVE
+	if not _is_swapping and not _is_removing:
+		play_remove_idle()
 	return HighlightMode.PLACE
 
 
@@ -226,15 +246,22 @@ func _on_add_block() -> void:
 # Remove Block
 #----------------
 func _on_remove_block() -> void:
+	if _is_removing: return
+	if _is_swapping: return
+		
 	var ray_hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if ray_hit == null:
 		return
-	
+		
 	var hit_block: Vector3i = Vector3i(
 		round(ray_hit.hit_position - ray_hit.hit_normal * 0.5)
 	)
 	
-	remove_block.emit(hit_block)
+	_is_removing = true
+	_block_removed_this_swing = false
+	_pending_remove_block = hit_block
+	_has_pending_remove = true
+	hand.play("RemoveBlock")
 
 
 #----------------
@@ -278,3 +305,56 @@ func is_underwater() -> bool:
 func is_at_water_surface() -> bool:
 	# Feet in water, head out of water ⇒ surface
 	return _feet_submerged and not _head_submerged
+
+
+#----------------
+# Animations
+#----------------
+
+func play_swap_item(value: int) -> void:
+	if _is_removing: return
+	if _is_swapping: return
+	_is_swapping = true
+	_swap_pending_value = value
+	_block_changed_this_swap = false
+	hand.play("ItemSwap")
+
+
+func _on_hand_frame_changed() -> void:
+	match hand.animation:
+		&"ItemSwap":
+			if hand.frame == 2 and not _block_changed_this_swap:
+				default_cube_mesh.hide()
+				_change_block(_swap_pending_value)
+				_block_changed_this_swap = true
+			elif hand.frame == 9:
+				default_cube_mesh.show()
+				
+		&"RemoveBlock":
+			if hand.frame == 8 and not _block_removed_this_swing and _has_pending_remove:
+				remove_block.emit(_pending_remove_block)
+				_block_removed_this_swing = true
+				_has_pending_remove = false
+
+
+func _change_animation() -> void:
+	match hand.animation:
+		&"ItemSwap":
+			_is_swapping = false
+			if input.is_place_mode_active:
+				play_display_idle()
+			else:
+				play_remove_idle()
+		&"RemoveBlock":
+			_is_removing = false
+			play_remove_idle()
+
+
+func play_display_idle() -> void:
+	default_cube_mesh.show()
+	hand.play(&"DisplayBlockIdle")
+
+
+func play_remove_idle() -> void:
+	default_cube_mesh.hide()
+	hand.play(&"RemoveBlockIdle")

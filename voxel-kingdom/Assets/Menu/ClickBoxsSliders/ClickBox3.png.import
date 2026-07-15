@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://hs5jmo0p4fum"
-path="res://.godot/imported/ClickBox3.png-18347ce54e36c82be342ed548bba6204.ctex"
+path="res://.godot/imported/ClickBox3.png-f5dd310975c3af78dd53f36969b38c50.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Menu/ClickBox3.png"
-dest_files=["res://.godot/imported/ClickBox3.png-18347ce54e36c82be342ed548bba6204.ctex"]
+source_file="res://Assets/Menu/ClickBoxsSliders/ClickBox3.png"
+dest_files=["res://.godot/imported/ClickBox3.png-f5dd310975c3af78dd53f36969b38c50.ctex"]
 
 [params]
 

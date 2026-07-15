@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clja2uhrc60u8"
-path="res://.godot/imported/SmallWorld.png-35c45343e790caaf87476e97df56cd8a.ctex"
+path="res://.godot/imported/SmallWorld.png-55363a247a8f4b2ba319d21088a788ba.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Menu/SmallWorld.png"
-dest_files=["res://.godot/imported/SmallWorld.png-35c45343e790caaf87476e97df56cd8a.ctex"]
+source_file="res://Assets/Menu/GenerationOptionsMenu/SmallWorld.png"
+dest_files=["res://.godot/imported/SmallWorld.png-55363a247a8f4b2ba319d21088a788ba.ctex"]
 
 [params]
 
