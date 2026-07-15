@@ -49,6 +49,7 @@ var _height_probe: Chunk = null
 @export_group("Terrain Shape")
 @export var terrain_base_height: float = 140.0
 @export var terrain_amplitude: float = 60.0
+@export_range(0.0, 1.0) var mountain_biome_threshold: float = 0.80
 
 @export_group("Water")
 @export var water_level: float = 130.0
@@ -108,6 +109,9 @@ var total_voxel_count: int = 0
 var start_time_usec: float = 0.0
 var is_first_chunk_added: bool = false
 
+var pending_tree_edits: Dictionary[Vector3i, Array] = {}
+var pending_tree_edits_mutex: Mutex = Mutex.new()
+
 #-###########################################
 # Streaming / Movement State
 #-###########################################
@@ -130,6 +134,7 @@ var movement_direction_xz: Vector2 = Vector2.RIGHT
 var modified_chunks: Dictionary[Vector3i, PackedInt32Array] = {}
 
 var vertical_streaming_locked_to_spawn: bool = true
+
 
 #-###########################################
 # Lifecycle
@@ -200,7 +205,8 @@ func _estimate_surface_grid_y(world_x: float, world_z: float) -> int:
 		terrain_noise,
 		mountain_biome_noise,
 		_height_probe.mountain_shape_noise,
-		_height_probe.steep_noise
+		_height_probe.steep_noise,
+		mountain_biome_threshold
 	)
 	return clampi(floori(estimated_height / float(chunk_size)), 0, number_of_chunks.y - 1)
 
@@ -409,7 +415,6 @@ func _get_water_grid_y_range(grid_x: int, grid_z: int) -> Vector2i:
 		_height_probe.steep_noise
 	)
 	
-	# Terrain here already sticks up above the water line — no underwater chunks needed.
 	if estimated_surface_height >= water_level:
 		return Vector2i(-1, -1)
 		
@@ -495,6 +500,33 @@ func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 		
 		return first_squared_distance < second_squared_distance
 	)
+
+
+func queue_tree_voxel(world_position: Vector3i, voxel_type: TerrianData.TerrianType) -> void:
+	if voxel_type == TerrianData.TerrianType.WOOD:
+		var below_type: TerrianData.TerrianType = get_voxel_type_at(world_position + Vector3i.DOWN)
+		if TerrianData.is_water(below_type):
+			return
+			
+	var chunk_world_key: Vector3i = _voxel_to_chunk_key(world_position)
+	
+	chunks_mutex.lock()
+	var chunk: Chunk = chunks_by_key.get(chunk_world_key)
+	chunks_mutex.unlock()
+	
+	if chunk != null:
+		var local_pos: Vector3i = world_position - chunk_world_key
+		if chunk.chunk_data.get_voxel(local_pos) == TerrianData.TerrianType.WATER:
+			return
+		chunk.chunk_data.add_voxel(local_pos, voxel_type)
+		return
+		
+	# Target chunk isn't generated yet — queue for when it is.
+	pending_tree_edits_mutex.lock()
+	if not pending_tree_edits.has(chunk_world_key):
+		pending_tree_edits[chunk_world_key] = []
+	pending_tree_edits[chunk_world_key].append({"pos": world_position - chunk_world_key, "type": voxel_type})
+	pending_tree_edits_mutex.unlock()
 
 #-###########################################
 # Dispatching Chunk Generation
@@ -601,7 +633,8 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		cave_entrance_surface_reach,
 		mountain_biome_noise,
 		water_level,
-		tree_noise
+		tree_noise,
+		mountain_biome_threshold
 	)
 	
 	var chunk_world_key: Vector3i = Vector3i(new_chunk.position)
@@ -610,6 +643,25 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		var saved_voxels: PackedInt32Array = modified_chunks[chunk_world_key]
 		new_chunk.chunk_data.voxels = saved_voxels
 		new_chunk.chunk_data.voxel_amount = _count_non_air(saved_voxels)
+	else:
+		pending_tree_edits_mutex.lock()
+		var queued_edits: Array = pending_tree_edits.get(chunk_world_key, [])
+		pending_tree_edits.erase(chunk_world_key)
+		pending_tree_edits_mutex.unlock()
+		
+		for edit: Dictionary in queued_edits:
+			var local_pos: Vector3i = edit["pos"]
+			var voxel_type: TerrianData.TerrianType = edit["type"]
+			
+			if new_chunk.chunk_data.get_voxel(local_pos) == TerrianData.TerrianType.WATER:
+				continue
+				
+			if voxel_type == TerrianData.TerrianType.WOOD:
+				var below_pos: Vector3i = local_pos + Vector3i.DOWN
+				if below_pos.y >= 0 and new_chunk.chunk_data.get_voxel(below_pos) == TerrianData.TerrianType.WATER:
+					continue
+					
+			new_chunk.chunk_data.add_voxel(local_pos, voxel_type)
 		
 	new_chunk.generate_mesh()
 	new_chunk.compute_collision_boxes()

@@ -63,6 +63,7 @@ mouse_filter = 2
 color = Color(1, 1, 1, 0)
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
+mountain_biome_threshold = 0.607
 water_level = 133.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
