@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bh2djwpacg08n"]
 
-[ext_resource type="Script" path="res://Test/TestWorld/World.gd" id="1_7cwmi"]
+[ext_resource type="Script" uid="uid://dgogsu1baaj50" path="res://Test/TestWorld/world.gd" id="1_7cwmi"]
 [ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="2_qykia"]
 [ext_resource type="PackedScene" uid="uid://4rqt7q4iep3m" path="res://Test/TestWorld/ChunkManager.tscn" id="3_gs4kv"]
 [ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="4_4mhdq"]
@@ -63,6 +63,7 @@ mouse_filter = 2
 color = Color(1, 1, 1, 0)
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
+water_level = 133.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
 

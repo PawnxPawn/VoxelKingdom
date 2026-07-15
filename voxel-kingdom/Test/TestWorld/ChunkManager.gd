@@ -51,7 +51,7 @@ var _height_probe: Chunk = null
 @export var terrain_amplitude: float = 60.0
 
 @export_group("Water")
-@export var water_level: float = 92.0
+@export var water_level: float = 130.0
 @export var water_tick_interval: float = 0.2
 @export var water_max_updates_per_tick: int = 96
 
@@ -385,7 +385,38 @@ func _get_needed_grid_y_values(center_chunk_grid_y: int, grid_x: int, grid_z: in
 		if not grid_y_values.has(grid_y):
 			grid_y_values.append(grid_y)
 			
+	var water_range: Vector2i = _get_water_grid_y_range(grid_x, grid_z)
+	if water_range.x != -1:
+		for grid_y: int in range(water_range.x, water_range.y + 1):
+			if not grid_y_values.has(grid_y):
+				grid_y_values.append(grid_y)
+				
 	return grid_y_values
+
+
+func _get_water_grid_y_range(grid_x: int, grid_z: int) -> Vector2i:
+	var world_x: float = grid_x * chunk_size + chunk_size * 0.5
+	var world_z: float = grid_z * chunk_size + chunk_size * 0.5
+	
+	var estimated_surface_height: float = _height_probe.get_final_height(
+		world_x,
+		world_z,
+		terrain_base_height,
+		terrain_amplitude,
+		terrain_noise,
+		mountain_biome_noise,
+		_height_probe.mountain_shape_noise,
+		_height_probe.steep_noise
+	)
+	
+	# Terrain here already sticks up above the water line — no underwater chunks needed.
+	if estimated_surface_height >= water_level:
+		return Vector2i(-1, -1)
+		
+	var surface_grid_y: int = clampi(floori(estimated_surface_height / float(chunk_size)), 0, number_of_chunks.y - 1)
+	var water_grid_y: int = clampi(floori(water_level / float(chunk_size)), 0, number_of_chunks.y - 1)
+	
+	return Vector2i(surface_grid_y, water_grid_y)
 
 
 func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
@@ -516,9 +547,12 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 		var surface_min_grid_y: int = max(0, surface_grid_y - surface_visible_chunks_below)
 		var is_surface_chunk: bool = grid_y >= surface_min_grid_y and grid_y <= surface_grid_y
 		
+		var water_range: Vector2i = _get_water_grid_y_range(grid_x, grid_z)
+		var is_underwater_chunk: bool = water_range.x != -1 and grid_y >= water_range.x and grid_y <= water_range.y
+		
 		var should_unload: bool = false
 		
-		if not is_surface_chunk and vertical_distance > vertical_unload_distance:
+		if not is_surface_chunk and not is_underwater_chunk and vertical_distance > vertical_unload_distance:
 			should_unload = true
 		elif distance_in_chunks > core_radius_in_chunks:
 			var unload_distance: int = ahead_unload_distance_in_chunks if _is_chunk_ahead(offset_grid_2d) else behind_unload_distance_in_chunks

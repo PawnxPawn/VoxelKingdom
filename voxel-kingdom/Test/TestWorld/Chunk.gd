@@ -356,16 +356,8 @@ func generate_date(
 					chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), terrain_type)
 					cube_count += 1
 					
-			if water_level > position.y and terrain_height < water_level:
-				var water_fill_start_local_y: int = int(max(floori(local_column_height), 0))
-				var water_fill_end_local_y: int = int(min(water_level - position.y, size))
-				
-				for voxel_y: int in range(water_fill_start_local_y, water_fill_end_local_y):
-					if chunk_data.get_voxel(Vector3i(voxel_x, voxel_y, voxel_z)) != TerrianData.TerrianType.AIR:
-						continue
-					chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), TerrianData.TerrianType.WATER)
-					cube_count += 1
-	_generate_trees(height_cache, biome_cache, tree_noise)
+			_fill_water_column(voxel_x, voxel_z, local_column_height, water_level)
+	_generate_trees(height_cache, biome_cache, tree_noise, water_level)
 
 
 #----------------
@@ -375,7 +367,8 @@ func generate_date(
 func _generate_trees(
 	height_cache: Array[Array],
 	_biome_cache: Array[Array],
-	tree_noise: FastNoiseLite
+	tree_noise: FastNoiseLite,
+	water_level: float
 ) -> void:
 	var placed_tree_positions: Array[Vector3i] = []
 	for voxel_x: int in range(chunk_size):
@@ -390,15 +383,12 @@ func _generate_trees(
 			if local_y < 0 or local_y >= chunk_size:
 				continue
 			
-			
-			
 			var ground_type: TerrianData.TerrianType = chunk_data.get_voxel(Vector3i(voxel_x, local_y - 1, voxel_z))
-			#print(ground_type)
 			
 			if ground_type != TerrianData.TerrianType.GRASS:
 				continue
 				
-			if terrain_height < chunk_manager.water_level:
+			if terrain_height <= water_level:
 				continue
 				
 			var noise_value: float = tree_noise.get_noise_2d(world_x, world_z)
@@ -418,11 +408,11 @@ func _generate_trees(
 			if too_close:
 				continue
 				
-			_place_tree(spawn_position)
+			_place_tree(spawn_position, water_level)
 			placed_tree_positions.append(spawn_position)
 
 
-func _place_tree(spawn_pos: Vector3i) -> void:
+func _place_tree(spawn_pos: Vector3i, water_level: float) -> void:
 	var trunk_height: int = randi_range(4, 7)
 	var trunk_radius: int = randi_range(1, 2)
 	for dy: int in range(trunk_height):
@@ -430,8 +420,7 @@ func _place_tree(spawn_pos: Vector3i) -> void:
 			for dz: int in range(-trunk_radius, trunk_radius + 1):
 				if abs(dx) + abs(dz) <= trunk_radius:
 					var pos: Vector3i = spawn_pos + Vector3i(dx, dy, dz)
-					if pos.y >= 0 and pos.y < chunk_size:
-						chunk_data.add_voxel(pos, TerrianData.TerrianType.WOOD)
+					_try_place_tree_voxel(pos, TerrianData.TerrianType.WOOD, water_level)
 						
 	var leaf_radius: int = trunk_radius + randi_range(2, 3)
 	
@@ -440,9 +429,59 @@ func _place_tree(spawn_pos: Vector3i) -> void:
 			for dz: int in range(-leaf_radius, leaf_radius + 1):
 				if dx * dx + dz * dz <= leaf_radius * leaf_radius:
 					var pos: Vector3i = spawn_pos + Vector3i(dx, trunk_height + dy, dz)
-					if pos.y >= 0 and pos.y < chunk_size:
-						chunk_data.add_voxel(pos, TerrianData.TerrianType.LEAVES)
+					_try_place_tree_voxel(pos, TerrianData.TerrianType.LEAVES, water_level)
 
+
+func _has_water_below(pos: Vector3i) -> bool:
+	var below: Vector3i = pos + Vector3i.DOWN
+	
+	if below.y >= 0:
+		return chunk_data.get_voxel(below) == TerrianData.TerrianType.WATER
+		
+	if chunk_manager == null:
+		return false
+		
+	var world_below: Vector3i = chunk_world_origin + below
+	return TerrianData.is_water(chunk_manager.get_voxel_type_at(world_below))
+
+
+func _try_place_tree_voxel(pos: Vector3i, voxel_type: TerrianData.TerrianType, water_level: float) -> void:
+	if pos.y < 0 or pos.y >= chunk_size:
+		return
+		
+	var world_y: float = position.y + pos.y
+	if world_y <= water_level:
+		return
+		
+	if chunk_data.get_voxel(pos) == TerrianData.TerrianType.WATER:
+		return
+		
+	if voxel_type == TerrianData.TerrianType.WOOD and _has_water_below(pos):
+		return
+		
+	chunk_data.add_voxel(pos, voxel_type)
+
+
+func _fill_water_column(voxel_x: int, voxel_z: int, local_column_height: float, water_level: float) -> void:
+	# Local Y of the first air voxel directly above the terrain surface in this column.
+	var surface_top_local_y: int = int(max(floori(local_column_height), 0))
+	var surface_top_world_y: int = int(position.y) + surface_top_local_y
+	
+	# Surface here is already at or above the water line — nothing to flood.
+	if surface_top_world_y > int(water_level):
+		return
+		
+	# Fill every air voxel from the surface up through water_level (inclusive),
+	# clamped to the slice of that column that lives in this chunk.
+	var fill_start_local_y: int = clampi(surface_top_local_y, 0, chunk_size)
+	var fill_end_local_y: int = clampi(int(water_level) - int(position.y) + 1, 0, chunk_size)
+	
+	for voxel_y: int in range(fill_start_local_y, fill_end_local_y):
+		var voxel_position: Vector3i = Vector3i(voxel_x, voxel_y, voxel_z)
+		if chunk_data.get_voxel(voxel_position) != TerrianData.TerrianType.AIR:
+			continue
+		chunk_data.add_voxel(voxel_position, TerrianData.TerrianType.WATER)
+		cube_count += 1
 
 
 #-###########################################
