@@ -491,7 +491,7 @@ layers = 524288
 block_type = 8
 
 [node name="OmniLight3D" type="AreaLight3D" parent="InventoryBar" unique_id=1152492798]
-transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.12030864, 2.09867)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12030864, 2.09867)
 layers = 524288
 light_energy = 2.74
 light_indirect_energy = 1.885
@@ -499,7 +499,7 @@ light_volumetric_fog_energy = 1.59
 light_cull_mask = 4294443008
 
 [node name="OmniLight3D2" type="AreaLight3D" parent="InventoryBar" unique_id=539805597]
-transform = Transform3D(-0.6, 0, -9.059749e-08, 0, 0.6, 0, 9.059749e-08, 0, -0.6, 0, 0.12030864, -3.1965036)
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0.12030864, -3.1965036)
 layers = 524288
 light_energy = 2.74
 light_indirect_energy = 1.885
