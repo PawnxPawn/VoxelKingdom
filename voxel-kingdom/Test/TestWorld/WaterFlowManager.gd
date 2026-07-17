@@ -180,7 +180,6 @@ func _collect_thread_result() -> void:
 	_thread_result = {}
 	_thread_mutex.unlock()
 	
-	# Free the thread so a new one can be created next tick
 	_thread.wait_to_finish()
 	_thread = null
 	

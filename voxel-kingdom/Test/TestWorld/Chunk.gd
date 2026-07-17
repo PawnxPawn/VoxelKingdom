@@ -14,7 +14,7 @@ enum Face {
 	BACK,
 }
 
-const MAX_TREE_FOOTPRINT_RADIUS: int = 5  # max trunk_radius (2) + max leaf extra (3)
+const MAX_TREE_FOOTPRINT_RADIUS: int = 5 
 
 @export var use_centered_voxels: bool = false
 @export var material: Material
@@ -33,7 +33,6 @@ const MOUNTAIN_GRASS_CHANCE: float = 0.20
 # Chunk Data & State
 #-###########################################
 
-static var cube_count: int = 0
 
 var chunk_data: ChunkData = ChunkData.new()
 var voxel_colors: Dictionary[TerrianData.TerrianType, Color] = {}
@@ -239,26 +238,18 @@ func generate_date(
 	chunk_size = size
 	chunk_data.set_size(size)
 	
-	var height_cache: Array[Array] = []
-	height_cache.resize(size)
-	for x_index in range(size):
-		height_cache[x_index] = []
-		height_cache[x_index].resize(size)
-		
-	var biome_cache: Array[Array] = []
-	biome_cache.resize(size)
-	for x_index in range(size):
-		biome_cache[x_index] = []
-		biome_cache[x_index].resize(size)
-		
-	var cave_entrance_cache: Array[Array] = []
-	cave_entrance_cache.resize(size)
-	for x_index in range(size):
-		cave_entrance_cache[x_index] = []
-		cave_entrance_cache[x_index].resize(size)
-		
+	var height_cache: PackedFloat32Array = PackedFloat32Array()
+	height_cache.resize(size * size)
+	
+	var biome_cache: PackedByteArray = PackedByteArray()
+	biome_cache.resize(size * size)
+	
+	var cave_entrance_cache: PackedByteArray = PackedByteArray()
+	cave_entrance_cache.resize(size * size)
+	
 	for voxel_x: int in range(size):
 		for voxel_z: int in range(size):
+			var cache_index: int = voxel_x * size + voxel_z
 			var world_position: Vector3 = position + Vector3(voxel_x, 0, voxel_z)
 			
 			var terrain_height: float = get_final_height(
@@ -273,12 +264,12 @@ func generate_date(
 				mountain_biome_threshold
 			)
 			
-			height_cache[voxel_x][voxel_z] = terrain_height
+			height_cache[cache_index] = terrain_height
 			
 			var biome_value: float = mountain_biome_noise.get_noise_2d(world_position.x, world_position.z)
 			var biome_normalized: float = (biome_value + 1.0) * 0.5
 			var is_mountain: bool = biome_normalized > mountain_biome_threshold
-			biome_cache[voxel_x][voxel_z] = is_mountain
+			biome_cache[cache_index] = 1 if is_mountain else 0
 			
 			var cave_entrance_allowed: bool = false
 			if cave_entrance_noise != null:
@@ -286,12 +277,12 @@ func generate_date(
 				var entrance_normalized: float = clampf((entrance_noise_value + 1.0) * 0.5, 0.0, 1.0)
 				if entrance_normalized > cave_entrance_region_threshold:
 					cave_entrance_allowed = true
-			cave_entrance_cache[voxel_x][voxel_z] = cave_entrance_allowed
+			cave_entrance_cache[cache_index] = 1 if cave_entrance_allowed else 0
 			
 	for voxel_x: int in range(size):
 		for voxel_z: int in range(size):
 			
-			var terrain_height: float = height_cache[voxel_x][voxel_z]
+			var terrain_height: float = height_cache[voxel_x * size + voxel_z]
 			var local_column_height: float = terrain_height - position.y
 			
 			if terrain_height >= position.y:
@@ -302,17 +293,17 @@ func generate_date(
 				var up_z: int = min(voxel_z + 1, size - 1)
 				var down_z: int = max(voxel_z - 1, 0)
 				
-				var height_left: float = height_cache[left_x][voxel_z]
-				var height_right: float = height_cache[right_x][voxel_z]
-				var height_up: float = height_cache[voxel_x][up_z]
-				var height_down: float = height_cache[voxel_x][down_z]
+				var height_left: float = height_cache[left_x * size + voxel_z]
+				var height_right: float = height_cache[right_x * size + voxel_z]
+				var height_up: float = height_cache[voxel_x * size + up_z]
+				var height_down: float = height_cache[voxel_x * size + down_z]
 				
 				var slope_x: float = abs(height_left - height_right)
 				var slope_z: float = abs(height_up - height_down)
 				var column_slope: float = clamp(max(slope_x, slope_z) / 12.0, 0.0, 1.0)
 				
-				var is_mountain: bool = biome_cache[voxel_x][voxel_z]
-				var cave_entrance_allowed: bool = cave_entrance_cache[voxel_x][voxel_z]
+				var is_mountain: bool = biome_cache[voxel_x * size + voxel_z] == 1
+				var cave_entrance_allowed: bool = cave_entrance_cache[voxel_x * size + voxel_z] == 1
 				
 				var cave_minimum_depth_adjusted: int = cave_below_surface_minimum
 				if cave_entrance_allowed:
@@ -359,7 +350,6 @@ func generate_date(
 							continue
 							
 					chunk_data.add_voxel(Vector3i(voxel_x, voxel_y, voxel_z), terrain_type)
-					cube_count += 1
 					
 			_fill_water_column(voxel_x, voxel_z, local_column_height, water_level)
 			
@@ -372,8 +362,8 @@ func generate_date(
 #---------------- 
 
 func _generate_trees(
-	height_cache: Array[Array],
-	_biome_cache: Array[Array],
+	height_cache: PackedFloat32Array,
+	_biome_cache: PackedByteArray,
 	tree_noise: FastNoiseLite,
 	water_level: float
 ) -> void:
@@ -384,7 +374,7 @@ func _generate_trees(
 			var world_x: float = position.x + voxel_x
 			var world_z: float = position.z + voxel_z
 			
-			var terrain_height: float = height_cache[voxel_x][voxel_z]
+			var terrain_height: float = height_cache[voxel_x * chunk_size + voxel_z]
 			var local_y: int = int(terrain_height - position.y)
 			
 			if local_y < 0 or local_y >= chunk_size:
@@ -415,7 +405,7 @@ func _generate_trees(
 			if too_close:
 				continue
 				
-			if _tree_area_has_water(spawn_position):
+			if _tree_area_has_water(spawn_position, water_level):
 				continue
 				
 			_place_tree(spawn_position, water_level)
@@ -481,7 +471,11 @@ func _has_water_below(pos: Vector3i) -> bool:
 	return TerrianData.is_water(chunk_manager.get_voxel_type_at(world_below))
 
 
-func _tree_area_has_water(spawn_position: Vector3i) -> bool:
+func _tree_area_has_water(spawn_position: Vector3i, water_level: float) -> bool:
+	var ground_world_y: float = position.y + spawn_position.y - 1
+	if ground_world_y > water_level + MAX_TREE_FOOTPRINT_RADIUS:
+		return false
+		
 	var ground_local_y: int = spawn_position.y - 1
 	
 	for dx: int in range(-MAX_TREE_FOOTPRINT_RADIUS, MAX_TREE_FOOTPRINT_RADIUS + 1):
@@ -531,11 +525,12 @@ func _fill_water_column(voxel_x: int, voxel_z: int, local_column_height: float, 
 		if chunk_data.get_voxel(voxel_position) != TerrianData.TerrianType.AIR:
 			continue
 		chunk_data.add_voxel(voxel_position, TerrianData.TerrianType.WATER)
-		cube_count += 1
 
 
 func _flood_fill_cave_water(water_level: float) -> void:
 	if chunk_data.is_empty():
+		return
+	if position.y > water_level:
 		return
 		
 	var visited: PackedByteArray = PackedByteArray()
@@ -583,13 +578,15 @@ func _flood_fill_cave_water(water_level: float) -> void:
 				continue
 				
 			chunk_data.add_voxel(neighbor, TerrianData.TerrianType.WATER)
-			cube_count += 1
 			visited[neighbor_index] = 1
 			queue.append(neighbor)
 
 
 func _seed_flood_fill_from_neighbors(queue: Array[Vector3i], visited: PackedByteArray, water_level: float) -> void:
 	if chunk_manager == null:
+		return
+	
+	if position.y > water_level:
 		return
 		
 	var boundary_faces: Array[Dictionary] = [
@@ -634,7 +631,6 @@ func _seed_flood_fill_from_neighbors(queue: Array[Vector3i], visited: PackedByte
 					continue
 					
 				chunk_data.add_voxel(local_pos, TerrianData.TerrianType.WATER)
-				cube_count += 1
 				visited[index] = 1
 				queue.append(local_pos)
 

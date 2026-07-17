@@ -40,6 +40,7 @@ var _last_valid_position: Vector3
 var _feet_submerged: bool = false
 var _head_submerged: bool = false
 
+var _is_wheel: bool = false
 
 # Animation Swapping
 var _is_swapping: bool = false
@@ -87,8 +88,8 @@ func _connect_components() -> void:
 		_handler.set_active(InputSource, true)
 		input.add_block_pressed.connect(_on_add_block)
 		input.remove_block_pressed.connect(_on_remove_block)
-		input.item_switched_up.connect(play_swap_item.bind(1))
-		input.item_switched_down.connect(play_swap_item.bind(-1))
+		input.item_switched.connect(play_swap_item.bind(true))
+		input.item_slot_pressed.connect(play_swap_item)
 	
 	# Look Component
 	look = _handler.get_component(LookComponent)
@@ -136,6 +137,7 @@ func _setup_camera() -> void:
 # Process
 #----------------
 func _process(_delta: float) -> void:
+	var current_mode: HighlightMode = get_mode()
 	
 	var hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if hit == null:
@@ -148,10 +150,9 @@ func _process(_delta: float) -> void:
 	var hit_block: Vector3i = Vector3i(round(hit_pos - normal * 0.5))
 	var normal_dir: Vector3i = Vector3i(round(normal.x), round(normal.y), round(normal.z))
 	
-	var target_block: Vector3i = hit_block if get_mode() else hit_block + normal_dir
+	var target_block: Vector3i = hit_block if current_mode else hit_block + normal_dir
 	
 	block_highlight.show_at_block(target_block)
-	
 
 
 #----------------
@@ -191,8 +192,11 @@ func get_mode() -> HighlightMode:
 #----------------
 # Change Block Type
 #----------------
-func _change_block(value: int) -> void:
-	current_slot = wrapi(current_slot + value, 0, TerrianData.UseableBlock.size())
+func _change_block(value: int, is_wheel:bool = false) -> void:
+	if is_wheel:
+		current_slot = wrapi(current_slot + value, 0, TerrianData.UseableBlock.size())
+	else:
+		current_slot = wrapi(value, 0, TerrianData.UseableBlock.size()) 
 	terrian_type = TerrianData.TerrianType.values()[current_slot]
 	default_cube_mesh.change_block_type(terrian_type)
 
@@ -311,10 +315,11 @@ func is_at_water_surface() -> bool:
 # Animations
 #----------------
 
-func play_swap_item(value: int) -> void:
+func play_swap_item(value: int, is_wheel:bool = false) -> void:
 	if _is_removing: return
 	if _is_swapping: return
 	_is_swapping = true
+	_is_wheel = is_wheel
 	_swap_pending_value = value
 	_block_changed_this_swap = false
 	hand.play("ItemSwap")
@@ -325,7 +330,7 @@ func _on_hand_frame_changed() -> void:
 		&"ItemSwap":
 			if hand.frame == 2 and not _block_changed_this_swap:
 				default_cube_mesh.hide()
-				_change_block(_swap_pending_value)
+				_change_block(_swap_pending_value, _is_wheel)
 				_block_changed_this_swap = true
 			elif hand.frame == 9:
 				default_cube_mesh.show()

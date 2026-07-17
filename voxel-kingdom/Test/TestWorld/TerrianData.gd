@@ -6,17 +6,16 @@ class_name TerrianData
 extends Resource
 
 # NOTE:
-# WATER_FLOW_1..7 are appended at the END of the enum on purpose.
+# WATER_FLOW_1-7 are appended at the END of the enum on purpose.
 # Changing their order would shift integer values stored in ChunkData.voxels.
 
 enum TerrianType {
-	DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, WATER, BEDROCK, AIR,
-	WATER_FLOW_1, WATER_FLOW_2, WATER_FLOW_3, WATER_FLOW_4,
-	WATER_FLOW_5, WATER_FLOW_6, WATER_FLOW_7
-}
+	DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, WATER, LAVA, SAND, GRAVEL, BEDROCK, AIR,
+	WATER_FLOW_1, WATER_FLOW_2, WATER_FLOW_3, WATER_FLOW_4, WATER_FLOW_5, WATER_FLOW_6, WATER_FLOW_7
+	}
 
 enum  UseableBlock {
-	DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, WATER,
+	DIRT, GRASS, STONE, WOOD, WOOD_PLANK, LEAVES, WATER, LAVA, SAND, GRAVEL
 }
 
 const MAX_WATER_FLOW_DISTANCE: int = 7
@@ -69,6 +68,24 @@ static func _static_init() -> void:
 	water.side = Vector2i(1, 2)
 	water.bottom = Vector2i(1, 2)
 	atlas_tiles[TerrianType.WATER] = water
+	
+	var lava: BlockFaceAtlas = BlockFaceAtlas.new()
+	lava.top = Vector2i(2, 2)
+	lava.side = Vector2i(2, 2)
+	lava.bottom = Vector2i(2, 2)
+	atlas_tiles[TerrianType.LAVA] = lava
+	
+	var sand: BlockFaceAtlas = BlockFaceAtlas.new()
+	sand.top = Vector2i(1, 1)
+	sand.side = Vector2i(1, 1)
+	sand.bottom = Vector2i(1, 1)
+	atlas_tiles[TerrianType.SAND] = sand
+	
+	var gravel: BlockFaceAtlas = BlockFaceAtlas.new()
+	gravel.top = Vector2i(2, 1)
+	gravel.side = Vector2i(2, 1)
+	gravel.bottom = Vector2i(2, 1)
+	atlas_tiles[TerrianType.GRAVEL] = gravel
 	
 	for level: int in range(1, MAX_WATER_FLOW_DISTANCE + 1):
 		atlas_tiles[water_type_for_level(level)] = water

@@ -7,7 +7,7 @@ extends State
 var state_name: StringName = &"MoveState"
 
 #-##############################
-#           Components
+# Components
 #-##############################
 
 var _input: InputSource = null

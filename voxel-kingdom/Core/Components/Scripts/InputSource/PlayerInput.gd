@@ -117,24 +117,40 @@ func _process_block_input() -> void:
 			
 	if Input.is_action_just_pressed(&"Change_Mode"):
 		is_place_mode_active = not is_place_mode_active
+		place_mode_changed.emit()
 
 
 #----------------
 # Item Switching Input
 #----------------
 func _process_item_switch_input() -> void:
-	if Input.is_action_just_pressed("Switch_Item_Up"):
-		item_switched_up.emit()
-		
-	if Input.is_action_just_pressed("Switch_Item_Down"):
-		item_switched_down.emit()
+	if Input.is_action_just_pressed(&"InventorySlot1"):
+		item_slot_pressed.emit(0)
+	if Input.is_action_just_pressed(&"InventorySlot2"):
+		item_slot_pressed.emit(1)
+	if Input.is_action_just_pressed(&"InventorySlot3"):
+		item_slot_pressed.emit(2)
+	if Input.is_action_just_pressed(&"InventorySlot4"):
+		item_slot_pressed.emit(3)
+	if Input.is_action_just_pressed(&"InventorySlot5"):
+		item_slot_pressed.emit(4)
+	if Input.is_action_just_pressed(&"InventorySlot6"):
+		item_slot_pressed.emit(5)
+	if Input.is_action_just_pressed(&"InventorySlot7"):
+		item_slot_pressed.emit(6)
+	if Input.is_action_just_pressed(&"InventorySlot8"):
+		item_slot_pressed.emit(7)
+	if Input.is_action_just_pressed(&"InventorySlot9"):
+		item_slot_pressed.emit(8)
+	if Input.is_action_just_pressed(&"InventorySlot0"):
+		item_slot_pressed.emit(9)
 
 
 #----------------
 # Raw Input Events
 #----------------
 func input(event: InputEvent) -> void:
-	if event.is_action_pressed("Add_Block"):
+	if event.is_action_pressed(&"Add_Block"):
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			
@@ -151,10 +167,10 @@ func input(event: InputEvent) -> void:
 		var mouse_button_event: InputEventMouseButton = event
 		
 		if mouse_button_event.button_index == MOUSE_BUTTON_WHEEL_UP and mouse_button_event.pressed:
-			item_switched_up.emit()
+			item_switched.emit(1)
 			
 		if mouse_button_event.button_index == MOUSE_BUTTON_WHEEL_DOWN and mouse_button_event.pressed:
-			item_switched_down.emit()
+			item_switched.emit(-1)
 
 
 #----------------

@@ -20,8 +20,7 @@ shader_parameter/atlas_texture = ExtResource("3_hseme")
 shader_parameter/tile_size = 0.25
 shader_parameter/canvas_size = 128.0
 shader_parameter/water_alpha = 0.65
-shader_parameter/wave_speed = 1.2
-shader_parameter/wave_height = 0.05
+shader_parameter/top_face_lower_amount = 0.1
 shader_parameter/scroll_speed = 0.03
 
 [node name="Chunk" type="StaticBody3D" unique_id=1940101697]

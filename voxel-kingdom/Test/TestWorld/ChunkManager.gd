@@ -19,22 +19,22 @@ var instance: ChunkManager
 @export var noise_frequency: float = 0.01
 @export var noise_seed: int = 0
 
-@export var dispatch_chunks_per_frame: int = 12
-@export var add_chunks_per_frame: int = 12
+@export var dispatch_chunks_per_frame: int = 20
+@export var add_chunks_per_frame: int = 24
 
-@export var view_distance_in_chunks: int = 4
+@export var view_distance_in_chunks: int = 3
 @export var unload_buffer_in_chunks: int = 4
 
 @export_group("Directional Streaming")
-@export var core_radius_in_chunks: int = 2
-@export var forward_dot_threshold: float = 0.5
+@export var core_radius_in_chunks: int = 1
+@export var forward_dot_threshold: float = 0.6
 @export var direction_change_dot_threshold: float = 0.3
 @export var behind_unload_buffer_in_chunks: int = 2
 
 @onready var seed_label: Label = %SeedLabel
 
 @export_group("Vertical Streaming")
-@export var view_distance_in_chunks_y: int = 3
+@export var view_distance_in_chunks_y: int = 2
 @export var unload_buffer_in_chunks_y: int = 2
 
 @export_group("Surface Visibility While Flying")
@@ -112,6 +112,9 @@ var is_first_chunk_added: bool = false
 var pending_tree_edits: Dictionary[Vector3i, Array] = {}
 var pending_tree_edits_mutex: Mutex = Mutex.new()
 
+var _pending_neighbor_rebuilds: Array[Vector3i] = []
+var _pending_neighbor_rebuilds_mutex: Mutex = Mutex.new()
+
 #-###########################################
 # Streaming / Movement State
 #-###########################################
@@ -135,6 +138,13 @@ var modified_chunks: Dictionary[Vector3i, PackedInt32Array] = {}
 
 var vertical_streaming_locked_to_spawn: bool = true
 
+
+#-##########################################
+# Chunk Refresh Per Frame
+#-##########################################
+var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
+
+@export var neighbor_rebuilds_per_frame: int = 4
 
 #-###########################################
 # Lifecycle
@@ -216,6 +226,7 @@ func _process(_delta: float) -> void:
 		stream_target = get_tree().get_first_node_in_group("player")
 		
 	_flush_pending_chunks()
+	_flush_pending_neighbor_rebuilds()
 	_update_movement_direction()
 	_update_streaming()
 	_dispatch_load_queue()
@@ -224,6 +235,22 @@ func _process(_delta: float) -> void:
 #-###########################################
 # Pending Chunk Addition
 #-###########################################
+
+func _flush_pending_neighbor_rebuilds() -> void:
+	_pending_neighbor_rebuilds_mutex.lock()
+	var count: int = min(neighbor_rebuilds_per_frame, _pending_neighbor_rebuilds.size())
+	var keys_to_process: Array[Vector3i] = []
+	for i: int in range(count):
+		var key: Vector3i = _pending_neighbor_rebuilds.pop_front()
+		_pending_neighbor_rebuilds_flags.erase(key)
+		keys_to_process.append(key)
+	_pending_neighbor_rebuilds_mutex.unlock()
+	
+	for key: Vector3i in keys_to_process:
+		var chunk: Chunk = get_loaded_chunk(key)
+		if chunk != null and chunk.is_inside_tree():
+			chunk.request_rebuild()
+
 
 func _flush_pending_chunks() -> void:
 	var chunks_to_add: Array[Chunk] = []
@@ -238,7 +265,7 @@ func _flush_pending_chunks() -> void:
 	
 	for chunk: Chunk in chunks_to_add:
 		add_child(chunk)
-		_wake_water_across_new_chunk_boundary(chunk.chunk_world_origin)
+		_refresh_boundaries_on_new_chunk(chunk.chunk_world_origin)
 		
 		if not is_first_chunk_added:
 			is_first_chunk_added = true
@@ -246,11 +273,12 @@ func _flush_pending_chunks() -> void:
 
 
 #-###########################################
-# Wake Water at New Chunk Boundaries
+# Refresh Neighbors When a New Chunk Spawns
 #-###########################################
 
-func _wake_water_across_new_chunk_boundary(new_chunk_world_key: Vector3i) -> void:
-	if water_flow_manager == null:
+func _refresh_boundaries_on_new_chunk(new_chunk_world_key: Vector3i) -> void:
+	var new_chunk: Chunk = get_loaded_chunk(new_chunk_world_key)
+	if new_chunk == null:
 		return
 		
 	var boundary_checks: Array[Dictionary] = [
@@ -265,9 +293,50 @@ func _wake_water_across_new_chunk_boundary(new_chunk_world_key: Vector3i) -> voi
 	for check: Dictionary in boundary_checks:
 		var neighbor_chunk_key: Vector3i = new_chunk_world_key + check["offset"]
 		var neighbor_chunk: Chunk = get_loaded_chunk(neighbor_chunk_key)
-		if neighbor_chunk == null:
+		if neighbor_chunk == null or not neighbor_chunk.is_inside_tree():
 			continue
+			
+		var new_chunk_layer: int = chunk_size - 1 - check["layer"]
+		
+		if _boundary_has_water(new_chunk, new_chunk_layer, check["axis"]) or _boundary_has_water(neighbor_chunk, check["layer"], check["axis"]):
+			_queue_neighbor_rebuild(neighbor_chunk_key)
+		
 		_wake_water_on_boundary_layer(neighbor_chunk, neighbor_chunk_key, check["axis"], check["layer"])
+		_seed_water_across_new_chunk_boundary(new_chunk, new_chunk_layer, check["axis"])
+
+
+func _boundary_has_water(chunk: Chunk, layer: int, axis: int) -> bool:
+	for a: int in range(chunk_size):
+		for b: int in range(chunk_size):
+			var local_position: Vector3i
+			if axis == 0:
+				local_position = Vector3i(layer, a, b)
+			elif axis == 1:
+				local_position = Vector3i(a, layer, b)
+			else:
+				local_position = Vector3i(a, b, layer)
+				
+			if TerrianData.is_water(chunk.chunk_data.get_voxel(local_position)):
+				return true
+	return false
+
+
+func _seed_water_across_new_chunk_boundary(new_chunk: Chunk, layer: int, axis: int) -> void:
+	if water_flow_manager == null:
+		return
+	
+	for a: int in range(chunk_size):
+		for b: int in range(chunk_size):
+			var local_position: Vector3i
+			if axis == 0:
+				local_position = Vector3i(layer, a, b)
+			elif axis == 1:
+				local_position = Vector3i(a, layer, b)
+			else:
+				local_position = Vector3i(a, b, layer)
+				
+			if TerrianData.is_water(new_chunk.chunk_data.get_voxel(local_position)):
+				water_flow_manager.enqueue(new_chunk.chunk_world_origin + local_position)
 
 
 func _wake_water_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Vector3i, axis: int, layer: int) -> void:
@@ -489,16 +558,16 @@ func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
 		if first_is_core != second_is_core:
 			return first_is_core
 			
-		var first_alignment: float = Vector2(first_grid_offset.x, first_grid_offset.y).normalized().dot(movement_direction) if first_grid_offset != Vector2i.ZERO else 1.0
-		var second_alignment: float = Vector2(second_grid_offset.x, second_grid_offset.y).normalized().dot(movement_direction) if second_grid_offset != Vector2i.ZERO else 1.0
-		
-		if not is_equal_approx(first_alignment, second_alignment):
-			return first_alignment > second_alignment
-			
 		var first_squared_distance: int = (first_key.x - center_world_x) * (first_key.x - center_world_x) + (first_key.z - center_world_z) * (first_key.z - center_world_z)
 		var second_squared_distance: int = (second_key.x - center_world_x) * (second_key.x - center_world_x) + (second_key.z - center_world_z) * (second_key.z - center_world_z)
 		
-		return first_squared_distance < second_squared_distance
+		if first_squared_distance != second_squared_distance:
+			return first_squared_distance < second_squared_distance
+			
+		var first_alignment: float = Vector2(first_grid_offset.x, first_grid_offset.y).normalized().dot(movement_direction) if first_grid_offset != Vector2i.ZERO else 1.0
+		var second_alignment: float = Vector2(second_grid_offset.x, second_grid_offset.y).normalized().dot(movement_direction) if second_grid_offset != Vector2i.ZERO else 1.0
+		
+		return first_alignment > second_alignment
 	)
 
 
@@ -519,14 +588,22 @@ func queue_tree_voxel(world_position: Vector3i, voxel_type: TerrianData.TerrianT
 		if chunk.chunk_data.get_voxel(local_pos) == TerrianData.TerrianType.WATER:
 			return
 		chunk.chunk_data.add_voxel(local_pos, voxel_type)
+		_queue_neighbor_rebuild(chunk_world_key)
 		return
 		
-	# Target chunk isn't generated yet — queue for when it is.
 	pending_tree_edits_mutex.lock()
 	if not pending_tree_edits.has(chunk_world_key):
 		pending_tree_edits[chunk_world_key] = []
 	pending_tree_edits[chunk_world_key].append({"pos": world_position - chunk_world_key, "type": voxel_type})
 	pending_tree_edits_mutex.unlock()
+
+
+func _queue_neighbor_rebuild(chunk_world_key: Vector3i) -> void:
+	_pending_neighbor_rebuilds_mutex.lock()
+	if not _pending_neighbor_rebuilds_flags.has(chunk_world_key):
+		_pending_neighbor_rebuilds_flags[chunk_world_key] = true
+		_pending_neighbor_rebuilds.append(chunk_world_key)
+	_pending_neighbor_rebuilds_mutex.unlock()
 
 #-###########################################
 # Dispatching Chunk Generation

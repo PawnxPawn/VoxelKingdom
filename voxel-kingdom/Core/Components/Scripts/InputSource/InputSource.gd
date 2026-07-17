@@ -17,5 +17,6 @@ signal inventory_pressed
 signal fly_pressed
 signal add_block_pressed
 signal remove_block_pressed
-signal item_switched_up
-signal item_switched_down
+signal item_switched(value: int)
+signal item_slot_pressed(value: int)
+signal place_mode_changed

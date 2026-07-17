@@ -236,7 +236,7 @@ animations = [{
 }],
 "loop": 0,
 "name": &"RemoveBlock",
-"speed": 24.0
+"speed": 60.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -252,10 +252,10 @@ animations = [{
 [node name="Player" type="CharacterBody3D" unique_id=900159298 groups=["player"]]
 script = ExtResource("1_jhyir")
 
-[node name="20260418_193043_rikafinished" parent="." unique_id=155209410 instance=ExtResource("2_r5xpd")]
+[node name="CharacterMesh" parent="." unique_id=155209410 instance=ExtResource("2_r5xpd")]
 transform = Transform3D(-0.16, 0, -1.3987644e-08, 0, 0.16, 0, 1.3987644e-08, 0, -0.16, 0, -0.18663752, -0.12886858)
 
-[node name="Mesh" parent="20260418_193043_rikafinished" index="0" unique_id=1471053659]
+[node name="Mesh" parent="CharacterMesh" index="0" unique_id=1471053659]
 transform = Transform3D(1, 0, 7.1054274e-15, 0, 1, 0, -7.1054274e-15, 0, 1, 1.387392e-07, 0, -1.5869915)
 layers = 524288
 cast_shadow = 0
@@ -399,14 +399,14 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -40.0
+offset_left = -14.0
+offset_top = -34.0
 offset_right = 358.0
 grow_horizontal = 2
 grow_vertical = 0
 scale = Vector2(2, 2)
 pivot_offset = Vector2(378, 40)
-color = Color(0.5251013, 0.5251013, 0.5251013, 1)
+color = Color(0.5254902, 0.5254902, 0.5254902, 0.4)
 
 [node name="TextureRect" type="TextureRect" parent="CanvasLayer/InventoryBar" unique_id=622423813]
 layout_mode = 1
@@ -478,7 +478,7 @@ block_type = 6
 [node name="InvBar8" parent="InventoryBar" unique_id=1395133036 instance=ExtResource("15_dey5f")]
 transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 2.485, -0.12, 0)
 layers = 524288
-block_type = 8
+block_type = 7
 
 [node name="InvBar9" parent="InventoryBar" unique_id=696452876 instance=ExtResource("15_dey5f")]
 transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 3.455, -0.12, 0)
@@ -488,7 +488,7 @@ block_type = 8
 [node name="InvBar10" parent="InventoryBar" unique_id=1514892841 instance=ExtResource("15_dey5f")]
 transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 4.4, -0.12, 0)
 layers = 524288
-block_type = 8
+block_type = 9
 
 [node name="OmniLight3D" type="AreaLight3D" parent="InventoryBar" unique_id=1152492798]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12030864, 2.09867)
@@ -512,4 +512,4 @@ visible = false
 layers = 524288
 mesh = SubResource("BoxMesh_w45gy")
 
-[editable path="20260418_193043_rikafinished"]
+[editable path="CharacterMesh"]
