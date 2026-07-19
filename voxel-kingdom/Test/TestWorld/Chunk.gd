@@ -248,6 +248,8 @@ func generate_date(
 	cave_entrance_cache.resize(size * size)
 	
 	for voxel_x: int in range(size):
+		if chunk_manager != null and chunk_manager.is_thread_stopping: return
+		
 		for voxel_z: int in range(size):
 			var cache_index: int = voxel_x * size + voxel_z
 			var world_position: Vector3 = position + Vector3(voxel_x, 0, voxel_z)
@@ -1070,6 +1072,11 @@ func request_rebuild() -> void:
 
 
 func rebuild_threaded() -> void:
+	if chunk_manager != null and chunk_manager.is_thread_stopping:
+		rebuild_mutex.lock()
+		rebuild_running = false
+		rebuild_mutex.unlock()
+		return
 	generate_mesh()
 	compute_collision_boxes()
 	call_deferred("_on_rebuild_complete")

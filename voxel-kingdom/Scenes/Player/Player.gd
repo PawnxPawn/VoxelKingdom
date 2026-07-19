@@ -15,6 +15,13 @@ signal remove_block(position)
 @export var player_height: float = 1.8
 @export var player_radius: float = 0.4
 
+#Title Menu Settings
+@export var _in_main_menu: bool = false
+@export var _gravity_allowed: bool = true
+@export var _input_allowed: bool = true
+@export var _player_auto_rotate: bool = false
+@export var _rotation_speed: float = 0.01
+
 @onready var default_cube_mesh: Cube = %DisplayItem
 @onready var _handler: ComponentHandler = %ComponentHandler
 @onready var _sm: StateMachine = %StateMachine
@@ -22,6 +29,7 @@ signal remove_block(position)
 @onready var ray_cast: RayCast3D = $RayCast3D
 @onready var water_overlay: WaterOverlay = %WaterOverlay
 @onready var hand: AnimatedSprite2D = $Hand
+@onready var highlight_inventory_slot: TextureRect = %HighlightInventorySlot
 
 var is_fly_active: bool = false
 
@@ -51,12 +59,17 @@ var _block_removed_this_swing: bool = false
 var _pending_remove_block: Vector3i = Vector3i.ZERO
 var _has_pending_remove: bool = false
 
+
+
 #----------------
 # Ready
 #----------------
 func _ready() -> void:
+		
 	_connect_components()
 	_setup_sm()
+	if _in_main_menu:
+		_sm.change_state(&"MenuState")
 	default_cube_mesh.change_block_type(terrian_type)
 	
 	var world_spawn: Vector3 = Vector3(
@@ -86,19 +99,22 @@ func _connect_components() -> void:
 	input = _handler.get_component(InputSource)
 	if input:
 		_handler.set_active(InputSource, true)
-		input.add_block_pressed.connect(_on_add_block)
-		input.remove_block_pressed.connect(_on_remove_block)
-		input.item_switched.connect(play_swap_item.bind(true))
-		input.item_slot_pressed.connect(play_swap_item)
+		if _input_allowed:
+			input.add_block_pressed.connect(_on_add_block)
+			input.remove_block_pressed.connect(_on_remove_block)
+			input.item_switched.connect(play_swap_item.bind(true))
+			input.item_slot_pressed.connect(play_swap_item)
+		else:
+			input.allow_mouse = true
 	
 	# Look Component
 	look = _handler.get_component(LookComponent)
-	if look and input:
+	if look and input and _input_allowed:
 		input.look_direction_changed.connect(look._on_look)
 	
 	# Gravity Component
 	gravity = _handler.get_component(GravityComponent)
-	if gravity:
+	if gravity and _gravity_allowed:
 		_handler.set_active(GravityComponent, true)
 		gravity.chunk_manager = chunk_manager
 	
@@ -159,6 +175,8 @@ func _process(_delta: float) -> void:
 # Physics Process
 #----------------
 func _physics_process(_delta: float) -> void:
+	if _player_auto_rotate:
+		look._on_look(Vector2(_rotation_speed * _delta,0))
 	_loaded_chunk_bounds()
 	camera.set_rotation(look.pitch, look.yaw, 0)
 
@@ -197,8 +215,16 @@ func _change_block(value: int, is_wheel:bool = false) -> void:
 		current_slot = wrapi(current_slot + value, 0, TerrianData.UseableBlock.size())
 	else:
 		current_slot = wrapi(value, 0, TerrianData.UseableBlock.size()) 
+	
+	_change_inventory_highlight(current_slot)
+	
 	terrian_type = TerrianData.TerrianType.values()[current_slot]
 	default_cube_mesh.change_block_type(terrian_type)
+
+
+func _change_inventory_highlight(slot:int) -> void:
+	const start_pos: Vector2 = Vector2(6.0, 6.0)
+	highlight_inventory_slot.position.x = start_pos.x + (highlight_inventory_slot.size.x * slot) + 1 + current_slot if slot > 0 else start_pos.x
 
 
 #----------------
@@ -250,7 +276,6 @@ func _on_add_block() -> void:
 # Remove Block
 #----------------
 func _on_remove_block() -> void:
-	if _is_removing: return
 	if _is_swapping: return
 		
 	var ray_hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
@@ -336,7 +361,7 @@ func _on_hand_frame_changed() -> void:
 				default_cube_mesh.show()
 				
 		&"RemoveBlock":
-			if hand.frame == 8 and not _block_removed_this_swing and _has_pending_remove:
+			if not _block_removed_this_swing and _has_pending_remove:
 				remove_block.emit(_pending_remove_block)
 				_block_removed_this_swing = true
 				_has_pending_remove = false

@@ -5,6 +5,6 @@
 [node name="GameManager" type="Node" unique_id=1787820013]
 script = ExtResource("1_mtm67")
 
-[node name="SceneManger" type="Node" parent="." unique_id=751169187]
+[node name="SceneManager" type="Node" parent="." unique_id=751169187]
 
-[node name="UIManager" type="Node" parent="." unique_id=1547022617]
+[node name="UIManager" type="CanvasLayer" parent="." unique_id=304332026]

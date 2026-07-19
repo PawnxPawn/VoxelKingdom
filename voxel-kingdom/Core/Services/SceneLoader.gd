@@ -13,8 +13,8 @@ enum Scenes {
 }
 
 const _PRELOADED_SCENES: Dictionary = {
-	# Scenes.MAIN_MENU: preload(""),
-	# Scenes.TEST: preload(""),
+	Scenes.MAIN_MENU: preload("uid://dmwg6px0ksu2j"),
+	Scenes.TEST: preload("uid://bh2djwpacg08n"),
 }
 
 const _DYNAMIC_SCENES: Dictionary = {
@@ -86,10 +86,28 @@ func _add_to_scene(_scene: Scenes) -> void:
 func _clean_up() -> void:
 	if not _loaded_scenes.is_empty():
 		for key in _loaded_scenes:
-			_loaded_scenes[key].queue_free()
+			var scene_instance: Node = _loaded_scenes[key]
+			_shutdown_chunk_managers_in(scene_instance)
+			scene_instance.queue_free()
 		
 		_loaded_scenes.clear()
 
+
+func _shutdown_chunk_managers_in(scene_instance: Node) -> void:
+	var found: Array[Node] = scene_instance.find_children("*", "ChunkManager", true, false)
+	
+	for node: Node in found:
+		var chunk_manager: ChunkManager = node as ChunkManager
+		if chunk_manager == null:
+			continue
+			
+		chunk_manager.request_shutdown()
+		
+		var task_ids: Array = chunk_manager.active_task_ids.duplicate()
+		for task_id: int in task_ids:
+			WorkerThreadPool.wait_for_task_completion(task_id)
+			
+		chunk_manager.active_task_ids.clear()
 
 #----------------
 # Scene Manager Check
@@ -100,3 +118,9 @@ func _scene_manager_check() -> bool:
 		return false
 	
 	return true
+
+
+func quit() -> void:
+	_clean_up()
+	if scene_manager:
+		scene_manager.get_tree().quit()

@@ -74,6 +74,7 @@ func wake_neighbors(world_voxel_position: Vector3i) -> void:
 #-###########################################
 
 func _run_tick() -> void:
+	if chunk_manager != null and chunk_manager.is_thread_stopping: return
 	if _thread_busy:
 		return
 		
@@ -101,7 +102,9 @@ func _run_tick() -> void:
 func _thread_worker(positions_to_process: Array[Vector3i]) -> void:
 	var edits_by_chunk: Dictionary[Vector3i, Array] = {}
 	
+	
 	for world_position: Vector3i in positions_to_process:
+		if chunk_manager != null and chunk_manager.is_thread_stopping: break
 		_process_water_voxel(world_position, edits_by_chunk)
 	
 	_thread_mutex.lock()
@@ -199,3 +202,9 @@ func _apply_edits(edits_by_chunk: Dictionary) -> void:
 			continue
 		
 		chunk.apply_water_voxel_edits(edits_by_chunk[chunk_world_key])
+
+
+func _exit_tree() -> void:
+	if _thread != null:
+		_thread.wait_to_finish()
+		_thread = null

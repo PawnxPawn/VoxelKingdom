@@ -17,10 +17,12 @@
 [ext_resource type="Script" uid="uid://c0ngd7j6j2vl3" path="res://Scenes/Player/BlockHighlight.gd" id="14_7g0yx"]
 [ext_resource type="Script" uid="uid://c17qkcd8jdwy8" path="res://Core/States/Player/PlayerSwimState.gd" id="14_hnuln"]
 [ext_resource type="PackedScene" uid="uid://c6yyee7na55t2" path="res://Scenes/Blocks/VisualBlocks/DefaultBlock.tscn" id="15_dey5f"]
+[ext_resource type="Script" uid="uid://yts5l84jmtgd" path="res://Core/States/Player/MenuState.gd" id="15_jincj"]
 [ext_resource type="Script" uid="uid://dqun06oabbeuc" path="res://Test/TestWorld/WaterOverlay.gd" id="17_hnuln"]
 [ext_resource type="Texture2D" uid="uid://chktsmn2ayrm1" path="res://Assets/hand/hand-Sheet.png" id="18_rcvs5"]
 [ext_resource type="Texture2D" uid="uid://c6lce08tmy68k" path="res://Assets/hand/hand inventory selection-Sheet.png" id="19_aqm4k"]
 [ext_resource type="Texture2D" uid="uid://p1fovxik4bqa" path="res://Assets/Inventory/inventory slots.png" id="20_h8ma5"]
+[ext_resource type="Texture2D" uid="uid://segjkck3kgo3" path="res://Assets/Inventory/highlight.png" id="21_eksi1"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_w45gy"]
 radius = 0.4
@@ -236,7 +238,7 @@ animations = [{
 }],
 "loop": 0,
 "name": &"RemoveBlock",
-"speed": 60.0
+"speed": 36.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -273,7 +275,7 @@ metadata/_custom_type_script = "uid://uj3fpyqghe2v"
 [node name="StateMachine" type="Node" parent="." unique_id=1902570200]
 unique_name_in_owner = true
 script = ExtResource("2_xpcdj")
-state_scripts = Array[GDScript]([ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2"), ExtResource("12_oikmp"), ExtResource("14_hnuln")])
+state_scripts = Array[GDScript]([ExtResource("8_7g0yx"), ExtResource("9_dey5f"), ExtResource("11_74mp2"), ExtResource("12_oikmp"), ExtResource("14_hnuln"), ExtResource("15_jincj")])
 metadata/_custom_type_script = "uid://cgduh0h7grupy"
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1263752586]
@@ -302,6 +304,7 @@ mesh = SubResource("ArrayMesh_dey5f")
 script = ExtResource("14_7g0yx")
 
 [node name="Hand" type="AnimatedSprite2D" parent="." unique_id=1569869357]
+z_index = -7
 position = Vector2(235, 886)
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_w45gy")
@@ -309,6 +312,7 @@ animation = &"RemoveBlock"
 autoplay = "RemoveBlockIdle"
 
 [node name="DisplayItem" type="SubViewportContainer" parent="." unique_id=1020413013]
+z_index = -6
 offset_left = 117.0
 offset_top = 763.0
 offset_right = 373.0
@@ -358,7 +362,7 @@ light_indirect_energy = 0.25
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=768392587]
 
 [node name="DisplayItem2" type="SubViewportContainer" parent="CanvasLayer" unique_id=1551910986]
-z_index = 1
+z_index = -2
 offset_left = 568.0
 offset_top = 930.0
 offset_right = 1316.0
@@ -393,6 +397,7 @@ grow_horizontal = 2
 grow_vertical = 0
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer/InventoryBar" unique_id=306302045]
+z_index = -3
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -401,7 +406,8 @@ anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -14.0
 offset_top = -34.0
-offset_right = 358.0
+offset_right = 351.0
+offset_bottom = 1.5
 grow_horizontal = 2
 grow_vertical = 0
 scale = Vector2(2, 2)
@@ -415,17 +421,29 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -40.0
-offset_right = 358.0
+offset_left = -399.0
+offset_top = -80.0
+offset_right = 345.0
+offset_bottom = 4.0
 grow_horizontal = 2
 grow_vertical = 0
-scale = Vector2(2, 2)
-pivot_offset = Vector2(378, 40)
+pivot_offset = Vector2(372, 42)
 texture = ExtResource("20_h8ma5")
+
+[node name="HighlightInventorySlot" type="TextureRect" parent="CanvasLayer/InventoryBar/TextureRect" unique_id=565986154]
+unique_name_in_owner = true
+modulate = Color(0.9286769, 0.9390528, 0.7522228, 1)
+z_index = -1
+layout_mode = 0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 78.0
+offset_bottom = 78.0
+texture = ExtResource("21_eksi1")
 
 [node name="WaterOverlay" type="ColorRect" parent="CanvasLayer" unique_id=241175340]
 unique_name_in_owner = true
+z_index = -5
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("17_hnuln")
@@ -442,51 +460,51 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.42399, 0, 0)
 top_level = true
 
 [node name="InvBar1" parent="InventoryBar" unique_id=1368739411 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -4.44, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -4.38, -0.15, 0)
 layers = 524288
 block_type = 0
 
 [node name="InvBar2" parent="InventoryBar" unique_id=237469503 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -3.395, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -3.425, -0.15, 0)
 layers = 524288
 
 [node name="InvBar3" parent="InventoryBar" unique_id=723969651 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -2.365, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -2.475, -0.15, 0)
 layers = 524288
 block_type = 2
 
 [node name="InvBar4" parent="InventoryBar" unique_id=1650311765 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -1.35, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -1.515, -0.15, 0)
 layers = 524288
 block_type = 3
 
 [node name="InvBar5" parent="InventoryBar" unique_id=1774247641 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -0.425, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, -0.56, -0.15, 0)
 layers = 524288
 block_type = 4
 
 [node name="InvBar6" parent="InventoryBar" unique_id=154979839 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 0.59, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 0.38, -0.15, 0)
 layers = 524288
 block_type = 5
 
 [node name="InvBar7" parent="InventoryBar" unique_id=605014772 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 1.51, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 1.325, -0.15, 0)
 layers = 524288
 block_type = 6
 
 [node name="InvBar8" parent="InventoryBar" unique_id=1395133036 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 2.485, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 2.295, -0.15, 0)
 layers = 524288
 block_type = 7
 
 [node name="InvBar9" parent="InventoryBar" unique_id=696452876 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 3.455, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 3.23, -0.15, 0)
 layers = 524288
 block_type = 8
 
 [node name="InvBar10" parent="InventoryBar" unique_id=1514892841 instance=ExtResource("15_dey5f")]
-transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 4.4, -0.12, 0)
+transform = Transform3D(0.5, 0, 0, 0, 0.48692173, 0.113609985, 0, -0.113609985, 0.48692173, 4.2, -0.15, 0)
 layers = 524288
 block_type = 9
 

@@ -26,15 +26,15 @@ var instance: ChunkManager
 @export var unload_buffer_in_chunks: int = 4
 
 @export_group("Directional Streaming")
-@export var core_radius_in_chunks: int = 1
+@export var core_radius_in_chunks: int = 2
 @export var forward_dot_threshold: float = 0.6
 @export var direction_change_dot_threshold: float = 0.3
 @export var behind_unload_buffer_in_chunks: int = 2
 
-@onready var seed_label: Label = %SeedLabel
+@onready var seed_label: Label = get_node_or_null(^"%SeedLabel")
 
 @export_group("Vertical Streaming")
-@export var view_distance_in_chunks_y: int = 2
+@export var view_distance_in_chunks_y: int = 1
 @export var unload_buffer_in_chunks_y: int = 2
 
 @export_group("Surface Visibility While Flying")
@@ -140,6 +140,12 @@ var vertical_streaming_locked_to_spawn: bool = true
 
 
 #-##########################################
+# Thread Stopping
+#-##########################################
+
+var is_thread_stopping: bool = false
+
+#-##########################################
 # Chunk Refresh Per Frame
 #-##########################################
 var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
@@ -183,8 +189,8 @@ func _ready() -> void:
 	tree_noise.frequency = 0.02
 	tree_noise.seed = noise_seed + 100
 
-	
-	seed_label.text = "Seed: %s" % noise_seed
+	if seed_label:
+		seed_label.text = "Seed: %s" % noise_seed
 	
 	number_of_chunks = Vector3i(
 		ceili(float(world_dimensions.x) / float(chunk_size)),
@@ -253,6 +259,7 @@ func _flush_pending_neighbor_rebuilds() -> void:
 
 
 func _flush_pending_chunks() -> void:
+	if is_thread_stopping: return
 	var chunks_to_add: Array[Chunk] = []
 	
 	pending_chunks_mutex.lock()
@@ -610,6 +617,7 @@ func _queue_neighbor_rebuild(chunk_world_key: Vector3i) -> void:
 #-###########################################
 
 func _dispatch_load_queue() -> void:
+	if is_thread_stopping: return
 	var count: int = min(dispatch_chunks_per_frame, load_queue.size())
 	for index: int in range(count):
 		var chunk_world_key: Vector3i = load_queue.pop_front()
@@ -685,6 +693,7 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 #-###########################################
 
 func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
+	if is_thread_stopping: return
 	var new_chunk: Chunk = chunk_scene.instantiate() as Chunk
 	new_chunk.chunk_manager = self
 	
@@ -695,6 +704,8 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 	) * float(chunk_size)
 	
 	new_chunk.chunk_world_origin = chunk_grid_coord * chunk_size
+	
+	if is_thread_stopping: return
 	
 	new_chunk.generate_date(
 		chunk_size,
@@ -741,7 +752,12 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 			new_chunk.chunk_data.add_voxel(local_pos, voxel_type)
 		
 	new_chunk.generate_mesh()
+	
+	if is_thread_stopping: return
+	
 	new_chunk.compute_collision_boxes()
+	
+	if is_thread_stopping: return
 	
 	chunks_mutex.lock()
 	chunks_by_key[chunk_world_key] = new_chunk
@@ -976,3 +992,14 @@ func _on_player_add_block(target_block: Vector3i, _normal: Vector3i, terrain_typ
 
 func _on_player_remove_block(target_block: Vector3i) -> void:
 	remove_voxel_at_position(target_block)
+
+
+#-###########################################
+# Thread Stopping
+#-###########################################
+
+func request_shutdown() -> void:
+	is_thread_stopping = true
+	load_queue.clear()
+	_pending_neighbor_rebuilds.clear()
+	_pending_neighbor_rebuilds_flags.clear()

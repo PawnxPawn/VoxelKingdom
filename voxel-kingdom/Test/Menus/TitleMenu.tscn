@@ -1,0 +1,436 @@
+[gd_scene format=3 uid="uid://dmwg6px0ksu2j"]
+
+[ext_resource type="Script" uid="uid://m21u4xqp7s55" path="res://Test/TestWorld/ChunkManager.gd" id="1_prvd2"]
+[ext_resource type="Script" uid="uid://bh754eggcmrdx" path="res://Test/Menus/TitleMenu.gd" id="1_s3fem"]
+[ext_resource type="Script" uid="uid://da06rduc8cbas" path="res://Test/TestWorld/WaterDetect.gd" id="2_xv1hu"]
+[ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="3_aefkp"]
+[ext_resource type="Texture2D" uid="uid://2gr5al6axbru" path="res://Assets/Menu/MainMenu/MainMenuTitle.png" id="4_aefkp"]
+[ext_resource type="Texture2D" uid="uid://dsgrn4b45qwr2" path="res://Assets/Menu/MainMenu/Boot.png" id="5_k7btm"]
+[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="6_g3a1x"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fqsfu"]
+sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
+sky_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
+ground_bottom_color = Color(0.42745098, 0.6509804, 1, 1)
+ground_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
+
+[sub_resource type="Sky" id="Sky_ab4hr"]
+sky_material = SubResource("ProceduralSkyMaterial_fqsfu")
+
+[sub_resource type="Environment" id="Environment_prvd2"]
+background_mode = 2
+sky = SubResource("Sky_ab4hr")
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
+fog_sun_scatter = 0.14
+fog_density = 0.0
+fog_aerial_perspective = 0.5
+fog_depth_curve = 1e-05
+fog_depth_begin = 868.5
+fog_depth_end = 1004.4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g3a1x"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_e0yiv"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s3fem"]
+atlas = ExtResource("5_k7btm")
+region = Rect2(69, 98, 242.67055, 20.773682)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w45gy"]
+atlas = ExtResource("5_k7btm")
+region = Rect2(69.39055, 125.02281, 242.67055, 20.773682)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k7btm"]
+atlas = ExtResource("5_k7btm")
+region = Rect2(69, 152, 242.67055, 20.773682)
+
+[sub_resource type="Theme" id="Theme_s3fem"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g3a1x"]
+atlas = ExtResource("5_k7btm")
+region = Rect2(69, 179, 242.67055, 20.773682)
+
+[sub_resource type="LabelSettings" id="LabelSettings_w45gy"]
+font = ExtResource("6_g3a1x")
+font_size = 84
+font_color = Color(0.60784316, 0.6784314, 0.7176471, 1)
+shadow_size = 16
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(1, 12.335)
+
+[sub_resource type="LabelSettings" id="LabelSettings_g3a1x"]
+font = ExtResource("6_g3a1x")
+font_size = 60
+font_color = Color(0.60784316, 0.6784314, 0.7176471, 1)
+shadow_size = 16
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(1, 12.335)
+
+[sub_resource type="LabelSettings" id="LabelSettings_3br18"]
+font = ExtResource("6_g3a1x")
+font_size = 60
+font_color = Color(0.6620639, 0.80705243, 0.9034646, 1)
+shadow_size = 16
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(1, 12.335)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_w4u2d"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_24bog"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ddt5i"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5utwj"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ujebd"]
+
+[node name="TitleMenu" type="Node3D" unique_id=363614013]
+script = ExtResource("1_s3fem")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=625438936]
+transform = Transform3D(0.9743701, -0.22236261, -0.034026157, -0.14685826, -0.74337274, 0.6525563, -0.17039822, -0.63083434, -0.7569759, 0, 3.9366724, -9.205248)
+light_bake_mode = 1
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1323188711]
+environment = SubResource("Environment_prvd2")
+
+[node name="ChunkManager" type="Node" parent="." unique_id=56504370]
+script = ExtResource("1_prvd2")
+view_distance_in_chunks = 10
+core_radius_in_chunks = 10
+metadata/_custom_type_script = "uid://m21u4xqp7s55"
+
+[node name="WaterDetector" type="Node" parent="." unique_id=2062160651]
+script = ExtResource("2_xv1hu")
+metadata/_custom_type_script = "uid://da06rduc8cbas"
+
+[node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager", "water_detector") instance=ExtResource("3_aefkp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 150, 0)
+chunk_manager = NodePath("../ChunkManager")
+water_detector = NodePath("../WaterDetector")
+_in_main_menu = true
+_gravity_allowed = false
+_input_allowed = false
+_player_auto_rotate = true
+
+[node name="CharacterMesh" parent="Player" index="0" unique_id=155209410]
+visible = false
+
+[node name="CollisionShape3D" parent="Player" index="1" unique_id=801005380]
+visible = false
+
+[node name="ColorRect" parent="Player" index="4" unique_id=1263752586]
+visible = false
+
+[node name="RayCast3D" parent="Player" index="5" unique_id=1585101922]
+visible = false
+
+[node name="BlockHighlight" parent="Player" index="6" unique_id=1962566818]
+visible = false
+
+[node name="Hand" parent="Player" index="7" unique_id=1569869357]
+visible = false
+
+[node name="DisplayItem" parent="Player" index="8" unique_id=1020413013]
+visible = false
+
+[node name="SubViewport" parent="Player/DisplayItem" index="0" unique_id=531835647]
+render_target_update_mode = 0
+
+[node name="Camera3D" parent="Player/DisplayItem/SubViewport" index="0" unique_id=1176292309]
+visible = false
+
+[node name="DisplayItemViewport" parent="Player" index="9" unique_id=847236374]
+visible = false
+
+[node name="OmniLight3D" parent="Player" index="10" unique_id=128926134]
+visible = false
+
+[node name="CanvasLayer" parent="Player" index="11" unique_id=768392587]
+visible = false
+
+[node name="SubViewport" parent="Player/CanvasLayer/DisplayItem2" parent_id_path=PackedInt32Array(900159298, 1551910986) index="0" unique_id=1388300029]
+render_target_update_mode = 0
+
+[node name="Camera3D" parent="Player/CanvasLayer/DisplayItem2/SubViewport" index="0" unique_id=384925859]
+visible = false
+
+[node name="Eyes" parent="Player" index="12" unique_id=1934927792]
+visible = false
+
+[node name="Feet" parent="Player" index="13" unique_id=34513168]
+visible = false
+
+[node name="InventoryBar" parent="Player" index="14" unique_id=2105644241]
+visible = false
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=631341261]
+
+[node name="TitleScreen" type="Control" parent="CanvasLayer" unique_id=301343103]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Title" type="TextureRect" parent="CanvasLayer/TitleScreen" unique_id=575553588]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 748.0
+offset_top = 328.0
+offset_right = 1132.0
+offset_bottom = 712.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(4, 4)
+pivot_offset = Vector2(192, 78.68)
+texture = ExtResource("4_aefkp")
+
+[node name="PressAnyKey" type="Panel" parent="CanvasLayer/TitleScreen" unique_id=347630219]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 937.0
+offset_top = 659.0
+offset_right = 977.0
+offset_bottom = 699.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_g3a1x")
+
+[node name="PressKey" type="Label" parent="CanvasLayer/TitleScreen/PressAnyKey" unique_id=2002201897]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -389.0
+offset_top = 44.0
+offset_right = 359.0
+offset_bottom = 116.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 5
+theme_override_constants/shadow_offset_y = 5
+theme_override_constants/shadow_outline_size = 10
+theme_override_fonts/font = ExtResource("6_g3a1x")
+theme_override_font_sizes/font_size = 48
+text = "Press Any Key"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TitleButtons" type="Panel" parent="CanvasLayer/TitleScreen" unique_id=2068132083]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_e0yiv")
+
+[node name="GenerateWorld" type="TextureButton" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=547514580]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 510.0
+offset_right = 1061.5
+offset_bottom = 530.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+texture_normal = SubResource("AtlasTexture_s3fem")
+texture_pressed = SubResource("AtlasTexture_s3fem")
+texture_hover = SubResource("AtlasTexture_s3fem")
+texture_disabled = SubResource("AtlasTexture_s3fem")
+texture_focused = SubResource("AtlasTexture_s3fem")
+
+[node name="Options" type="TextureButton" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=1348817605]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 627.0
+offset_right = 1061.5
+offset_bottom = 647.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+texture_normal = SubResource("AtlasTexture_w45gy")
+texture_pressed = SubResource("AtlasTexture_w45gy")
+texture_hover = SubResource("AtlasTexture_w45gy")
+texture_disabled = SubResource("AtlasTexture_w45gy")
+texture_focused = SubResource("AtlasTexture_w45gy")
+
+[node name="Credits" type="TextureButton" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=1138838570]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 744.0
+offset_right = 1061.5
+offset_bottom = 764.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+texture_normal = SubResource("AtlasTexture_k7btm")
+texture_pressed = SubResource("AtlasTexture_k7btm")
+texture_hover = SubResource("AtlasTexture_k7btm")
+texture_disabled = SubResource("AtlasTexture_k7btm")
+texture_focused = SubResource("AtlasTexture_k7btm")
+
+[node name="Quit" type="TextureButton" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=435708742]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 861.0
+offset_right = 1061.5
+offset_bottom = 881.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+theme = SubResource("Theme_s3fem")
+texture_normal = SubResource("AtlasTexture_g3a1x")
+texture_pressed = SubResource("AtlasTexture_g3a1x")
+texture_hover = SubResource("AtlasTexture_g3a1x")
+texture_disabled = SubResource("AtlasTexture_g3a1x")
+texture_focused = SubResource("AtlasTexture_g3a1x")
+
+[node name="Credits" type="Panel" parent="CanvasLayer/TitleScreen" unique_id=217753276]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 452.0
+offset_top = 160.0
+offset_right = 452.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Credits" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=994440454]
+layout_mode = 0
+offset_left = 214.0
+offset_top = -131.0
+offset_right = 735.0
+offset_bottom = -47.0
+text = "Credits"
+label_settings = SubResource("LabelSettings_w45gy")
+
+[node name="Programmer" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=1673096433]
+layout_mode = 0
+offset_left = -342.0
+offset_top = 45.0
+offset_right = 1254.0
+offset_bottom = 129.0
+text = "Programmer"
+label_settings = SubResource("LabelSettings_g3a1x")
+horizontal_alignment = 1
+
+[node name="ProgrammerName" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=197177615]
+layout_mode = 0
+offset_left = -336.0
+offset_top = 139.0
+offset_right = 1260.0
+offset_bottom = 223.0
+text = "Patrick Heil (Pawn)"
+label_settings = SubResource("LabelSettings_3br18")
+horizontal_alignment = 1
+
+[node name="Artist" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=458711468]
+layout_mode = 0
+offset_left = -342.0
+offset_top = 269.0
+offset_right = 1254.0
+offset_bottom = 353.0
+text = "Artist"
+label_settings = SubResource("LabelSettings_g3a1x")
+horizontal_alignment = 1
+
+[node name="ArtistName" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=1227734261]
+layout_mode = 0
+offset_left = -336.0
+offset_top = 363.0
+offset_right = 1260.0
+offset_bottom = 447.0
+text = "Vesper"
+label_settings = SubResource("LabelSettings_3br18")
+horizontal_alignment = 1
+
+[node name="Composer" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=559840909]
+layout_mode = 0
+offset_left = -342.0
+offset_top = 513.0
+offset_right = 1254.0
+offset_bottom = 597.0
+text = "Composer"
+label_settings = SubResource("LabelSettings_g3a1x")
+horizontal_alignment = 1
+
+[node name="ComposerName" type="Label" parent="CanvasLayer/TitleScreen/Credits" unique_id=819071881]
+layout_mode = 0
+offset_left = -336.0
+offset_top = 607.0
+offset_right = 1260.0
+offset_bottom = 691.0
+text = "Some random dev"
+label_settings = SubResource("LabelSettings_3br18")
+horizontal_alignment = 1
+
+[node name="CreditsBack" type="Button" parent="CanvasLayer/TitleScreen/Credits" unique_id=1160352766]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 346.0
+offset_top = 759.0
+offset_right = 584.0
+offset_bottom = 839.0
+theme_override_colors/font_focus_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
+theme_override_colors/font_pressed_color = Color(0.37413925, 0.37413928, 0.37413922, 1)
+theme_override_colors/font_hover_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
+theme_override_fonts/font = ExtResource("6_g3a1x")
+theme_override_font_sizes/font_size = 72
+theme_override_styles/normal = SubResource("StyleBoxEmpty_w4u2d")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_24bog")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_ddt5i")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_5utwj")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ujebd")
+text = "Back"
+
+[editable path="Player"]
+[editable path="Player/CharacterMesh"]

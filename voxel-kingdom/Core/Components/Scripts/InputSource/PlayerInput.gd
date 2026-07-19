@@ -12,6 +12,7 @@ var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
 
 var movement_direction: Vector2 = Vector2.ZERO
 
+var allow_mouse: bool = false
 var is_place_mode_active: bool = false
 var is_jump_held: bool = false
 
@@ -23,9 +24,6 @@ var pending_look_direction: Vector2 = Vector2.ZERO
 #----------------
 # Lifecycle
 #----------------
-func ready() -> void:
-	change_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-
 
 func process(_delta: float) -> void:
 	look_direction = pending_look_direction
@@ -151,9 +149,11 @@ func _process_item_switch_input() -> void:
 #----------------
 func input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"Add_Block"):
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			
+		if not allow_mouse:
+			if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# TODO: DELETE after pause menu is added
 	if event.is_action_pressed(&"ui_cancel") and not OS.has_feature("web"):
 		_owner.get_tree().quit()

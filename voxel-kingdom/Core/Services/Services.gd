@@ -15,6 +15,7 @@ var debug: Debug
 # Lifecycle
 #----------------
 func _ready() -> void:
+	get_tree().set_auto_accept_quit(false)
 	_register_services()
 	debug.add_debug_label(
 		&"GameState",
@@ -55,3 +56,8 @@ func set_ui_manager(ui_manager: Node) -> void:
 #----------------
 func set_scene_manager(scene_manager: Node) -> void:
 	scene_loader.scene_manager = scene_manager
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		scene_loader.quit()
