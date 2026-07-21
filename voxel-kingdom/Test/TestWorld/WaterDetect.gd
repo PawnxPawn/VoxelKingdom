@@ -1,7 +1,6 @@
 #-###########################################
 # WaterDetector
 #-###########################################
-
 class_name WaterDetector
 extends Node
 
@@ -11,30 +10,29 @@ signal head_submerged_changed(is_submerged: bool)
 @export var chunk_manager: ChunkManager
 @export var feet_point: Node3D
 @export var head_point: Node3D
-@export var check_interval: float = 0.1
 
-var _timer: float = 0.0
+const HYSTERESIS_MARGIN: float = 0.15
+
 var _feet_submerged: bool = false
 var _head_submerged: bool = false
 
 
-func _process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	if chunk_manager == null:
 		return
-	
-	_timer += delta
-	if _timer < check_interval:
-		return
-	_timer = 0.0
 	
 	_check_point(feet_point.global_position, true)
 	_check_point(head_point.global_position, false)
 
 
 func _check_point(pos: Vector3, is_feet: bool) -> void:
+	var currently_submerged: bool = _feet_submerged if is_feet else _head_submerged
+	
+	var biased_y: float = pos.y - HYSTERESIS_MARGIN if currently_submerged else pos.y + HYSTERESIS_MARGIN
+	
 	var voxel: Vector3i = Vector3i(
 		roundi(pos.x),
-		roundi(pos.y),
+		roundi(biased_y),
 		roundi(pos.z)
 	)
 	

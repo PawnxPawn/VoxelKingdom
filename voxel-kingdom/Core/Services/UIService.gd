@@ -1,7 +1,6 @@
 #-###########################################
 # UI Manager
 #-###########################################
-
 class_name UI
 extends Node
 
@@ -17,7 +16,8 @@ enum Uis {
 }
 
 const _UI_SCENES_PRELOAD: Dictionary = {
-	# Uis.GAME_SETTINGS: preload("uid://dxyeviydep8bt")
+	Uis.GAME_SETTINGS: preload("uid://b4t8bgelv3vsd"),
+	Uis.PAUSE: preload("uid://dfmyan3smw5s4")
 }
 
 var ui_manager: CanvasLayer = null
@@ -96,3 +96,12 @@ func _ui_manager_check() -> bool:
 		return false
 	
 	return true
+
+
+#-#######################
+# Helpers
+#-#######################
+
+func is_ui_shown(ui:Uis) -> bool:
+	print(_active_uis)
+	return _active_uis.has(ui)

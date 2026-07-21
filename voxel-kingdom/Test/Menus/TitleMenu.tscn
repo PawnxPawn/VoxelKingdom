@@ -18,14 +18,12 @@ ground_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
 sky_material = SubResource("ProceduralSkyMaterial_fqsfu")
 
 [sub_resource type="Environment" id="Environment_prvd2"]
-background_mode = 2
 sky = SubResource("Sky_ab4hr")
 glow_enabled = true
 fog_enabled = true
 fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
 fog_sun_scatter = 0.14
 fog_density = 0.0
-fog_aerial_perspective = 0.5
 fog_depth_curve = 1e-05
 fog_depth_begin = 868.5
 fog_depth_end = 1004.4
@@ -91,6 +89,7 @@ script = ExtResource("1_s3fem")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=625438936]
 transform = Transform3D(0.9743701, -0.22236261, -0.034026157, -0.14685826, -0.74337274, 0.6525563, -0.17039822, -0.63083434, -0.7569759, 0, 3.9366724, -9.205248)
+light_color = Color(0.52156866, 0.52156866, 0.52156866, 1)
 light_bake_mode = 1
 shadow_enabled = true
 
@@ -263,7 +262,6 @@ texture_disabled = SubResource("AtlasTexture_s3fem")
 texture_focused = SubResource("AtlasTexture_s3fem")
 
 [node name="Options" type="TextureButton" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=1348817605]
-visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5

@@ -1,14 +1,13 @@
 #-###########################################
 # Services Root
 #-###########################################
-
 extends Node
 
 var game_state: GameState
 var scene_loader: SceneLoader
 var ui: UI
 var debug: Debug
-# var audio_services
+var audio: Audio
 
 
 #----------------
@@ -33,8 +32,13 @@ func _register_services() -> void:
 	scene_loader = SceneLoader.new()
 	ui = UI.new()
 	
+	audio = Audio.new()
+	add_child(audio)
+	
+	
 	debug = Debug.new()
 	add_child(debug)
+	
 
 
 #----------------
@@ -50,6 +54,11 @@ func _deregister_service() -> void:
 func set_ui_manager(ui_manager: Node) -> void:
 	ui.ui_manager = ui_manager
 
+#----------------
+# UI Manager
+#----------------
+func set_audio_manager(audio_manager: Node) -> void:
+	audio.audio_manager = audio_manager
 
 #----------------
 # Scene Manager

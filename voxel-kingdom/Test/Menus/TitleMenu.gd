@@ -9,11 +9,25 @@ extends Node3D
 
 func _ready() -> void:
 	Services.game_state.change_game_state(GameState.GameStates.MAIN_MENU)
+	Services.audio.set_loop(true)
+	Services.audio.play_music(Audio.Music_Titles.MENUS)
 	_connect_signals()
 	_setup_initial_state()
 	set_process_input(true)
 	if OS.has_feature("web"):
 		%Quit.visible = false
+
+
+func _connect_signals() -> void:
+	Services.ui.ui_hidden.connect(_on_ui_hidden)
+	credits_back.button_up.connect(_credits_back)
+	for button in title_buttons.get_children():
+		if button is TextureButton: 
+			button.button_down.connect(_on_button_down.bind(button))
+			button.button_up.connect(_on_button_up.bind(button))
+			button.mouse_entered.connect(_on_button_hover.bind(button, true))
+			button.mouse_exited.connect(_on_button_hover.bind(button, false))
+
 
 func _setup_initial_state() -> void:
 	title_buttons.visible = false
@@ -38,14 +52,6 @@ func _start_title_transition() -> void:
 	tween.tween_property(title_buttons, "modulate:a", 1.0, 0.6)
 
 
-func _connect_signals() -> void:
-	credits_back.button_up.connect(_credits_back)
-	for button in title_buttons.get_children():
-		if button is TextureButton: 
-			button.button_down.connect(_on_button_down.bind(button))
-			button.button_up.connect(_on_button_up.bind(button))
-			button.mouse_entered.connect(_on_button_hover.bind(button, true))
-			button.mouse_exited.connect(_on_button_hover.bind(button, false))
 
 
 func _on_button_down(button: TextureButton) -> void:
@@ -95,9 +101,8 @@ func _on_ui_hidden(ui:UI.Uis) -> void:
 
 
 func _disconnect_external_signals() -> void:
-	pass
-	#Services.ui.ui_hidden.disconnect(_on_ui_hidden) 
-
+	Services.ui.ui_hidden.disconnect(_on_ui_hidden)
 
 func _exit_tree() -> void:
+	Services.audio.stop_music()
 	_disconnect_external_signals()

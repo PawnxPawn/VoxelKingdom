@@ -31,6 +31,7 @@ var instance: ChunkManager
 @export var direction_change_dot_threshold: float = 0.3
 @export var behind_unload_buffer_in_chunks: int = 2
 
+
 @onready var seed_label: Label = get_node_or_null(^"%SeedLabel")
 
 @export_group("Vertical Streaming")
@@ -114,6 +115,8 @@ var pending_tree_edits_mutex: Mutex = Mutex.new()
 
 var _pending_neighbor_rebuilds: Array[Vector3i] = []
 var _pending_neighbor_rebuilds_mutex: Mutex = Mutex.new()
+
+var max_concurrent_chunk_tasks = max(4, OS.get_processor_count() - 2)
 
 #-###########################################
 # Streaming / Movement State
@@ -618,7 +621,16 @@ func _queue_neighbor_rebuild(chunk_world_key: Vector3i) -> void:
 
 func _dispatch_load_queue() -> void:
 	if is_thread_stopping: return
-	var count: int = min(dispatch_chunks_per_frame, load_queue.size())
+	
+	loading_chunks_mutex.lock()
+	var in_flight: int = loading_chunks_flags.size()
+	loading_chunks_mutex.unlock()
+	
+	var available_slots: int = max_concurrent_chunk_tasks - in_flight
+	if available_slots <= 0:
+		return
+	
+	var count: int = min(min(dispatch_chunks_per_frame, available_slots), load_queue.size())
 	for index: int in range(count):
 		var chunk_world_key: Vector3i = load_queue.pop_front()
 		

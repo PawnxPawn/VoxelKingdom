@@ -36,7 +36,6 @@ var vertical_swim_acceleration: float = 6.0
 var swim_vertical_speed: float = 8.0
 var fly_up_down_speed: float = 4.0
 
-var surface_bob_speed: float = 1.5
 var climb_check_distance: float = 0.6
 #-------- End Resources -----------
 
@@ -126,7 +125,6 @@ func physics_process(delta: float) -> void:
 			climbed_out.emit()
 		return
 		
-	# normal gravity logic continues...
 	apply_characterbody_gravity()
 
 
@@ -210,13 +208,15 @@ func apply_water_gravity() -> void:
 	var target_velocity: float
 	
 	if vertical_direction > 0.0:
-		target_velocity = surface_bob_speed if _is_at_surface else swim_vertical_speed
+		target_velocity = swim_vertical_speed
+		_owner.velocity.y = move_toward(_owner.velocity.y, target_velocity, vertical_swim_acceleration * delta)
 	elif vertical_direction < 0.0:
 		target_velocity = -swim_vertical_speed
+		_owner.velocity.y = move_toward(_owner.velocity.y, target_velocity, vertical_swim_acceleration * delta)
 	else:
-		target_velocity = -water_descending_gravity * 0.3
+		target_velocity = -0.5
+		_owner.velocity.y = min(_owner.velocity.y, target_velocity)
 	
-	_owner.velocity.y = move_toward(_owner.velocity.y, target_velocity, vertical_swim_acceleration * delta)
 	_owner.velocity.y = clamp(_owner.velocity.y, -5.0, swim_vertical_speed)
 
 
@@ -244,7 +244,6 @@ func _try_climb_out() -> bool:
 	if not (ledge_is_solid_ground and headroom_is_clear):
 		return false
 
-	# --- Smooth climb-out animation ---
 	_climb_start = _owner.global_position
 	_climb_end = Vector3(forward_position.x, float(ledge_voxel.y) + 1.0, forward_position.z)
 
@@ -290,7 +289,6 @@ func set_gravity(type: GravityType, custom_ascent: float = 0.0, custom_descent: 
 	gravity_descent = presets[type][&"descent"]
 	
 	is_flying = (type == GravityType.FLYING)
-
 
 #----------------
 # Jump

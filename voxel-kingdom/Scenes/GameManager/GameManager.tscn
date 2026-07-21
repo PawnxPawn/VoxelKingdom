@@ -6,5 +6,11 @@
 script = ExtResource("1_mtm67")
 
 [node name="SceneManager" type="Node" parent="." unique_id=751169187]
+process_mode = 1
 
 [node name="UIManager" type="CanvasLayer" parent="." unique_id=304332026]
+process_mode = 3
+layer = 99
+
+[node name="AudioManager" type="Node" parent="." unique_id=1364382262]
+process_mode = 3

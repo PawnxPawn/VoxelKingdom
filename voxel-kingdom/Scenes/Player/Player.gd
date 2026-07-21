@@ -5,8 +5,6 @@
 class_name Player
 extends Entity
 
-enum HighlightMode { REMOVE, PLACE }
-
 signal add_block(position: Vector3i, normal: Vector3i, terrian: TerrianData.TerrianType)
 signal remove_block(position)
 
@@ -38,7 +36,6 @@ var input: InputSource = null
 var gravity: GravityComponent = null
 var look: LookComponent = null
 
-var highlight_mode: HighlightMode = HighlightMode.PLACE
 var current_slot: int = 0
 var terrian_type: TerrianData.TerrianType = TerrianData.TerrianType.DIRT
 
@@ -59,6 +56,7 @@ var _block_removed_this_swing: bool = false
 var _pending_remove_block: Vector3i = Vector3i.ZERO
 var _has_pending_remove: bool = false
 
+var _pause_cooldown_frames: int = 0
 
 
 #----------------
@@ -89,6 +87,10 @@ func _ready() -> void:
 	# Animation connections
 	hand.animation_finished.connect(_change_animation)
 	hand.frame_changed.connect(_on_hand_frame_changed)
+	
+	Services.ui.ui_hidden.connect(_unpause)
+	
+	play_display_idle()
 
 
 #----------------
@@ -104,6 +106,7 @@ func _connect_components() -> void:
 			input.remove_block_pressed.connect(_on_remove_block)
 			input.item_switched.connect(play_swap_item.bind(true))
 			input.item_slot_pressed.connect(play_swap_item)
+			input.paused_pressed.connect(_pause)
 		else:
 			input.allow_mouse = true
 	
@@ -120,6 +123,24 @@ func _connect_components() -> void:
 	
 	#Camera Component
 	_setup_camera()
+
+
+func _pause() -> void:
+	if not _input_allowed: return
+	if _pause_cooldown_frames > 0:
+		return
+	_input_allowed = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Services.ui.show_ui(UI.Uis.PAUSE)
+	get_tree().paused = true
+
+
+func _unpause(ui:UI.Uis) -> void:
+	if ui != UI.Uis.PAUSE: return
+	_input_allowed = true
+	_handler.set_active(InputSource, true)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_pause_cooldown_frames = 3
 
 
 #----------------
@@ -153,8 +174,6 @@ func _setup_camera() -> void:
 # Process
 #----------------
 func _process(_delta: float) -> void:
-	var current_mode: HighlightMode = get_mode()
-	
 	var hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if hit == null:
 		block_highlight.hide_highlight()
@@ -164,17 +183,18 @@ func _process(_delta: float) -> void:
 	var normal: Vector3 = hit.hit_normal
 	
 	var hit_block: Vector3i = Vector3i(round(hit_pos - normal * 0.5))
-	var normal_dir: Vector3i = Vector3i(round(normal.x), round(normal.y), round(normal.z))
 	
-	var target_block: Vector3i = hit_block if current_mode else hit_block + normal_dir
-	
-	block_highlight.show_at_block(target_block)
+	block_highlight.show_at_block(hit_block)
 
 
 #----------------
 # Physics Process
 #----------------
 func _physics_process(_delta: float) -> void:
+	if _pause_cooldown_frames > 0:
+		_pause_cooldown_frames -= 1
+		return
+	
 	if _player_auto_rotate:
 		look._on_look(Vector2(_rotation_speed * _delta,0))
 	_loaded_chunk_bounds()
@@ -192,19 +212,6 @@ func _loaded_chunk_bounds() -> void:
 		_last_valid_position = global_position
 	else:
 		global_position = _last_valid_position
-
-
-#----------------
-# Highlight Mode
-#----------------
-func get_mode() -> HighlightMode:
-	if input.is_place_mode_active:
-		if not _is_swapping and not _is_removing:
-			play_display_idle()
-		return HighlightMode.REMOVE
-	if not _is_swapping and not _is_removing:
-		play_remove_idle()
-	return HighlightMode.PLACE
 
 
 #----------------
@@ -252,6 +259,7 @@ func _would_overlap_player(target_block: Vector3i) -> bool:
 # Add Block
 #----------------
 func _on_add_block() -> void:
+	if not _input_allowed: return
 	var ray_hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if ray_hit == null:
 		return
@@ -276,7 +284,8 @@ func _on_add_block() -> void:
 # Remove Block
 #----------------
 func _on_remove_block() -> void:
-	if _is_swapping: return
+	if not _input_allowed: return
+	#if _is_removing: return
 		
 	var ray_hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if ray_hit == null:
@@ -286,11 +295,27 @@ func _on_remove_block() -> void:
 		round(ray_hit.hit_position - ray_hit.hit_normal * 0.5)
 	)
 	
+	if _is_swapping:
+		_cancel_swap_for_removal()
+	
 	_is_removing = true
 	_block_removed_this_swing = false
 	_pending_remove_block = hit_block
 	_has_pending_remove = true
+	default_cube_mesh.hide()
 	hand.play("RemoveBlock")
+
+
+#----------------
+# Cancel Swap
+#----------------
+func _cancel_swap_for_removal() -> void:
+	if not _block_changed_this_swap:
+		default_cube_mesh.hide()
+		_change_block(_swap_pending_value, _is_wheel)
+		_block_changed_this_swap = true
+	
+	_is_swapping = false
 
 
 #----------------
@@ -332,7 +357,6 @@ func is_underwater() -> bool:
 
 
 func is_at_water_surface() -> bool:
-	# Feet in water, head out of water ⇒ surface
 	return _feet_submerged and not _head_submerged
 
 
@@ -341,6 +365,7 @@ func is_at_water_surface() -> bool:
 #----------------
 
 func play_swap_item(value: int, is_wheel:bool = false) -> void:
+	if not _input_allowed: return
 	if _is_removing: return
 	if _is_swapping: return
 	_is_swapping = true
@@ -371,20 +396,12 @@ func _change_animation() -> void:
 	match hand.animation:
 		&"ItemSwap":
 			_is_swapping = false
-			if input.is_place_mode_active:
-				play_display_idle()
-			else:
-				play_remove_idle()
+			play_display_idle()
 		&"RemoveBlock":
 			_is_removing = false
-			play_remove_idle()
+			play_display_idle()
 
 
 func play_display_idle() -> void:
 	default_cube_mesh.show()
 	hand.play(&"DisplayBlockIdle")
-
-
-func play_remove_idle() -> void:
-	default_cube_mesh.hide()
-	hand.play(&"RemoveBlockIdle")

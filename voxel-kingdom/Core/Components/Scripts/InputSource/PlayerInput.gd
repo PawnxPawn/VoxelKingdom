@@ -13,13 +13,11 @@ var mouse_sensitivity: Vector2 = Vector2(1.0, 0.50)
 var movement_direction: Vector2 = Vector2.ZERO
 
 var allow_mouse: bool = false
-var is_place_mode_active: bool = false
 var is_jump_held: bool = false
-
+var is_sprint_held: bool = false
 
 var look_direction: Vector2 = Vector2.ZERO
 var pending_look_direction: Vector2 = Vector2.ZERO
-
 
 #----------------
 # Lifecycle
@@ -36,6 +34,9 @@ func process(_delta: float) -> void:
 	_process_interaction_input()
 	_process_block_input()
 	_process_item_switch_input()
+	
+	if Input.is_action_just_pressed(&"Pause"):
+		paused_pressed.emit()
 
 
 #----------------
@@ -59,9 +60,11 @@ func _process_movement_input() -> void:
 #----------------
 func _process_jump_input() -> void:
 	if Input.is_action_just_pressed(&"Jump"):
+		is_jump_held = true
 		jump_pressed.emit()
 		
 	if Input.is_action_just_released(&"Jump"):
+		is_jump_held = false
 		jump_released.emit()
 
 
@@ -70,13 +73,12 @@ func _process_jump_input() -> void:
 #----------------
 func _process_sprint_input() -> void:
 	if Input.is_action_just_pressed(&"Sprint"):
-		is_jump_held = true
+		is_sprint_held = true
 		sprinting_pressed.emit()
 		
 	if Input.is_action_just_released(&"Sprint"):
-		is_jump_held = false
+		is_sprint_held = false
 		sprinting_released.emit()
-
 
 #----------------
 # Crouch Input
@@ -107,15 +109,11 @@ func _process_interaction_input() -> void:
 # Block Input
 #----------------
 func _process_block_input() -> void:
+	if Input.is_action_just_pressed(&"Remove_Block"):
+		remove_block_pressed.emit()
+	
 	if Input.is_action_just_pressed(&"Add_Block"):
-		if is_place_mode_active:
-			add_block_pressed.emit()
-		else:
-			remove_block_pressed.emit()
-			
-	if Input.is_action_just_pressed(&"Change_Mode"):
-		is_place_mode_active = not is_place_mode_active
-		place_mode_changed.emit()
+		add_block_pressed.emit()
 
 
 #----------------
@@ -142,21 +140,23 @@ func _process_item_switch_input() -> void:
 		item_slot_pressed.emit(8)
 	if Input.is_action_just_pressed(&"InventorySlot0"):
 		item_slot_pressed.emit(9)
+	
+	if Input.is_action_just_pressed(&"Switch_Item_Up"):
+		item_switched.emit(-1)
+	if Input.is_action_just_pressed(&"Switch_Item_Down"):
+		item_switched.emit(1)
 
 
 #----------------
 # Raw Input Events
 #----------------
 func input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"Add_Block"):
+	if event.is_action_pressed(&"Add_Block") or event.is_action_pressed(&"Remove_Block"):
 		if not allow_mouse:
 			if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	# TODO: DELETE after pause menu is added
-	if event.is_action_pressed(&"ui_cancel") and not OS.has_feature("web"):
-		_owner.get_tree().quit()
 		
 	if event is InputEventMouseMotion:
 		var mouse_motion_event: InputEventMouseMotion = event

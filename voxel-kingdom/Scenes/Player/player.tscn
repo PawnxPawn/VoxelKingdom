@@ -238,7 +238,7 @@ animations = [{
 }],
 "loop": 0,
 "name": &"RemoveBlock",
-"speed": 36.0
+"speed": 24.0
 }, {
 "frames": [{
 "duration": 1.0,

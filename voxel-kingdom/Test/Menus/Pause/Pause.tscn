@@ -1,0 +1,287 @@
+[gd_scene format=3 uid="uid://dfmyan3smw5s4"]
+
+[ext_resource type="Script" uid="uid://vshljeqcqssk" path="res://Test/Menus/Pause/Pause.gd" id="1_6qvne"]
+[ext_resource type="Texture2D" uid="uid://br5fixeijg00o" path="res://Assets/Menu/PauseMenu/PauseMenuText.png" id="1_ril7s"]
+[ext_resource type="Texture2D" uid="uid://btgfr5q22cn0k" path="res://Assets/Menu/PauseMenu/PauseOptions.png" id="2_r1y73"]
+[ext_resource type="Texture2D" uid="uid://dsgrn4b45qwr2" path="res://Assets/Menu/MainMenu/Boot.png" id="3_6qvne"]
+[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="5_ms11p"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ms11p"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f43ef"]
+atlas = ExtResource("2_r1y73")
+region = Rect2(69, 98, 242.67055, 20.773682)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1rmba"]
+atlas = ExtResource("3_6qvne")
+region = Rect2(69.39055, 125.02281, 242.67055, 20.773682)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lqb6d"]
+atlas = ExtResource("3_6qvne")
+region = Rect2(69, 152, 242.67055, 20.773682)
+
+[sub_resource type="Theme" id="Theme_yqlle"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n37kl"]
+atlas = ExtResource("3_6qvne")
+region = Rect2(69, 179, 242.67055, 20.773682)
+
+[sub_resource type="LabelSettings" id="LabelSettings_f43ef"]
+font = ExtResource("5_ms11p")
+font_size = 84
+font_color = Color(0.60784316, 0.6784314, 0.7176471, 1)
+shadow_size = 16
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(1, 12.335)
+
+[sub_resource type="LabelSettings" id="LabelSettings_1rmba"]
+font = ExtResource("5_ms11p")
+font_size = 60
+font_color = Color(0.60784316, 0.6784314, 0.7176471, 1)
+shadow_size = 16
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(1, 12.335)
+
+[sub_resource type="LabelSettings" id="LabelSettings_lqb6d"]
+font = ExtResource("5_ms11p")
+font_size = 60
+font_color = Color(0.6620639, 0.80705243, 0.9034646, 1)
+shadow_size = 16
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(1, 12.335)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_yqlle"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_n37kl"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_aru8u"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rceoy"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3bpyv"]
+
+[node name="Pause" type="Control" unique_id=101831265]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6qvne")
+
+[node name="PauseScreen" type="Panel" parent="." unique_id=1996354435]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Pause" type="TextureRect" parent="PauseScreen" unique_id=515914242]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -576.0
+offset_right = -192.0
+offset_bottom = 384.0
+grow_horizontal = 2
+scale = Vector2(3, 3)
+texture = ExtResource("1_ril7s")
+
+[node name="PauseButtons" type="Panel" parent="PauseScreen" unique_id=1462823848]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_ms11p")
+
+[node name="Resume" type="TextureButton" parent="PauseScreen/PauseButtons" unique_id=581249342]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 510.0
+offset_right = 1061.5
+offset_bottom = 530.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+texture_normal = SubResource("AtlasTexture_f43ef")
+texture_pressed = SubResource("AtlasTexture_f43ef")
+texture_hover = SubResource("AtlasTexture_f43ef")
+texture_disabled = SubResource("AtlasTexture_f43ef")
+texture_focused = SubResource("AtlasTexture_f43ef")
+
+[node name="Options" type="TextureButton" parent="PauseScreen/PauseButtons" unique_id=45725839]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 627.0
+offset_right = 1061.5
+offset_bottom = 647.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+texture_normal = SubResource("AtlasTexture_1rmba")
+texture_pressed = SubResource("AtlasTexture_1rmba")
+texture_hover = SubResource("AtlasTexture_1rmba")
+texture_disabled = SubResource("AtlasTexture_1rmba")
+texture_focused = SubResource("AtlasTexture_1rmba")
+
+[node name="Credits" type="TextureButton" parent="PauseScreen/PauseButtons" unique_id=1268712671]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 744.0
+offset_right = 1061.5
+offset_bottom = 764.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+texture_normal = SubResource("AtlasTexture_lqb6d")
+texture_pressed = SubResource("AtlasTexture_lqb6d")
+texture_hover = SubResource("AtlasTexture_lqb6d")
+texture_disabled = SubResource("AtlasTexture_lqb6d")
+texture_focused = SubResource("AtlasTexture_lqb6d")
+
+[node name="Quit" type="TextureButton" parent="PauseScreen/PauseButtons" unique_id=606802486]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 818.5
+offset_top = 861.0
+offset_right = 1061.5
+offset_bottom = 881.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(3, 3)
+pivot_offset = Vector2(121.5, 10)
+theme = SubResource("Theme_yqlle")
+texture_normal = SubResource("AtlasTexture_n37kl")
+texture_pressed = SubResource("AtlasTexture_n37kl")
+texture_hover = SubResource("AtlasTexture_n37kl")
+texture_disabled = SubResource("AtlasTexture_n37kl")
+texture_focused = SubResource("AtlasTexture_n37kl")
+
+[node name="Credits" type="Panel" parent="." unique_id=537128399]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -441.0
+offset_top = -354.0
+offset_right = -441.0
+offset_bottom = -354.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Credits" type="Label" parent="Credits" unique_id=1308763423]
+layout_mode = 0
+offset_left = 214.0
+offset_top = -131.0
+offset_right = 735.0
+offset_bottom = -47.0
+text = "Credits"
+label_settings = SubResource("LabelSettings_f43ef")
+
+[node name="Programmer" type="Label" parent="Credits" unique_id=650999369]
+layout_mode = 0
+offset_left = -342.0
+offset_top = 45.0
+offset_right = 1254.0
+offset_bottom = 129.0
+text = "Programmer"
+label_settings = SubResource("LabelSettings_1rmba")
+horizontal_alignment = 1
+
+[node name="ProgrammerName" type="Label" parent="Credits" unique_id=1038028771]
+layout_mode = 0
+offset_left = -336.0
+offset_top = 139.0
+offset_right = 1260.0
+offset_bottom = 223.0
+text = "Patrick Heil (Pawn)"
+label_settings = SubResource("LabelSettings_lqb6d")
+horizontal_alignment = 1
+
+[node name="Artist" type="Label" parent="Credits" unique_id=906286984]
+layout_mode = 0
+offset_left = -342.0
+offset_top = 269.0
+offset_right = 1254.0
+offset_bottom = 353.0
+text = "Artist"
+label_settings = SubResource("LabelSettings_1rmba")
+horizontal_alignment = 1
+
+[node name="ArtistName" type="Label" parent="Credits" unique_id=148587459]
+layout_mode = 0
+offset_left = -336.0
+offset_top = 363.0
+offset_right = 1260.0
+offset_bottom = 447.0
+text = "Vesper"
+label_settings = SubResource("LabelSettings_lqb6d")
+horizontal_alignment = 1
+
+[node name="Composer" type="Label" parent="Credits" unique_id=381874959]
+layout_mode = 0
+offset_left = -342.0
+offset_top = 513.0
+offset_right = 1254.0
+offset_bottom = 597.0
+text = "Composer"
+label_settings = SubResource("LabelSettings_1rmba")
+horizontal_alignment = 1
+
+[node name="ComposerName" type="Label" parent="Credits" unique_id=303855272]
+layout_mode = 0
+offset_left = -336.0
+offset_top = 607.0
+offset_right = 1260.0
+offset_bottom = 691.0
+text = "Some random dev"
+label_settings = SubResource("LabelSettings_lqb6d")
+horizontal_alignment = 1
+
+[node name="CreditsBack" type="Button" parent="Credits" unique_id=1582059412]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 346.0
+offset_top = 759.0
+offset_right = 584.0
+offset_bottom = 839.0
+theme_override_colors/font_focus_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
+theme_override_colors/font_pressed_color = Color(0.37413925, 0.37413928, 0.37413922, 1)
+theme_override_colors/font_hover_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
+theme_override_fonts/font = ExtResource("5_ms11p")
+theme_override_font_sizes/font_size = 72
+theme_override_styles/normal = SubResource("StyleBoxEmpty_yqlle")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_n37kl")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_aru8u")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_rceoy")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_3bpyv")
+text = "Back"

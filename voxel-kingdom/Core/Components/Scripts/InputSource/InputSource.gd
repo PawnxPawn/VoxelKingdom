@@ -20,3 +20,4 @@ signal remove_block_pressed
 signal item_switched(value: int)
 signal item_slot_pressed(value: int)
 signal place_mode_changed
+signal paused_pressed

@@ -4,32 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="2_qykia"]
 [ext_resource type="PackedScene" uid="uid://4rqt7q4iep3m" path="res://Test/TestWorld/ChunkManager.tscn" id="3_gs4kv"]
 [ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="4_4mhdq"]
-[ext_resource type="AudioStream" uid="uid://ucajyunnv11n" path="res://Assets/Music/c4188 (1).mp3" id="4_6qn7x"]
-[ext_resource type="AudioStream" uid="uid://lblty5d1hbi5" path="res://Assets/Music/minecrafp (1).mp3" id="5_4mhdq"]
-[ext_resource type="AudioStream" uid="uid://bf6hdj40jwk5a" path="res://Assets/Music/more c418 tests, i like this one too but idk if this is straight up copying or inspiration atp.mp3" id="6_6fedw"]
 [ext_resource type="Script" uid="uid://da06rduc8cbas" path="res://Test/TestWorld/WaterDetect.gd" id="8_6fedw"]
-
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gs4kv"]
-sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
-sky_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
-ground_bottom_color = Color(0.42745098, 0.6509804, 1, 1)
-ground_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
-
-[sub_resource type="Sky" id="Sky_6fedw"]
-sky_material = SubResource("ProceduralSkyMaterial_gs4kv")
-
-[sub_resource type="Environment" id="Environment_b330u"]
-background_mode = 2
-sky = SubResource("Sky_6fedw")
-glow_enabled = true
-fog_enabled = true
-fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
-fog_sun_scatter = 0.14
-fog_density = 0.0
-fog_aerial_perspective = 0.5
-fog_depth_curve = 1e-05
-fog_depth_begin = 868.5
-fog_depth_end = 1004.4
 
 [sub_resource type="LabelSettings" id="LabelSettings_gs4kv"]
 font = ExtResource("4_4mhdq")
@@ -37,36 +12,62 @@ font_size = 32
 shadow_color = Color(0, 0, 0, 1)
 shadow_offset = Vector2(5, 5)
 
-[sub_resource type="AudioStreamRandomizer" id="AudioStreamRandomizer_e0yiv"]
-playback_mode = 1
-streams_count = 3
-stream_0/stream = ExtResource("4_6qn7x")
-stream_1/stream = ExtResource("5_4mhdq")
-stream_2/stream = ExtResource("6_6fedw")
+[sub_resource type="AudioStream" id="AudioStream_b330u"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_b330u"]
+sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
+sky_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
+ground_bottom_color = Color(0.42745098, 0.6509804, 1, 1)
+ground_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
+
+[sub_resource type="Sky" id="Sky_ab4hr"]
+sky_material = SubResource("ProceduralSkyMaterial_b330u")
+
+[sub_resource type="Environment" id="Environment_6qn7x"]
+sky = SubResource("Sky_ab4hr")
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
+fog_sun_scatter = 0.14
+fog_density = 0.0
+fog_depth_curve = 1e-05
+fog_depth_begin = 868.5
+fog_depth_end = 1004.4
 
 [node name="World" type="Node3D" unique_id=1147436933]
 script = ExtResource("1_7cwmi")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=358367093]
-transform = Transform3D(0.9743701, -0.22236261, -0.034026157, -0.14685826, -0.74337274, 0.6525563, -0.17039822, -0.63083434, -0.7569759, 0, 3.9366724, -9.205248)
-light_bake_mode = 1
-shadow_enabled = true
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=742342461]
-environment = SubResource("Environment_b330u")
 
 [node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager", "water_detector") instance=ExtResource("2_qykia")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.522, 150, 9.799)
 chunk_manager = NodePath("../ChunkManager")
 water_detector = NodePath("../WaterDetector")
 
+[node name="ColorRect" parent="Player" index="4" unique_id=1263752586]
+metadata/_edit_use_anchors_ = true
+
+[node name="DisplayItem" parent="Player" index="8" unique_id=1020413013]
+metadata/_edit_use_anchors_ = true
+
 [node name="DisplayItem2" parent="Player/CanvasLayer" parent_id_path=PackedInt32Array(900159298, 768392587) index="0" unique_id=1551910986]
 offset_top = 926.0
 offset_right = 1324.0
 offset_bottom = 1003.0
+metadata/_edit_use_anchors_ = true
 
 [node name="SubViewport" parent="Player/CanvasLayer/DisplayItem2" index="0" unique_id=1388300029]
 size = Vector2i(756, 77)
+
+[node name="InventoryBar" parent="Player/CanvasLayer" parent_id_path=PackedInt32Array(900159298, 768392587) index="1" unique_id=293181905]
+metadata/_edit_use_anchors_ = true
+
+[node name="ColorRect" parent="Player/CanvasLayer/InventoryBar" index="0" unique_id=306302045]
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureRect" parent="Player/CanvasLayer/InventoryBar" index="1" unique_id=622423813]
+metadata/_edit_use_anchors_ = true
+
+[node name="HighlightInventorySlot" parent="Player/CanvasLayer/InventoryBar/TextureRect" index="0" unique_id=565986154]
+metadata/_edit_use_anchors_ = true
 
 [node name="WaterOverlay" parent="Player/CanvasLayer" parent_id_path=PackedInt32Array(900159298, 768392587) index="2" unique_id=241175340]
 anchors_preset = 15
@@ -78,8 +79,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(1, 1, 1, 0)
+metadata/_edit_use_anchors_ = true
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
+view_distance_in_chunks = 10
 water_level = 133.0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
@@ -90,11 +93,7 @@ offset_right = 40.0
 offset_bottom = 23.0
 text = "Seed: 0"
 label_settings = SubResource("LabelSettings_gs4kv")
-
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=2088320426]
-stream = SubResource("AudioStreamRandomizer_e0yiv")
-autoplay = true
-bus = &"Music"
+metadata/_edit_use_anchors_ = true
 
 [node name="WaterDetector" type="Node" parent="." unique_id=2084025762 node_paths=PackedStringArray("chunk_manager", "feet_point", "head_point")]
 script = ExtResource("8_6fedw")
@@ -102,6 +101,18 @@ chunk_manager = NodePath("../ChunkManager")
 feet_point = NodePath("../Player/Feet")
 head_point = NodePath("../Player/Eyes")
 metadata/_custom_type_script = "uid://da06rduc8cbas"
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=212981820]
+stream = SubResource("AudioStream_b330u")
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="." unique_id=1225490174]
+transform = Transform3D(0.9743701, -0.22236261, -0.034026157, -0.14685826, -0.74337274, 0.6525563, -0.17039822, -0.63083434, -0.7569759, 0, 3.9366724, -9.205248)
+light_color = Color(0.52156866, 0.52156866, 0.52156866, 1)
+light_bake_mode = 1
+shadow_enabled = true
+
+[node name="WorldEnvironment2" type="WorldEnvironment" parent="." unique_id=1163347118]
+environment = SubResource("Environment_6qn7x")
 
 [connection signal="add_block" from="Player" to="ChunkManager" method="_on_player_add_block"]
 [connection signal="remove_block" from="Player" to="ChunkManager" method="_on_player_remove_block"]

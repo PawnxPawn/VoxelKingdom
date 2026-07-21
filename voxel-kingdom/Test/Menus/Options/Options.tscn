@@ -1,0 +1,241 @@
+[gd_scene format=3 uid="uid://b4t8bgelv3vsd"]
+
+[ext_resource type="Texture2D" uid="uid://cej77ob25cvdl" path="res://Assets/Menu/ClickBoxsSliders/SliderOne.png" id="1_2jpdu"]
+[ext_resource type="Script" uid="uid://btxbx878ounkq" path="res://Test/Menus/Options/Options.gd" id="1_3qc7w"]
+[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="2_8dv6q"]
+[ext_resource type="Texture2D" uid="uid://cijecf5q51mft" path="res://Assets/Menu/ClickBoxsSliders/ClickBox.png" id="2_rm3bf"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_w45gy"]
+font = ExtResource("2_8dv6q")
+font_size = 60
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e0yiv"]
+atlas = ExtResource("2_rm3bf")
+region = Rect2(69, 98, 243, 21)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w45gy"]
+atlas = ExtResource("1_2jpdu")
+region = Rect2(68, 127, 16, 20)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_3qc7w"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5utwj"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ujebd"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_3secf"]
+font = ExtResource("2_8dv6q")
+font_size = 30
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3qc7w"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8dv6q"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3secf"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ms8x0"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ol1iq"]
+
+[node name="Options" type="Control" unique_id=1790596543]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_3qc7w")
+
+[node name="Panel" type="Panel" parent="." unique_id=499435030]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Master" type="Control" parent="Panel" unique_id=906370063]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -393.0
+offset_top = -408.0
+offset_right = -353.0
+offset_bottom = -368.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Panel/Master" unique_id=2025321673]
+layout_mode = 0
+offset_left = 40.0
+offset_top = -83.0
+offset_right = 664.0
+offset_bottom = -23.0
+text = "Master Volume"
+label_settings = SubResource("LabelSettings_w45gy")
+horizontal_alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Panel/Master" unique_id=2106489070]
+layout_mode = 0
+offset_right = 243.0
+offset_bottom = 21.0
+scale = Vector2(3, 3)
+texture = SubResource("AtlasTexture_e0yiv")
+
+[node name="MasterVolSlider" type="HSlider" parent="Panel/Master" unique_id=304459528]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 182.5
+offset_bottom = 20.0
+scale = Vector2(4, 4)
+theme_override_icons/grabber = SubResource("AtlasTexture_w45gy")
+theme_override_icons/grabber_highlight = SubResource("AtlasTexture_w45gy")
+theme_override_styles/slider = SubResource("StyleBoxTexture_3qc7w")
+theme_override_styles/grabber_area = SubResource("StyleBoxTexture_5utwj")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxTexture_ujebd")
+
+[node name="MasterVolPer" type="Label" parent="Panel/Master" unique_id=1482892866]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 66.0
+offset_top = 3.0
+offset_right = 690.0
+offset_bottom = 63.0
+text = "0%"
+label_settings = SubResource("LabelSettings_3secf")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Music" type="Control" parent="Panel" unique_id=1162507783]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -393.0
+offset_top = -194.0
+offset_right = -353.0
+offset_bottom = -154.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Panel/Music" unique_id=973765545]
+layout_mode = 0
+offset_left = 40.0
+offset_top = -83.0
+offset_right = 664.0
+offset_bottom = -23.0
+text = "Music Volume"
+label_settings = SubResource("LabelSettings_w45gy")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Panel/Music" unique_id=1511359385]
+layout_mode = 0
+offset_right = 243.0
+offset_bottom = 21.0
+scale = Vector2(3, 3)
+texture = SubResource("AtlasTexture_e0yiv")
+
+[node name="MusicVolSlider" type="HSlider" parent="Panel/Music" unique_id=2051584683]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 182.5
+offset_bottom = 20.0
+scale = Vector2(4, 4)
+theme_override_icons/grabber = SubResource("AtlasTexture_w45gy")
+theme_override_icons/grabber_highlight = SubResource("AtlasTexture_w45gy")
+theme_override_styles/slider = SubResource("StyleBoxTexture_3qc7w")
+theme_override_styles/grabber_area = SubResource("StyleBoxTexture_5utwj")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxTexture_ujebd")
+
+[node name="MusicVolPer" type="Label" parent="Panel/Music" unique_id=1058499218]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 66.0
+offset_top = 3.0
+offset_right = 690.0
+offset_bottom = 63.0
+text = "0%"
+label_settings = SubResource("LabelSettings_3secf")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SFX" type="Control" parent="Panel" unique_id=69794545]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -393.0
+offset_top = 54.0
+offset_right = -353.0
+offset_bottom = 94.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="Panel/SFX" unique_id=304168736]
+layout_mode = 0
+offset_left = 40.0
+offset_top = -83.0
+offset_right = 664.0
+offset_bottom = -23.0
+text = "SFx Volume"
+label_settings = SubResource("LabelSettings_w45gy")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="Panel/SFX" unique_id=9759111]
+layout_mode = 0
+offset_right = 243.0
+offset_bottom = 21.0
+scale = Vector2(3, 3)
+texture = SubResource("AtlasTexture_e0yiv")
+
+[node name="SFXVolSlider" type="HSlider" parent="Panel/SFX" unique_id=2013919213]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 182.5
+offset_bottom = 20.0
+scale = Vector2(4, 4)
+theme_override_icons/grabber = SubResource("AtlasTexture_w45gy")
+theme_override_icons/grabber_highlight = SubResource("AtlasTexture_w45gy")
+theme_override_styles/slider = SubResource("StyleBoxTexture_3qc7w")
+theme_override_styles/grabber_area = SubResource("StyleBoxTexture_5utwj")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxTexture_ujebd")
+
+[node name="SFXVolPer" type="Label" parent="Panel/SFX" unique_id=1220292786]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 66.0
+offset_top = 3.0
+offset_right = 690.0
+offset_bottom = 63.0
+text = "0%"
+label_settings = SubResource("LabelSettings_3secf")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Back" type="Button" parent="." unique_id=2136993335]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 813.0
+offset_top = 873.0
+offset_right = 1051.0
+offset_bottom = 953.0
+theme_override_colors/font_focus_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
+theme_override_colors/font_pressed_color = Color(0.37413925, 0.37413928, 0.37413922, 1)
+theme_override_colors/font_hover_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
+theme_override_fonts/font = ExtResource("2_8dv6q")
+theme_override_font_sizes/font_size = 72
+theme_override_styles/normal = SubResource("StyleBoxEmpty_3qc7w")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_8dv6q")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_3secf")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_ms8x0")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ol1iq")
+text = "Back"

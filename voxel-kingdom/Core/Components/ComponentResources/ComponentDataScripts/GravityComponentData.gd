@@ -21,5 +21,4 @@ var component: Script = preload("uid://ckkpqo3bx8v2t")
 @export var fly_up_down_speed: float = 4.0
 
 @export_subgroup("Swimming Surface")
-@export var surface_bob_speed: float = 1.5
-@export var climb_check_distance: float = 0.6
+@export var climb_check_distance: float = 1.0
