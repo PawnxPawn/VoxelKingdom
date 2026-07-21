@@ -166,7 +166,8 @@ func get_final_height(
 	mountain_biome_noise: Noise,
 	mountain_shape_noise_local: FastNoiseLite,
 	steep_noise_local: FastNoiseLite,
-	mountain_biome_threshold: float = 0.80
+	mountain_biome_threshold: float = 0.80,
+	mountain_height_multiplier: float = 1.0
 ) -> float:
 	var ground_level: float = terrain_base_height
 	
@@ -209,7 +210,7 @@ func get_final_height(
 			biome_falloff * directional_multiplier + ramp_curve * (terrain_amplitude * 1.8) * 
 			biome_falloff * directional_multiplier + peak_curve * (terrain_amplitude * 1.2) * 
 			biome_falloff * steep_multiplier + detail_curve * (terrain_amplitude * 0.6) * biome_falloff
-			)
+			) * mountain_height_multiplier
 		
 		final_height += mountain_height
 		
@@ -235,7 +236,13 @@ func generate_date(
 	mountain_biome_noise: Noise = null,
 	water_level: float = -1.0,
 	tree_noise: FastNoiseLite = null,
-	mountain_biome_threshold: float = 0.80
+	mountain_biome_threshold: float = 0.80,
+	mountain_height_multiplier: float = 1.0,
+	sand_deposit_noise: Noise = null,
+	sand_deposit_threshold: float = 0.55,
+	sand_shore_range: float = 4.0,
+	gravel_deposit_noise: Noise = null,
+	gravel_deposit_threshold: float = 0.55
 ) -> void:
 	chunk_size = size
 	chunk_data.set_size(size)
@@ -248,6 +255,12 @@ func generate_date(
 	
 	var cave_entrance_cache: PackedByteArray = PackedByteArray()
 	cave_entrance_cache.resize(size * size)
+	
+	var sand_cache: PackedByteArray = PackedByteArray()
+	sand_cache.resize(size * size)
+	
+	var gravel_cache: PackedByteArray = PackedByteArray()
+	gravel_cache.resize(size * size)
 	
 	for voxel_x: int in range(size):
 		if chunk_manager != null and chunk_manager.is_thread_stopping: return
@@ -265,7 +278,8 @@ func generate_date(
 				mountain_biome_noise,
 				mountain_shape_noise,
 				steep_noise,
-				mountain_biome_threshold
+				mountain_biome_threshold,
+				mountain_height_multiplier
 			)
 			
 			height_cache[cache_index] = terrain_height
@@ -282,6 +296,16 @@ func generate_date(
 				if entrance_normalized > cave_entrance_region_threshold:
 					cave_entrance_allowed = true
 			cave_entrance_cache[cache_index] = 1 if cave_entrance_allowed else 0
+			
+			if sand_deposit_noise != null:
+				var sand_value: float = sand_deposit_noise.get_noise_2d(world_position.x, world_position.z)
+				var sand_normalized: float = (sand_value + 1.0) * 0.5
+				sand_cache[cache_index] = 1 if sand_normalized > sand_deposit_threshold else 0
+				
+			if gravel_deposit_noise != null:
+				var gravel_value: float = gravel_deposit_noise.get_noise_2d(world_position.x, world_position.z)
+				var gravel_normalized: float = (gravel_value + 1.0) * 0.5
+				gravel_cache[cache_index] = 1 if gravel_normalized > gravel_deposit_threshold else 0
 			
 	for voxel_x: int in range(size):
 		for voxel_z: int in range(size):
@@ -309,6 +333,20 @@ func generate_date(
 				var is_mountain: bool = biome_cache[voxel_x * size + voxel_z] == 1
 				var cave_entrance_allowed: bool = cave_entrance_cache[voxel_x * size + voxel_z] == 1
 				
+				# Deposit eligibility for this column, computed once here rather
+				# than per-voxel. Sand only forms near shorelines on gentle,
+				# non-mountain ground; gravel only forms on mountain terrain.
+				var is_sand_deposit: bool = (
+					sand_cache[voxel_x * size + voxel_z] == 1 and
+					not is_mountain and
+					column_slope < 0.4 and
+					abs(world_surface_y - water_level) <= sand_shore_range
+				)
+				var is_gravel_deposit: bool = (
+					gravel_cache[voxel_x * size + voxel_z] == 1 and
+					is_mountain
+				)
+				
 				var cave_minimum_depth_adjusted: int = cave_below_surface_minimum
 				if cave_entrance_allowed:
 					cave_minimum_depth_adjusted = -cave_entrance_surface_reach
@@ -328,6 +366,12 @@ func generate_date(
 						
 					elif cave_entrance_allowed:
 						terrain_type = TerrianData.TerrianType.STONE
+						
+					elif is_sand_deposit and depth_from_surface <= dirt_depth:
+						terrain_type = TerrianData.TerrianType.SAND
+						
+					elif is_gravel_deposit and depth_from_surface <= dirt_depth:
+						terrain_type = TerrianData.TerrianType.GRAVEL
 						
 					elif depth_from_surface == 0:
 						var grass_chance: float = get_grass_probability(world_y, terrain_base_height, terrain_amplitude)

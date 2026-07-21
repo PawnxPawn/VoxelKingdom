@@ -50,6 +50,7 @@ var _height_probe: Chunk = null
 @export_group("Terrain Shape")
 @export var terrain_base_height: float = 140.0
 @export var terrain_amplitude: float = 60.0
+@export var mountain_height_multiplier: float = 1.0
 @export_range(0.0, 1.0) var mountain_biome_threshold: float = 0.80
 
 @export_group("Water")
@@ -58,6 +59,13 @@ var _height_probe: Chunk = null
 @export var water_max_updates_per_tick: int = 96
 
 var water_flow_manager: WaterFlowManager = null
+
+@export_group("Deposits")
+@export var sand_deposit_frequency: float = 0.008
+@export var sand_deposit_threshold: float = 0.55
+@export var sand_shore_range: float = 4.0
+@export var gravel_deposit_frequency: float = 0.01
+@export var gravel_deposit_threshold: float = 0.55
 
 #-###########################################
 # Cave Generation Settings
@@ -92,6 +100,8 @@ var cave_noise: FastNoiseLite = FastNoiseLite.new()
 var cave_entrance_noise: FastNoiseLite = FastNoiseLite.new()
 var mountain_biome_noise: FastNoiseLite = FastNoiseLite.new()
 var tree_noise: FastNoiseLite = FastNoiseLite.new()
+var sand_deposit_noise: FastNoiseLite = FastNoiseLite.new()
+var gravel_deposit_noise: FastNoiseLite = FastNoiseLite.new()
 
 var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
@@ -209,6 +219,16 @@ func _ready() -> void:
 	tree_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	tree_noise.frequency = 0.02
 	tree_noise.seed = noise_seed + 100
+	
+	# Sand Deposits
+	sand_deposit_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	sand_deposit_noise.frequency = sand_deposit_frequency
+	sand_deposit_noise.seed = noise_seed + 200
+	
+	# Gravel Deposits
+	gravel_deposit_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	gravel_deposit_noise.frequency = gravel_deposit_frequency
+	gravel_deposit_noise.seed = noise_seed + 201
 
 	if seed_label:
 		seed_label.text = "Seed: %s" % noise_seed
@@ -252,7 +272,8 @@ func _get_column_info(grid_x: int, grid_z: int) -> Dictionary:
 		mountain_biome_noise,
 		_height_probe.mountain_shape_noise,
 		_height_probe.steep_noise,
-		mountain_biome_threshold
+		mountain_biome_threshold,
+		mountain_height_multiplier
 	)
 	
 	var surface_grid_y: int = clampi(floori(estimated_surface_height / float(chunk_size)), 0, number_of_chunks.y - 1)
@@ -778,7 +799,13 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		mountain_biome_noise,
 		water_level,
 		tree_noise,
-		mountain_biome_threshold
+		mountain_biome_threshold,
+		mountain_height_multiplier,
+		sand_deposit_noise,
+		sand_deposit_threshold,
+		sand_shore_range,
+		gravel_deposit_noise,
+		gravel_deposit_threshold
 	)
 	
 	var chunk_world_key: Vector3i = Vector3i(new_chunk.position)
