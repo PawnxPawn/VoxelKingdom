@@ -87,6 +87,8 @@ var steep_noise: FastNoiseLite
 var chunk_manager: ChunkManager = null
 var chunk_world_origin: Vector3i = Vector3i.ZERO
 
+var voxel_data_mutex: Mutex = Mutex.new()
+
 #----------------
 # Init
 #----------------
@@ -656,7 +658,7 @@ func _demote_buried_grass() -> void:
 # Mesh Generation
 #-###########################################
 
-func generate_mesh() -> void:
+func generate_mesh(flat_voxels: PackedInt32Array) -> void:
 	if chunk_data.is_empty():
 		mesh_data.reset()
 		water_mesh_data.reset()
@@ -665,8 +667,6 @@ func generate_mesh() -> void:
 	mesh_data.reset()
 	water_mesh_data.reset()
 	collision_faces.clear()
-	
-	var flat_voxels: PackedInt32Array = chunk_data.get_voxels_copy()
 	
 	for face: Face in Face.values():
 		mesh_face(face, flat_voxels)
@@ -905,12 +905,11 @@ func _is_solid_for_collision(voxel_value: int) -> bool:
 	return true
 
 
-func compute_collision_boxes() -> void:
+func compute_collision_boxes(flat_voxels: PackedInt32Array) -> void:
 	if chunk_data.is_empty():
 		pending_collision_boxes = []
 		return
 		
-	var flat_voxels: PackedInt32Array = chunk_data.get_voxels_copy()
 	var visited: PackedByteArray = PackedByteArray()
 	visited.resize(chunk_size * chunk_size * chunk_size)
 	
@@ -1012,22 +1011,29 @@ func commit_mesh() -> void:
 #-###########################################
 
 func set_voxel(position_index: Vector3i, voxel_type: TerrianData.TerrianType) -> void:
+	voxel_data_mutex.lock()
 	chunk_data.add_voxel(position_index, voxel_type)
-	add_provisional_collision(position_index)
+	voxel_data_mutex.unlock()
+	add_provisional_collision(position_index)  # cheap instant single-box feedback, as before
 	request_rebuild()
 
 
 func remove_voxel_at_local(position_index: Vector3i) -> void:
+	voxel_data_mutex.lock()
 	if chunk_data.get_voxel(position_index) == TerrianData.TerrianType.BEDROCK:
+		voxel_data_mutex.unlock()
 		return
 	chunk_data.remove_voxel(position_index)
+	voxel_data_mutex.unlock()
 	request_rebuild()
 
-
 func change_voxel_at_local(position_index: Vector3i, new_type: TerrianData.TerrianType) -> void:
+	voxel_data_mutex.lock()
 	if chunk_data.get_voxel(position_index) == TerrianData.TerrianType.BEDROCK:
+		voxel_data_mutex.unlock()
 		return
 	chunk_data.change_voxel(position_index, new_type)
+	voxel_data_mutex.unlock()
 	request_rebuild()
 
 
@@ -1077,8 +1083,13 @@ func rebuild_threaded() -> void:
 		rebuild_running = false
 		rebuild_mutex.unlock()
 		return
-	generate_mesh()
-	compute_collision_boxes()
+	
+	voxel_data_mutex.lock()
+	var flat_voxels: PackedInt32Array = chunk_data.get_voxels_copy()
+	voxel_data_mutex.unlock()
+	
+	generate_mesh(flat_voxels)
+	compute_collision_boxes(flat_voxels)
 	call_deferred("_on_rebuild_complete")
 
 

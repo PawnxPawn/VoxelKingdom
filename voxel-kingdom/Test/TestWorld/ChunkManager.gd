@@ -156,6 +156,24 @@ var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
 @export var neighbor_rebuilds_per_frame: int = 4
 
 #-###########################################
+# Column Info Cache (surface height / water range)
+#-###########################################
+# Terrain noise is static per-seed, so once a column's surface height and
+# water range are computed they never change. Cache them by (grid_x, grid_z)
+# instead of resampling noise every time the streaming window shifts.
+var _column_info_cache: Dictionary[Vector2i, Dictionary] = {}
+
+#-###########################################
+# Pending Water Wakes (from threaded boundary refresh)
+#-###########################################
+# _refresh_boundaries_on_new_chunk now runs on a worker thread, so it can't
+# safely call into water_flow_manager directly (Node access / non-mutexed
+# internal queues). It stashes world positions here instead, and the main
+# thread flushes them once per frame.
+var _pending_water_wakes: Array[Vector3i] = []
+var _pending_water_wakes_mutex: Mutex = Mutex.new()
+
+#-###########################################
 # Lifecycle
 #-###########################################
 
@@ -212,11 +230,20 @@ func _ready() -> void:
 	_update_streaming()
 
 #-###########################################
-# Surface Height Estimation (Fly Visibility)
+# Column Info (cached surface height + water range)
 #-###########################################
 
-func _estimate_surface_grid_y(world_x: float, world_z: float) -> int:
-	var estimated_height: float = _height_probe.get_final_height(
+func _get_column_info(grid_x: int, grid_z: int) -> Dictionary:
+	var cache_key: Vector2i = Vector2i(grid_x, grid_z)
+	
+	var cached: Dictionary = _column_info_cache.get(cache_key, {})
+	if not cached.is_empty():
+		return cached
+		
+	var world_x: float = grid_x * chunk_size + chunk_size * 0.5
+	var world_z: float = grid_z * chunk_size + chunk_size * 0.5
+	
+	var estimated_surface_height: float = _height_probe.get_final_height(
 		world_x,
 		world_z,
 		terrain_base_height,
@@ -227,7 +254,21 @@ func _estimate_surface_grid_y(world_x: float, world_z: float) -> int:
 		_height_probe.steep_noise,
 		mountain_biome_threshold
 	)
-	return clampi(floori(estimated_height / float(chunk_size)), 0, number_of_chunks.y - 1)
+	
+	var surface_grid_y: int = clampi(floori(estimated_surface_height / float(chunk_size)), 0, number_of_chunks.y - 1)
+	
+	var water_range: Vector2i = Vector2i(-1, -1)
+	if estimated_surface_height < water_level:
+		var water_grid_y: int = clampi(floori(water_level / float(chunk_size)), 0, number_of_chunks.y - 1)
+		water_range = Vector2i(surface_grid_y, water_grid_y)
+		
+	var info: Dictionary = {
+		"surface_grid_y": surface_grid_y,
+		"water_range": water_range,
+	}
+	
+	_column_info_cache[cache_key] = info
+	return info
 
 
 func _process(_delta: float) -> void:
@@ -236,6 +277,7 @@ func _process(_delta: float) -> void:
 		
 	_flush_pending_chunks()
 	_flush_pending_neighbor_rebuilds()
+	_flush_pending_water_wakes()
 	_update_movement_direction()
 	_update_streaming()
 	_dispatch_load_queue()
@@ -261,6 +303,25 @@ func _flush_pending_neighbor_rebuilds() -> void:
 			chunk.request_rebuild()
 
 
+func _flush_pending_water_wakes() -> void:
+	if water_flow_manager == null:
+		return
+		
+	_pending_water_wakes_mutex.lock()
+	var wakes: Array[Vector3i] = _pending_water_wakes.duplicate()
+	_pending_water_wakes.clear()
+	_pending_water_wakes_mutex.unlock()
+	
+	for world_position: Vector3i in wakes:
+		water_flow_manager.enqueue(world_position)
+
+
+func _queue_water_wake(world_position: Vector3i) -> void:
+	_pending_water_wakes_mutex.lock()
+	_pending_water_wakes.append(world_position)
+	_pending_water_wakes_mutex.unlock()
+
+
 func _flush_pending_chunks() -> void:
 	if is_thread_stopping: return
 	var chunks_to_add: Array[Chunk] = []
@@ -275,7 +336,11 @@ func _flush_pending_chunks() -> void:
 	
 	for chunk: Chunk in chunks_to_add:
 		add_child(chunk)
-		_refresh_boundaries_on_new_chunk(chunk.chunk_world_origin)
+		
+		var chunk_world_key: Vector3i = chunk.chunk_world_origin
+		active_task_ids.append(
+			WorkerThreadPool.add_task(_refresh_boundaries_on_new_chunk.bind(chunk_world_key), false, "chunk_boundary_refresh")
+		)
 		
 		if not is_first_chunk_added:
 			is_first_chunk_added = true
@@ -285,8 +350,15 @@ func _flush_pending_chunks() -> void:
 #-###########################################
 # Refresh Neighbors When a New Chunk Spawns
 #-###########################################
+# NOTE: this now runs on a WorkerThreadPool task (dispatched from
+# _flush_pending_chunks), not the main thread. It only reads chunk_data
+# (voxel arrays) and mutex-protected chunk_by_key lookups, and defers all
+# water_flow_manager calls through _queue_water_wake / _queue_neighbor_rebuild
+# so nothing here touches non-mutexed shared state directly.
 
 func _refresh_boundaries_on_new_chunk(new_chunk_world_key: Vector3i) -> void:
+	if is_thread_stopping: return
+	
 	var new_chunk: Chunk = get_loaded_chunk(new_chunk_world_key)
 	if new_chunk == null:
 		return
@@ -301,6 +373,8 @@ func _refresh_boundaries_on_new_chunk(new_chunk_world_key: Vector3i) -> void:
 	]
 	
 	for check: Dictionary in boundary_checks:
+		if is_thread_stopping: return
+		
 		var neighbor_chunk_key: Vector3i = new_chunk_world_key + check["offset"]
 		var neighbor_chunk: Chunk = get_loaded_chunk(neighbor_chunk_key)
 		if neighbor_chunk == null or not neighbor_chunk.is_inside_tree():
@@ -332,9 +406,6 @@ func _boundary_has_water(chunk: Chunk, layer: int, axis: int) -> bool:
 
 
 func _seed_water_across_new_chunk_boundary(new_chunk: Chunk, layer: int, axis: int) -> void:
-	if water_flow_manager == null:
-		return
-	
 	for a: int in range(chunk_size):
 		for b: int in range(chunk_size):
 			var local_position: Vector3i
@@ -346,7 +417,7 @@ func _seed_water_across_new_chunk_boundary(new_chunk: Chunk, layer: int, axis: i
 				local_position = Vector3i(a, b, layer)
 				
 			if TerrianData.is_water(new_chunk.chunk_data.get_voxel(local_position)):
-				water_flow_manager.enqueue(new_chunk.chunk_world_origin + local_position)
+				_queue_water_wake(new_chunk.chunk_world_origin + local_position)
 
 
 func _wake_water_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Vector3i, axis: int, layer: int) -> void:
@@ -362,7 +433,7 @@ func _wake_water_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Ve
 				
 			var voxel_type: TerrianData.TerrianType = neighbor_chunk.chunk_data.get_voxel(local_position)
 			if TerrianData.is_water(voxel_type):
-				water_flow_manager.enqueue(neighbor_chunk_key + local_position)
+				_queue_water_wake(neighbor_chunk_key + local_position)
 
 
 #-###########################################
@@ -460,47 +531,21 @@ func _get_needed_grid_y_values(center_chunk_grid_y: int, grid_x: int, grid_z: in
 	for grid_y: int in range(player_min_grid_y, player_max_grid_y + 1):
 		grid_y_values.append(grid_y)
 		
-	var world_x: float = grid_x * chunk_size + chunk_size * 0.5
-	var world_z: float = grid_z * chunk_size + chunk_size * 0.5
-	
-	var surface_grid_y: int = _estimate_surface_grid_y(world_x, world_z)
+	var column_info: Dictionary = _get_column_info(grid_x, grid_z)
+	var surface_grid_y: int = column_info["surface_grid_y"]
 	var surface_min_grid_y: int = max(0, surface_grid_y - surface_visible_chunks_below)
 	
 	for grid_y: int in range(surface_min_grid_y, surface_grid_y + 1):
 		if not grid_y_values.has(grid_y):
 			grid_y_values.append(grid_y)
 			
-	var water_range: Vector2i = _get_water_grid_y_range(grid_x, grid_z)
+	var water_range: Vector2i = column_info["water_range"]
 	if water_range.x != -1:
 		for grid_y: int in range(water_range.x, water_range.y + 1):
 			if not grid_y_values.has(grid_y):
 				grid_y_values.append(grid_y)
 				
 	return grid_y_values
-
-
-func _get_water_grid_y_range(grid_x: int, grid_z: int) -> Vector2i:
-	var world_x: float = grid_x * chunk_size + chunk_size * 0.5
-	var world_z: float = grid_z * chunk_size + chunk_size * 0.5
-	
-	var estimated_surface_height: float = _height_probe.get_final_height(
-		world_x,
-		world_z,
-		terrain_base_height,
-		terrain_amplitude,
-		terrain_noise,
-		mountain_biome_noise,
-		_height_probe.mountain_shape_noise,
-		_height_probe.steep_noise
-	)
-	
-	if estimated_surface_height >= water_level:
-		return Vector2i(-1, -1)
-		
-	var surface_grid_y: int = clampi(floori(estimated_surface_height / float(chunk_size)), 0, number_of_chunks.y - 1)
-	var water_grid_y: int = clampi(floori(water_level / float(chunk_size)), 0, number_of_chunks.y - 1)
-	
-	return Vector2i(surface_grid_y, water_grid_y)
 
 
 func _queue_needed_chunks(center_chunk_grid: Vector3i) -> void:
@@ -670,13 +715,12 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 		var distance_in_chunks: int = maxi(absi(offset_grid_2d.x), absi(offset_grid_2d.y))
 		var vertical_distance: int = absi(grid_y - center_chunk_grid.y)
 		
-		var world_x: float = grid_x * chunk_size + chunk_size * 0.5
-		var world_z: float = grid_z * chunk_size + chunk_size * 0.5
-		var surface_grid_y: int = _estimate_surface_grid_y(world_x, world_z)
+		var column_info: Dictionary = _get_column_info(grid_x, grid_z)
+		var surface_grid_y: int = column_info["surface_grid_y"]
 		var surface_min_grid_y: int = max(0, surface_grid_y - surface_visible_chunks_below)
 		var is_surface_chunk: bool = grid_y >= surface_min_grid_y and grid_y <= surface_grid_y
 		
-		var water_range: Vector2i = _get_water_grid_y_range(grid_x, grid_z)
+		var water_range: Vector2i = column_info["water_range"]
 		var is_underwater_chunk: bool = water_range.x != -1 and grid_y >= water_range.x and grid_y <= water_range.y
 		
 		var should_unload: bool = false
@@ -763,11 +807,13 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 					
 			new_chunk.chunk_data.add_voxel(local_pos, voxel_type)
 		
-	new_chunk.generate_mesh()
+	var flat_voxels: PackedInt32Array = new_chunk.chunk_data.get_voxels_copy()
+	
+	new_chunk.generate_mesh(flat_voxels)
 	
 	if is_thread_stopping: return
 	
-	new_chunk.compute_collision_boxes()
+	new_chunk.compute_collision_boxes(flat_voxels)
 	
 	if is_thread_stopping: return
 	
@@ -1015,3 +1061,4 @@ func request_shutdown() -> void:
 	load_queue.clear()
 	_pending_neighbor_rebuilds.clear()
 	_pending_neighbor_rebuilds_flags.clear()
+	_pending_water_wakes.clear()
