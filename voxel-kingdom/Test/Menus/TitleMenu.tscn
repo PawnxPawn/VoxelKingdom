@@ -8,25 +8,30 @@
 [ext_resource type="Texture2D" uid="uid://dsgrn4b45qwr2" path="res://Assets/Menu/MainMenu/Boot.png" id="5_k7btm"]
 [ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="6_g3a1x"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fqsfu"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_b330u"]
 sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
 sky_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
 ground_bottom_color = Color(0.42745098, 0.6509804, 1, 1)
 ground_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
 
 [sub_resource type="Sky" id="Sky_ab4hr"]
-sky_material = SubResource("ProceduralSkyMaterial_fqsfu")
+sky_material = SubResource("ProceduralSkyMaterial_b330u")
 
-[sub_resource type="Environment" id="Environment_prvd2"]
+[sub_resource type="Environment" id="Environment_6qn7x"]
 sky = SubResource("Sky_ab4hr")
+ambient_light_source = 2
+ambient_light_color = Color(0.14767182, 0.14767182, 0.14767176, 1)
 glow_enabled = true
+glow_intensity = 1.63
+glow_hdr_threshold = 2.74
 fog_enabled = true
+fog_mode = 1
 fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
-fog_sun_scatter = 0.14
-fog_density = 0.0
-fog_depth_curve = 1e-05
-fog_depth_begin = 868.5
-fog_depth_end = 1004.4
+fog_density = 11.685
+fog_height_density = 0.03
+fog_depth_begin = 15.0
+fog_depth_end = 1839.1
+adjustment_enabled = true
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g3a1x"]
 
@@ -94,7 +99,7 @@ light_bake_mode = 1
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1323188711]
-environment = SubResource("Environment_prvd2")
+environment = SubResource("Environment_6qn7x")
 
 [node name="ChunkManager" type="Node" parent="." unique_id=56504370]
 script = ExtResource("1_prvd2")

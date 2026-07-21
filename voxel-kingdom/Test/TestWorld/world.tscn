@@ -25,14 +25,19 @@ sky_material = SubResource("ProceduralSkyMaterial_b330u")
 
 [sub_resource type="Environment" id="Environment_6qn7x"]
 sky = SubResource("Sky_ab4hr")
+ambient_light_source = 2
+ambient_light_color = Color(0.14767182, 0.14767182, 0.14767176, 1)
 glow_enabled = true
+glow_intensity = 1.63
+glow_hdr_threshold = 2.74
 fog_enabled = true
+fog_mode = 1
 fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
-fog_sun_scatter = 0.14
-fog_density = 0.0
-fog_depth_curve = 1e-05
-fog_depth_begin = 868.5
-fog_depth_end = 1004.4
+fog_density = 11.685
+fog_height_density = 0.03
+fog_depth_begin = 15.0
+fog_depth_end = 1839.1
+adjustment_enabled = true
 
 [node name="World" type="Node3D" unique_id=1147436933]
 script = ExtResource("1_7cwmi")
