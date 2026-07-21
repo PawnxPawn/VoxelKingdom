@@ -87,38 +87,8 @@ color = Color(1, 1, 1, 0)
 metadata/_edit_use_anchors_ = true
 
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
-world_dimensions = null
-chunk_size = null
-noise_frequency = null
-noise_seed = null
-dispatch_chunks_per_frame = null
-add_chunks_per_frame = null
 view_distance_in_chunks = 10
-unload_buffer_in_chunks = null
-core_radius_in_chunks = null
-forward_dot_threshold = null
-direction_change_dot_threshold = null
-behind_unload_buffer_in_chunks = null
-view_distance_in_chunks_y = null
-unload_buffer_in_chunks_y = null
-surface_visible_chunks_below = null
-terrain_base_height = null
-terrain_amplitude = null
-mountain_biome_threshold = null
 water_level = 133.0
-water_tick_interval = null
-water_max_updates_per_tick = null
-cave_frequency = null
-cave_threshold = null
-cave_below_surface_min = null
-cave_below_surface_max = null
-cave_entrance_frequency = null
-cave_entrance_region_threshold = null
-cave_entrance_surface_reach = null
-tree_frequency = null
-tree_threshold = null
-tree_min_spacing = null
-neighbor_rebuilds_per_frame = null
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
 

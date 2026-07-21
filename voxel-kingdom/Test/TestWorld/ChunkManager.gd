@@ -166,20 +166,15 @@ var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
 @export var neighbor_rebuilds_per_frame: int = 4
 
 #-###########################################
-# Column Info Cache (surface height / water range)
+# Column Info Cache
 #-###########################################
-# Terrain noise is static per-seed, so once a column's surface height and
-# water range are computed they never change. Cache them by (grid_x, grid_z)
-# instead of resampling noise every time the streaming window shifts.
+
 var _column_info_cache: Dictionary[Vector2i, Dictionary] = {}
 
 #-###########################################
 # Pending Water Wakes (from threaded boundary refresh)
 #-###########################################
-# _refresh_boundaries_on_new_chunk now runs on a worker thread, so it can't
-# safely call into water_flow_manager directly (Node access / non-mutexed
-# internal queues). It stashes world positions here instead, and the main
-# thread flushes them once per frame.
+
 var _pending_water_wakes: Array[Vector3i] = []
 var _pending_water_wakes_mutex: Mutex = Mutex.new()
 
@@ -369,13 +364,8 @@ func _flush_pending_chunks() -> void:
 
 
 #-###########################################
-# Refresh Neighbors When a New Chunk Spawns
+# Refresh Neighbors
 #-###########################################
-# NOTE: this now runs on a WorkerThreadPool task (dispatched from
-# _flush_pending_chunks), not the main thread. It only reads chunk_data
-# (voxel arrays) and mutex-protected chunk_by_key lookups, and defers all
-# water_flow_manager calls through _queue_water_wake / _queue_neighbor_rebuild
-# so nothing here touches non-mutexed shared state directly.
 
 func _refresh_boundaries_on_new_chunk(new_chunk_world_key: Vector3i) -> void:
 	if is_thread_stopping: return
