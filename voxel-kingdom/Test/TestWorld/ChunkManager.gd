@@ -20,9 +20,9 @@ var instance: ChunkManager
 @export var noise_seed: int = 0
 
 @export var dispatch_chunks_per_frame: int = 20
-@export var add_chunks_per_frame: int = 24
+@export var add_chunks_per_frame: int = 4
 
-@export var view_distance_in_chunks: int = 3
+@export var view_distance_in_chunks: int = 2
 @export var unload_buffer_in_chunks: int = 4
 
 @export_group("Directional Streaming")
@@ -66,6 +66,10 @@ var water_flow_manager: WaterFlowManager = null
 @export var sand_shore_range: float = 4.0
 @export var gravel_deposit_frequency: float = 0.01
 @export var gravel_deposit_threshold: float = 0.55
+@export var coal_deposit_frequency: float = 0.05
+@export var coal_deposit_threshold: float = 0.72
+@export var iron_deposit_frequency: float = 0.06
+@export var iron_deposit_threshold: float = 0.78
 
 #-###########################################
 # Cave Generation Settings
@@ -87,6 +91,22 @@ var water_flow_manager: WaterFlowManager = null
 @export var tree_threshold: float = 0.65
 @export var tree_min_spacing: int = 8
 
+@export_group("Lava")
+@export var lava_pool_frequency: float = 0.05
+@export var lava_pool_threshold: float = 0.80
+@export var lava_min_pool_height: int = 2
+@export var lava_max_pool_height: int = 3
+@export var lava_min_depth_below_surface: int = 25
+@export var lava_tick_interval: float = 0.6
+@export var lava_max_updates_per_tick: int = 32
+
+@export_subgroup("Surface Vents")
+@export var lava_vent_frequency: float = 0.006
+@export var lava_vent_threshold: float = 0.94
+
+var lava_flow_manager: LavaFlowManager = null
+var lava_pool_noise: FastNoiseLite = FastNoiseLite.new()
+var lava_vent_noise: FastNoiseLite = FastNoiseLite.new()
 
 var cave_min_y: int = 0
 var cave_max_y: int = 0
@@ -102,6 +122,8 @@ var mountain_biome_noise: FastNoiseLite = FastNoiseLite.new()
 var tree_noise: FastNoiseLite = FastNoiseLite.new()
 var sand_deposit_noise: FastNoiseLite = FastNoiseLite.new()
 var gravel_deposit_noise: FastNoiseLite = FastNoiseLite.new()
+var coal_deposit_noise: FastNoiseLite = FastNoiseLite.new()
+var iron_deposit_noise: FastNoiseLite = FastNoiseLite.new()
 
 var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
@@ -126,7 +148,10 @@ var pending_tree_edits_mutex: Mutex = Mutex.new()
 var _pending_neighbor_rebuilds: Array[Vector3i] = []
 var _pending_neighbor_rebuilds_mutex: Mutex = Mutex.new()
 
-var max_concurrent_chunk_tasks = max(4, OS.get_processor_count() - 2)
+var _pending_lava_wakes: Array[Vector3i] = []
+var _pending_lava_wakes_mutex: Mutex = Mutex.new()
+
+var max_concurrent_chunk_tasks = max(2, OS.get_processor_count() - 2)
 
 #-###########################################
 # Streaming / Movement State
@@ -172,11 +197,14 @@ var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
 var _column_info_cache: Dictionary[Vector2i, Dictionary] = {}
 
 #-###########################################
-# Pending Water Wakes (from threaded boundary refresh)
+# Pending Water Wakes
 #-###########################################
 
 var _pending_water_wakes: Array[Vector3i] = []
 var _pending_water_wakes_mutex: Mutex = Mutex.new()
+
+var rebuild_needs_collision: bool = false
+
 
 #-###########################################
 # Lifecycle
@@ -224,7 +252,28 @@ func _ready() -> void:
 	gravel_deposit_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	gravel_deposit_noise.frequency = gravel_deposit_frequency
 	gravel_deposit_noise.seed = noise_seed + 201
+	
+	# Lava Pools
+	lava_pool_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	lava_pool_noise.frequency = lava_pool_frequency
+	lava_pool_noise.seed = noise_seed + 300
+	
+	# Lava Vents
+	lava_vent_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	lava_vent_noise.frequency = lava_vent_frequency
+	lava_vent_noise.seed = noise_seed + 301
+	
+	# Coal Deposits
+	coal_deposit_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	coal_deposit_noise.frequency = coal_deposit_frequency
+	coal_deposit_noise.seed = noise_seed + 400
 
+	# Iron Deposits
+	iron_deposit_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	iron_deposit_noise.frequency = iron_deposit_frequency
+	iron_deposit_noise.seed = noise_seed + 401
+	
+	
 	if seed_label:
 		seed_label.text = "Seed: %s" % noise_seed
 	
@@ -241,6 +290,12 @@ func _ready() -> void:
 	water_flow_manager.tick_interval = water_tick_interval
 	water_flow_manager.max_updates_per_tick = water_max_updates_per_tick
 	add_child(water_flow_manager)
+	
+	lava_flow_manager = LavaFlowManager.new()
+	lava_flow_manager.chunk_manager = self
+	lava_flow_manager.tick_interval = lava_tick_interval
+	lava_flow_manager.max_updates_per_tick = lava_max_updates_per_tick
+	add_child(lava_flow_manager)
 	
 	_update_streaming()
 
@@ -294,6 +349,7 @@ func _process(_delta: float) -> void:
 	_flush_pending_chunks()
 	_flush_pending_neighbor_rebuilds()
 	_flush_pending_water_wakes()
+	_flush_pending_lava_wakes()
 	_update_movement_direction()
 	_update_streaming()
 	_dispatch_load_queue()
@@ -332,10 +388,27 @@ func _flush_pending_water_wakes() -> void:
 		water_flow_manager.enqueue(world_position)
 
 
+func _flush_pending_lava_wakes() -> void:
+	if lava_flow_manager == null:
+		return
+	_pending_lava_wakes_mutex.lock()
+	var wakes: Array[Vector3i] = _pending_lava_wakes.duplicate()
+	_pending_lava_wakes.clear()
+	_pending_lava_wakes_mutex.unlock()
+	for world_position: Vector3i in wakes:
+		lava_flow_manager.enqueue(world_position)
+
+
 func _queue_water_wake(world_position: Vector3i) -> void:
 	_pending_water_wakes_mutex.lock()
 	_pending_water_wakes.append(world_position)
 	_pending_water_wakes_mutex.unlock()
+
+
+func _queue_lava_wake(world_position: Vector3i) -> void:
+	_pending_lava_wakes_mutex.lock()
+	_pending_lava_wakes.append(world_position)
+	_pending_lava_wakes_mutex.unlock()
 
 
 func _flush_pending_chunks() -> void:
@@ -368,12 +441,13 @@ func _flush_pending_chunks() -> void:
 #-###########################################
 
 func _refresh_boundaries_on_new_chunk(new_chunk_world_key: Vector3i) -> void:
-	if is_thread_stopping: return
+	if is_thread_stopping:
+		return
 	
 	var new_chunk: Chunk = get_loaded_chunk(new_chunk_world_key)
-	if new_chunk == null:
+	if new_chunk == null or not is_instance_valid(new_chunk) or new_chunk.is_being_unloaded:
 		return
-		
+	
 	var boundary_checks: Array[Dictionary] = [
 		{"offset": Vector3i(chunk_size, 0, 0), "axis": 0, "layer": 0},
 		{"offset": Vector3i(-chunk_size, 0, 0), "axis": 0, "layer": chunk_size - 1},
@@ -384,23 +458,40 @@ func _refresh_boundaries_on_new_chunk(new_chunk_world_key: Vector3i) -> void:
 	]
 	
 	for check: Dictionary in boundary_checks:
-		if is_thread_stopping: return
+		if is_thread_stopping:
+			return
 		
 		var neighbor_chunk_key: Vector3i = new_chunk_world_key + check["offset"]
 		var neighbor_chunk: Chunk = get_loaded_chunk(neighbor_chunk_key)
-		if neighbor_chunk == null or not neighbor_chunk.is_inside_tree():
+		
+		if neighbor_chunk == null or not is_instance_valid(neighbor_chunk) or neighbor_chunk.is_being_unloaded:
 			continue
-			
+		if new_chunk == null or not is_instance_valid(new_chunk) or new_chunk.is_being_unloaded:
+			return
+		
 		var new_chunk_layer: int = chunk_size - 1 - check["layer"]
 		
-		if _boundary_has_water(new_chunk, new_chunk_layer, check["axis"]) or _boundary_has_water(neighbor_chunk, check["layer"], check["axis"]):
-			_queue_neighbor_rebuild(neighbor_chunk_key)
+		if is_instance_valid(new_chunk) and is_instance_valid(neighbor_chunk):
+			if _boundary_has_water(new_chunk, new_chunk_layer, check["axis"]) \
+			or _boundary_has_water(neighbor_chunk, check["layer"], check["axis"]):
+				_queue_neighbor_rebuild(neighbor_chunk_key)
 		
-		_wake_water_on_boundary_layer(neighbor_chunk, neighbor_chunk_key, check["axis"], check["layer"])
-		_seed_water_across_new_chunk_boundary(new_chunk, new_chunk_layer, check["axis"])
+		if is_instance_valid(neighbor_chunk):
+			_wake_water_on_boundary_layer(neighbor_chunk, neighbor_chunk_key, check["axis"], check["layer"])
+		
+		if is_instance_valid(neighbor_chunk):
+			_wake_lava_on_boundary_layer(neighbor_chunk, neighbor_chunk_key, check["axis"], check["layer"])
+		
+		if is_instance_valid(new_chunk):
+			_seed_water_across_new_chunk_boundary(new_chunk, new_chunk_layer, check["axis"])
+
 
 
 func _boundary_has_water(chunk: Chunk, layer: int, axis: int) -> bool:
+	chunk.voxel_data_mutex.lock()
+	if chunk.is_being_unloaded:
+		chunk.voxel_data_mutex.unlock()
+		return false
 	for a: int in range(chunk_size):
 		for b: int in range(chunk_size):
 			var local_position: Vector3i
@@ -412,11 +503,19 @@ func _boundary_has_water(chunk: Chunk, layer: int, axis: int) -> bool:
 				local_position = Vector3i(a, b, layer)
 				
 			if TerrianData.is_water(chunk.chunk_data.get_voxel(local_position)):
+				chunk.voxel_data_mutex.unlock()
 				return true
+	chunk.voxel_data_mutex.unlock()
 	return false
 
 
 func _seed_water_across_new_chunk_boundary(new_chunk: Chunk, layer: int, axis: int) -> void:
+	new_chunk.voxel_data_mutex.lock()
+	if new_chunk.is_being_unloaded:
+		new_chunk.voxel_data_mutex.unlock()
+		return
+	var found_positions: Array[Vector3i] = []
+	
 	for a: int in range(chunk_size):
 		for b: int in range(chunk_size):
 			var local_position: Vector3i
@@ -428,10 +527,20 @@ func _seed_water_across_new_chunk_boundary(new_chunk: Chunk, layer: int, axis: i
 				local_position = Vector3i(a, b, layer)
 				
 			if TerrianData.is_water(new_chunk.chunk_data.get_voxel(local_position)):
-				_queue_water_wake(new_chunk.chunk_world_origin + local_position)
+				found_positions.append(local_position)
+	new_chunk.voxel_data_mutex.unlock()
+	
+	for local_position: Vector3i in found_positions:
+		_queue_water_wake(new_chunk.chunk_world_origin + local_position)
 
 
 func _wake_water_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Vector3i, axis: int, layer: int) -> void:
+	neighbor_chunk.voxel_data_mutex.lock()
+	if neighbor_chunk.is_being_unloaded:
+		neighbor_chunk.voxel_data_mutex.unlock()
+		return
+	var found_positions: Array[Vector3i] = []
+	
 	for a: int in range(chunk_size):
 		for b: int in range(chunk_size):
 			var local_position: Vector3i
@@ -444,7 +553,39 @@ func _wake_water_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Ve
 				
 			var voxel_type: TerrianData.TerrianType = neighbor_chunk.chunk_data.get_voxel(local_position)
 			if TerrianData.is_water(voxel_type):
-				_queue_water_wake(neighbor_chunk_key + local_position)
+				found_positions.append(local_position)
+	neighbor_chunk.voxel_data_mutex.unlock()
+	
+	for local_position: Vector3i in found_positions:
+		_queue_water_wake(neighbor_chunk_key + local_position)
+
+
+func _wake_lava_on_boundary_layer(neighbor_chunk: Chunk, neighbor_chunk_key: Vector3i, axis: int, layer: int) -> void:
+	if neighbor_chunk == null or not is_instance_valid(neighbor_chunk):
+		return
+	neighbor_chunk.voxel_data_mutex.lock()
+	if neighbor_chunk.is_being_unloaded:
+		neighbor_chunk.voxel_data_mutex.unlock()
+		return
+	var found_positions: Array[Vector3i] = []
+	
+	for a: int in range(chunk_size):
+		for b: int in range(chunk_size):
+			var local_position: Vector3i
+			if axis == 0:
+				local_position = Vector3i(layer, a, b)
+			elif axis == 1:
+				local_position = Vector3i(a, layer, b)
+			else:
+				local_position = Vector3i(a, b, layer)
+				
+			var voxel_type: TerrianData.TerrianType = neighbor_chunk.chunk_data.get_voxel(local_position)
+			if TerrianData.is_lava(voxel_type):
+				found_positions.append(local_position)
+	neighbor_chunk.voxel_data_mutex.unlock()
+	
+	for local_position: Vector3i in found_positions:
+		_queue_lava_wake(neighbor_chunk_key + local_position)
 
 
 #-###########################################
@@ -651,9 +792,15 @@ func queue_tree_voxel(world_position: Vector3i, voxel_type: TerrianData.TerrianT
 	
 	if chunk != null:
 		var local_pos: Vector3i = world_position - chunk_world_key
-		if chunk.chunk_data.get_voxel(local_pos) == TerrianData.TerrianType.WATER:
+		
+		chunk.voxel_data_mutex.lock()
+		var existing_type: TerrianData.TerrianType = chunk.chunk_data.get_voxel(local_pos)
+		if existing_type == TerrianData.TerrianType.WATER:
+			chunk.voxel_data_mutex.unlock()
 			return
 		chunk.chunk_data.add_voxel(local_pos, voxel_type)
+		chunk.voxel_data_mutex.unlock()
+		
 		_queue_neighbor_rebuild(chunk_world_key)
 		return
 		
@@ -752,6 +899,9 @@ func _unload_distant_chunks(center_chunk_grid: Vector3i) -> void:
 			chunks_mutex.unlock()
 			
 			if chunk != null and not still_pending:
+				chunk.voxel_data_mutex.lock()
+				chunk.is_being_unloaded = true
+				chunk.voxel_data_mutex.unlock()
 				chunk.queue_free()
 
 
@@ -795,7 +945,18 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void:
 		sand_deposit_threshold,
 		sand_shore_range,
 		gravel_deposit_noise,
-		gravel_deposit_threshold
+		gravel_deposit_threshold,
+		lava_pool_noise,
+		lava_pool_threshold,
+		lava_min_pool_height,
+		lava_max_pool_height,
+		lava_min_depth_below_surface,
+		lava_vent_noise,
+		lava_vent_threshold,
+		coal_deposit_noise,
+		coal_deposit_threshold,
+		iron_deposit_noise,
+		iron_deposit_threshold
 	)
 	
 	var chunk_world_key: Vector3i = Vector3i(new_chunk.position)
@@ -877,6 +1038,11 @@ func add_voxel_at_position(target_block: Vector3i, voxel_type: TerrianData.Terri
 		if TerrianData.is_water(voxel_type):
 			water_flow_manager.enqueue(target_block)
 		water_flow_manager.wake_neighbors(target_block)
+		
+	if lava_flow_manager != null:
+		if TerrianData.is_lava(voxel_type):
+			lava_flow_manager.enqueue(target_block)
+		lava_flow_manager.wake_neighbors(target_block)
 
 
 func remove_voxel_at_position(target_block: Vector3i) -> void:
@@ -895,7 +1061,9 @@ func remove_voxel_at_position(target_block: Vector3i) -> void:
 	
 	if water_flow_manager != null:
 		water_flow_manager.wake_neighbors(target_block)
-
+	if lava_flow_manager != null:
+		lava_flow_manager.wake_neighbors(target_block)
+		
 
 #-###########################################
 # Water Simulation Lookups
@@ -1056,6 +1224,28 @@ func _count_non_air(voxels: PackedInt32Array) -> int:
 func notify_player_spawned() -> void:
 	vertical_streaming_locked_to_spawn = false
 
+
+func is_chunk_streaming_busy() -> bool:
+	if not load_queue.is_empty():
+		return true
+	
+	loading_chunks_mutex.lock()
+	var in_flight: int = loading_chunks_flags.size()
+	loading_chunks_mutex.unlock()
+	if in_flight > 0:
+		return true
+	
+	pending_chunks_mutex.lock()
+	var pending_add: int = pending_chunks_to_add.size()
+	pending_chunks_mutex.unlock()
+	if pending_add > 0:
+		return true
+	
+	_pending_neighbor_rebuilds_mutex.lock()
+	var pending_rebuilds: int = _pending_neighbor_rebuilds.size()
+	_pending_neighbor_rebuilds_mutex.unlock()
+	
+	return pending_rebuilds > 0
 
 #-###########################################
 # Player Signals

@@ -4,6 +4,7 @@
 [ext_resource type="Shader" uid="uid://dgk1ppwrqs2sb" path="res://Scenes/Blocks/Shaders/voxel_atlas.gdshader" id="2_yrfl5"]
 [ext_resource type="Texture2D" uid="uid://bx0qb40yv57kb" path="res://Assets/BlockTextures/assets for game jam.png" id="3_hseme"]
 [ext_resource type="Shader" uid="uid://bcqn71inv3drg" path="res://Test/TestWorld/Water.gdshader" id="4_d72tp"]
+[ext_resource type="Shader" uid="uid://b16u7gsc7ir4b" path="res://Test/TestWorld/Lava.gdshader" id="5_i1dqx"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yrfl5"]
 render_priority = 0
@@ -23,10 +24,22 @@ shader_parameter/water_alpha = 0.65
 shader_parameter/top_face_lower_amount = 0.1
 shader_parameter/scroll_speed = 0.03
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pbjyu"]
+render_priority = 0
+shader = ExtResource("5_i1dqx")
+shader_parameter/atlas_texture = ExtResource("3_hseme")
+shader_parameter/tile_size = 0.25
+shader_parameter/canvas_size = 128.0
+shader_parameter/lava_brightness = 1.8
+shader_parameter/lava_emission_strength = 4.0
+shader_parameter/scroll_speed = 0.02
+shader_parameter/glow_pulse_speed = 0.5
+
 [node name="Chunk" type="StaticBody3D" unique_id=1940101697]
 script = ExtResource("1_sc5a4")
 material = SubResource("ShaderMaterial_yrfl5")
 water_material = SubResource("ShaderMaterial_4mhdq")
+lava_material = SubResource("ShaderMaterial_pbjyu")
 atlas_columns = 4
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1274664315]

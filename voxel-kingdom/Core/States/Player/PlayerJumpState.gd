@@ -27,10 +27,16 @@ func exit() -> void:
 # Grounded Callback
 #----------------
 func _on_grounded() -> void:
+	
+	if _input.is_jump_held:
+		transition_to(&"JumpState")
+		return
 	if _input and _input.movement_direction != Vector2.ZERO:
 		transition_to(&"MoveState")
+		return
 	else:
 		transition_to(&"IdleState")
+		return
 
 
 #----------------

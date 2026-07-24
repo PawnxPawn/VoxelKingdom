@@ -82,7 +82,11 @@ func get_voxel(pos: Vector3i) -> TerrianData.TerrianType:
 	if pos.x < 0 or pos.y < 0 or pos.z < 0 or pos.x >= chunk_size or pos.y >= chunk_size or pos.z >= chunk_size:
 		return TerrianData.TerrianType.AIR
 	
-	return voxels[_position_to_index(pos)] as TerrianData.TerrianType
+	var index: int = _position_to_index(pos)
+	if index < 0 or index >= voxels.size():
+		return TerrianData.TerrianType.AIR
+	
+	return voxels[index] as TerrianData.TerrianType
 
 
 #----------------

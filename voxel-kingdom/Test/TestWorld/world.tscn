@@ -27,6 +27,7 @@ sky_material = SubResource("ProceduralSkyMaterial_b330u")
 sky = SubResource("Sky_ab4hr")
 ambient_light_source = 2
 ambient_light_color = Color(0.14767182, 0.14767182, 0.14767176, 1)
+ambient_light_energy = 2.0
 glow_enabled = true
 glow_intensity = 1.63
 glow_hdr_threshold = 2.74
@@ -89,6 +90,7 @@ metadata/_edit_use_anchors_ = true
 [node name="ChunkManager" parent="." unique_id=1434710344 instance=ExtResource("3_gs4kv")]
 view_distance_in_chunks = 10
 water_level = 133.0
+lava_min_depth_below_surface = 0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1699135370]
 

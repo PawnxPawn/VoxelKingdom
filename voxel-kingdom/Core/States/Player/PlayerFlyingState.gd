@@ -31,7 +31,7 @@ func exit() -> void:
 #----------------
 func _on_fly_toggled() -> void:
 	var body = _owner as Player
-	if body.is_underwater() or body.is_at_water_surface():
+	if body.is_under_liquid() or body.is_at_liquid_surface():
 		transition_to(&"SwimState")
 		return
 	if _input and _input.movement_direction != Vector2.ZERO:

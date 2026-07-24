@@ -1,13 +1,13 @@
 #-###########################################
-# WaterFlowManager
+# Lava Flow Manager
 #-###########################################
-
-class_name WaterFlowManager
+class_name LavaFlowManager
 extends Node
 
 @export var chunk_manager: ChunkManager
-@export var tick_interval: float = 0.2
-@export var max_updates_per_tick: int = 96
+@export var tick_interval: float = 0.6
+@export var max_updates_per_tick: int = 32
+
 
 const HORIZONTAL_OFFSETS: Array[Vector3i] = [
 	Vector3i(1, 0, 0),
@@ -31,17 +31,15 @@ var _tick_timer: float = 0.0
 
 var _thread: Thread = null
 var _thread_mutex: Mutex = Mutex.new()
-var _thread_result: Dictionary = {}
+var _thread_result: Dictionary[Vector3i, Array] = {}
 var _thread_busy: bool = false
 var _task_id: int = -1
 
-#----------------
-# Process
-#----------------
+
 func _process(delta: float) -> void:
 	if chunk_manager == null:
 		return
-		
+	
 	_tick_timer += delta
 	if _tick_timer >= tick_interval:
 		_tick_timer = 0.0
@@ -50,14 +48,10 @@ func _process(delta: float) -> void:
 	_collect_thread_result()
 
 
-#-###########################################
-# Public API
-#-###########################################
-
 func enqueue(world_voxel_position: Vector3i) -> void:
 	if _queued_flags.has(world_voxel_position):
 		return
-		
+	
 	_queued_flags[world_voxel_position] = true
 	_queued_positions.append(world_voxel_position)
 
@@ -65,13 +59,10 @@ func enqueue(world_voxel_position: Vector3i) -> void:
 func wake_neighbors(world_voxel_position: Vector3i) -> void:
 	for offset: Vector3i in ALL_NEIGHBOR_OFFSETS:
 		var neighbor_position: Vector3i = world_voxel_position + offset
-		if TerrianData.is_water(chunk_manager.get_voxel_type_at(neighbor_position)):
+		var neighbor_type: TerrianData.TerrianType = chunk_manager.get_voxel_type_at(neighbor_position)
+		if TerrianData.is_lava(neighbor_type):
 			enqueue(neighbor_position)
 
-
-#-###########################################
-# Tick Dispatch
-#-###########################################
 
 func _run_tick() -> void:
 	if chunk_manager != null and chunk_manager.is_thread_stopping: return
@@ -96,7 +87,7 @@ func _thread_worker(positions_to_process: Array[Vector3i]) -> void:
 	var edits_by_chunk: Dictionary[Vector3i, Array] = {}
 	for world_position: Vector3i in positions_to_process:
 		if chunk_manager != null and chunk_manager.is_thread_stopping: break
-		_process_water_voxel(world_position, edits_by_chunk)
+		_process_lava_voxel(world_position, edits_by_chunk)
 
 	_thread_mutex.lock()
 	_thread_result = edits_by_chunk
@@ -123,32 +114,31 @@ func _collect_thread_result() -> void:
 	_apply_edits(edits_by_chunk)
 
 
-#----------------
-# Water Logic
-#----------------
-func _process_water_voxel(world_position: Vector3i, edits_by_chunk: Dictionary[Vector3i, Array]) -> void:
+func _process_lava_voxel(world_position: Vector3i, edits_by_chunk: Dictionary[Vector3i, Array]) -> void:
 	var voxel_type: TerrianData.TerrianType = chunk_manager.get_voxel_type_at(world_position)
-	if not TerrianData.is_water(voxel_type):
+	if not TerrianData.is_lava(voxel_type):
 		return
-		
-	var current_level: int = TerrianData.get_water_level(voxel_type)
 	
-	for offset: Vector3i in ALL_NEIGHBOR_OFFSETS:
-		var neighbor_position: Vector3i = world_position + offset
-		var neighbor_type: TerrianData.TerrianType = chunk_manager.get_voxel_type_at(neighbor_position)
-		if TerrianData.is_lava(neighbor_type):
-			_queue_write(neighbor_position, TerrianData.TerrianType.WATER, edits_by_chunk)
+	var current_level: int = TerrianData.get_lava_level(voxel_type)
+	if current_level < 0:
+		return
 	
 	var below_position: Vector3i = world_position + DOWN_OFFSET
-	if chunk_manager.get_voxel_type_at(below_position) == TerrianData.TerrianType.AIR:
-		_queue_write(below_position, TerrianData.water_type_for_level(0), edits_by_chunk)
+	var below_type: TerrianData.TerrianType = chunk_manager.get_voxel_type_at(below_position)
+	
+	if below_type == TerrianData.TerrianType.AIR:
+		_queue_write(below_position, TerrianData.lava_type_for_level(0), edits_by_chunk)
 		return
-		
-	if current_level >= TerrianData.MAX_WATER_FLOW_DISTANCE:
+	
+	if TerrianData.is_water(below_type):
+		_queue_write(below_position, voxel_type, edits_by_chunk)
 		return
-		
+	
+	if current_level >= TerrianData.MAX_LAVA_FLOW_DISTANCE:
+		return
+	
 	var next_level: int = current_level + 1
-	var next_type: TerrianData.TerrianType = TerrianData.water_type_for_level(next_level)
+	var next_type: TerrianData.TerrianType = TerrianData.lava_type_for_level(next_level)
 	
 	for offset: Vector3i in HORIZONTAL_OFFSETS:
 		var neighbor_position: Vector3i = world_position + offset
@@ -156,39 +146,35 @@ func _process_water_voxel(world_position: Vector3i, edits_by_chunk: Dictionary[V
 		
 		if neighbor_type == TerrianData.TerrianType.AIR:
 			_queue_write(neighbor_position, next_type, edits_by_chunk)
-		elif TerrianData.is_water(neighbor_type) and TerrianData.get_water_level(neighbor_type) > next_level:
+		elif TerrianData.is_lava(neighbor_type) and TerrianData.get_lava_level(neighbor_type) > next_level:
+			_queue_write(neighbor_position, next_type, edits_by_chunk)
+		elif TerrianData.is_water(neighbor_type):
 			_queue_write(neighbor_position, next_type, edits_by_chunk)
 
 
-#----------------
-# Queue Write
-#----------------
-func _queue_write(world_position: Vector3i, water_type: TerrianData.TerrianType, edits_by_chunk: Dictionary[Vector3i, Array]) -> void:
+func _queue_write(world_position: Vector3i, lava_type: TerrianData.TerrianType, edits_by_chunk: Dictionary[Vector3i, Array]) -> void:
 	var chunk_world_key: Vector3i = chunk_manager.voxel_to_chunk_key(world_position)
 	
 	if not edits_by_chunk.has(chunk_world_key):
 		edits_by_chunk[chunk_world_key] = []
-		
+	
 	var local_position: Vector3i = world_position - chunk_world_key
 	
 	edits_by_chunk[chunk_world_key].append({
 		"pos": local_position,
-		"type": water_type
+		"type": lava_type
 	})
 	
 	enqueue(world_position)
 
 
-#----------------
-# Apply Edits (Main Thread)
-#----------------
-func _apply_edits(edits_by_chunk: Dictionary) -> void:
-	for chunk_world_key: Vector3i in edits_by_chunk.keys():
+func _apply_edits(edits_by_chunk: Dictionary[Vector3i, Array]) -> void:
+	for chunk_world_key: Vector3i in edits_by_chunk.keys():	# MUST run on main thread
 		var chunk: Chunk = chunk_manager.get_loaded_chunk(chunk_world_key)
 		if chunk == null:
 			continue
 		
-		chunk.apply_water_voxel_edits(edits_by_chunk[chunk_world_key])
+		chunk.apply_lava_voxel_edits(edits_by_chunk[chunk_world_key])
 
 
 func _exit_tree() -> void:

@@ -58,6 +58,9 @@ var _has_pending_remove: bool = false
 
 var _pause_cooldown_frames: int = 0
 
+var _feet_in_lava: bool = false
+var _head_in_lava: bool = false
+
 
 #----------------
 # Ready
@@ -132,6 +135,7 @@ func _pause() -> void:
 	_input_allowed = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Services.ui.show_ui(UI.Uis.PAUSE)
+	Services.game_state.change_game_state(GameState.GameStates.PAUSED)
 	get_tree().paused = true
 
 
@@ -140,6 +144,7 @@ func _unpause(ui:UI.Uis) -> void:
 	_input_allowed = true
 	_handler.set_active(InputSource, true)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Services.game_state.change_game_state(GameState.GameStates.PLAYING)
 	_pause_cooldown_frames = 3
 
 
@@ -321,15 +326,16 @@ func _cancel_swap_for_removal() -> void:
 #----------------
 # Body Submerged
 #----------------
-func _on_feet_submerged(is_submerged: bool) -> void:
+func _on_feet_submerged(is_submerged: bool, kind: WaterOverlay.FluidKind) -> void:
 	_feet_submerged = is_submerged
+	_feet_in_lava = (kind == WaterOverlay.FluidKind.LAVA)
 	
 	if gravity:
-		gravity.set_at_surface(is_at_water_surface())
+		gravity.set_at_surface(is_at_liquid_surface())
 	
 	var current: StringName = _sm.get_current_state()
-	
-	if current == &"FlyState": return
+	if current == &"FlyState":
+		return
 	
 	if is_submerged:
 		if current != &"SwimState":
@@ -339,25 +345,29 @@ func _on_feet_submerged(is_submerged: bool) -> void:
 			_sm.change_state(&"MoveState")
 
 
-func _on_head_submerged(is_submerged: bool) -> void:
+func _on_head_submerged(is_submerged: bool, kind: WaterOverlay.FluidKind) -> void:
 	_head_submerged = is_submerged
+	_head_in_lava = (kind == WaterOverlay.FluidKind.LAVA)
+	
+	water_overlay.set_submerged(is_submerged, kind)
 	
 	if gravity:
-		gravity.set_at_surface(is_at_water_surface())
-	
-	if water_overlay:
-		water_overlay.set_submerged(is_submerged)
+		gravity.set_at_surface(is_at_liquid_surface())
+
 
 
 #----------------
 # Water helpers
 #----------------
-func is_underwater() -> bool:
-	return _feet_submerged and _head_submerged
+func is_under_liquid() -> bool:
+	return (_feet_submerged or _feet_in_lava) and (_head_submerged or _head_in_lava)
 
 
-func is_at_water_surface() -> bool:
-	return _feet_submerged and not _head_submerged
+func is_at_liquid_surface() -> bool:
+	return (_feet_submerged or _feet_in_lava) and not (_head_submerged or _head_in_lava)
+
+func is_in_lava() -> bool:
+	return _feet_in_lava or _head_in_lava
 
 
 #----------------

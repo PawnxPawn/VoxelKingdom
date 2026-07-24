@@ -1,5 +1,5 @@
 //-###########################################
-// Atlas Tile Shader (Spatial)
+// Atlas Tile Shader
 //-###########################################
 
 shader_type spatial;
@@ -14,7 +14,7 @@ varying vec2 tile_origin;
 
 
 void vertex() {
-    tile_origin = UV2;
+	tile_origin = UV2;
 }
 
 
@@ -22,18 +22,18 @@ void vertex() {
 // Fragment
 //----------------
 void fragment() {
-    float tile_percent = tile_size / 1.0;
-
-    vec2 local_uv = fract(UV);
-
-    float inset = 0.5 / canvas_size;
-    local_uv = clamp(local_uv, inset, 1.0 - inset);
-
-    vec2 atlas_uv = tile_origin + local_uv * tile_percent;
-
-    vec4 tex_color = texture(atlas_texture, atlas_uv);
-
-    ALBEDO = tex_color.rgb * COLOR.rgb;
-    ALPHA = tex_color.a;
-    ALPHA_SCISSOR_THRESHOLD = alpha_scissor_threshold;
+	float tile_percent = tile_size / 1.0;
+	
+	vec2 local_uv = fract(UV);
+	
+	float inset = 0.5 / canvas_size;
+	local_uv = clamp(local_uv, inset, 1.0 - inset);
+	
+	vec2 atlas_uv = tile_origin + local_uv * tile_percent;
+	
+	vec4 tex_color = texture(atlas_texture, atlas_uv);
+	
+	ALBEDO = tex_color.rgb * COLOR.rgb;
+	ALPHA = tex_color.a;
+	ALPHA_SCISSOR_THRESHOLD = alpha_scissor_threshold;
 }
