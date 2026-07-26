@@ -2,7 +2,7 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://w6of34d2ldgd"
+uid="uid://dlfeul0bdemta"
 path="res://.godot/imported/PlaceStone.wav-0d7919e677ea452e1ffb5281db1280f5.sample"
 
 [deps]
@@ -21,4 +21,4 @@ edit/normalize=false
 edit/loop_mode=0
 edit/loop_begin=0
 edit/loop_end=-1
-compress/mode=2
+compress/mode=0

@@ -2,7 +2,7 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://dmget0h8h5sbm"
+uid="uid://wmme05tcx4i7"
 path="res://.godot/imported/EnteringWater.wav-e394dfa89d62a8879556144518c27e80.sample"
 
 [deps]
@@ -21,4 +21,4 @@ edit/normalize=false
 edit/loop_mode=0
 edit/loop_begin=0
 edit/loop_end=-1
-compress/mode=2
+compress/mode=0
