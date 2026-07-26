@@ -1,6 +1,6 @@
-#-###########################################
-# Debug Settings Panel
-#-###########################################
+
+
+
 
 extends PanelContainer
 
@@ -10,5 +10,5 @@ extends PanelContainer
 @onready var button: Button = $Button
 
 
-func _ready() -> void:
-	button.pressed.connect(func(): visible = false)
+func _ready() -> void :
+	button.pressed.connect( func(): visible = false)

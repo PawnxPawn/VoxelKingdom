@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://dmwg6px0ksu2j"]
 
-[ext_resource type="Script" uid="uid://m21u4xqp7s55" path="res://Test/TestWorld/ChunkManager.gd" id="1_prvd2"]
-[ext_resource type="Script" uid="uid://bh754eggcmrdx" path="res://Test/Menus/TitleMenu.gd" id="1_s3fem"]
-[ext_resource type="Script" uid="uid://da06rduc8cbas" path="res://Test/TestWorld/WaterDetect.gd" id="2_xv1hu"]
-[ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="3_aefkp"]
-[ext_resource type="Texture2D" uid="uid://2gr5al6axbru" path="res://Assets/Menu/MainMenu/MainMenuTitle.png" id="4_aefkp"]
-[ext_resource type="Texture2D" uid="uid://dsgrn4b45qwr2" path="res://Assets/Menu/MainMenu/Boot.png" id="5_k7btm"]
-[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="6_g3a1x"]
+[ext_resource type="Script" uid="uid://bh754eggcmrdx" path="res://Test/Menus/TitleMenu.gd" id="1"]
+[ext_resource type="Script" uid="uid://m21u4xqp7s55" path="res://Test/TestWorld/ChunkManager.gd" id="2"]
+[ext_resource type="Script" uid="uid://da06rduc8cbas" path="res://Test/TestWorld/WaterDetect.gd" id="3"]
+[ext_resource type="PackedScene" uid="uid://h4f6xqjagguy" path="res://Scenes/Player/player.tscn" id="4"]
+[ext_resource type="Texture2D" uid="uid://2gr5al6axbru" path="res://Assets/Menu/MainMenu/MainMenuTitle.png" id="5"]
+[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="6"]
+[ext_resource type="Texture2D" uid="uid://dsgrn4b45qwr2" path="res://Assets/Menu/MainMenu/Boot.png" id="7"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_b330u"]
 sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
@@ -38,25 +38,25 @@ adjustment_enabled = true
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_e0yiv"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_s3fem"]
-atlas = ExtResource("5_k7btm")
+atlas = ExtResource("7")
 region = Rect2(69, 98, 242.67055, 20.773682)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_w45gy"]
-atlas = ExtResource("5_k7btm")
+atlas = ExtResource("7")
 region = Rect2(69.39055, 125.02281, 242.67055, 20.773682)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_k7btm"]
-atlas = ExtResource("5_k7btm")
+atlas = ExtResource("7")
 region = Rect2(69, 152, 242.67055, 20.773682)
 
 [sub_resource type="Theme" id="Theme_s3fem"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_g3a1x"]
-atlas = ExtResource("5_k7btm")
+atlas = ExtResource("7")
 region = Rect2(69, 179, 242.67055, 20.773682)
 
 [sub_resource type="LabelSettings" id="LabelSettings_w45gy"]
-font = ExtResource("6_g3a1x")
+font = ExtResource("6")
 font_size = 84
 font_color = Color(0.60784316, 0.6784314, 0.7176471, 1)
 shadow_size = 16
@@ -64,7 +64,7 @@ shadow_color = Color(0, 0, 0, 1)
 shadow_offset = Vector2(1, 12.335)
 
 [sub_resource type="LabelSettings" id="LabelSettings_g3a1x"]
-font = ExtResource("6_g3a1x")
+font = ExtResource("6")
 font_size = 60
 font_color = Color(0.60784316, 0.6784314, 0.7176471, 1)
 shadow_size = 16
@@ -72,7 +72,7 @@ shadow_color = Color(0, 0, 0, 1)
 shadow_offset = Vector2(1, 12.335)
 
 [sub_resource type="LabelSettings" id="LabelSettings_3br18"]
-font = ExtResource("6_g3a1x")
+font = ExtResource("6")
 font_size = 60
 font_color = Color(0.6620639, 0.80705243, 0.9034646, 1)
 shadow_size = 16
@@ -90,7 +90,7 @@ shadow_offset = Vector2(1, 12.335)
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ujebd"]
 
 [node name="TitleMenu" type="Node3D" unique_id=363614013]
-script = ExtResource("1_s3fem")
+script = ExtResource("1")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=625438936]
 transform = Transform3D(0.9743701, -0.22236261, -0.034026157, -0.14685826, -0.74337274, 0.6525563, -0.17039822, -0.63083434, -0.7569759, 0, 3.9366724, -9.205248)
@@ -102,16 +102,16 @@ shadow_enabled = true
 environment = SubResource("Environment_6qn7x")
 
 [node name="ChunkManager" type="Node" parent="." unique_id=56504370]
-script = ExtResource("1_prvd2")
+script = ExtResource("2")
 view_distance_in_chunks = 10
 core_radius_in_chunks = 10
 metadata/_custom_type_script = "uid://m21u4xqp7s55"
 
 [node name="WaterDetector" type="Node" parent="." unique_id=2062160651]
-script = ExtResource("2_xv1hu")
+script = ExtResource("3")
 metadata/_custom_type_script = "uid://da06rduc8cbas"
 
-[node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager", "water_detector") instance=ExtResource("3_aefkp")]
+[node name="Player" parent="." unique_id=900159298 node_paths=PackedStringArray("chunk_manager", "water_detector") instance=ExtResource("4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 150, 0)
 chunk_manager = NodePath("../ChunkManager")
 water_detector = NodePath("../WaterDetector")
@@ -196,7 +196,7 @@ grow_horizontal = 2
 grow_vertical = 2
 scale = Vector2(4, 4)
 pivot_offset = Vector2(192, 78.68)
-texture = ExtResource("4_aefkp")
+texture = ExtResource("5")
 
 [node name="PressAnyKey" type="Panel" parent="CanvasLayer/TitleScreen" unique_id=347630219]
 unique_name_in_owner = true
@@ -231,7 +231,7 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 5
 theme_override_constants/shadow_offset_y = 5
 theme_override_constants/shadow_outline_size = 10
-theme_override_fonts/font = ExtResource("6_g3a1x")
+theme_override_fonts/font = ExtResource("6")
 theme_override_font_sizes/font_size = 48
 text = "Press Any Key"
 horizontal_alignment = 1
@@ -426,7 +426,7 @@ offset_bottom = 839.0
 theme_override_colors/font_focus_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
 theme_override_colors/font_pressed_color = Color(0.37413925, 0.37413928, 0.37413922, 1)
 theme_override_colors/font_hover_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
-theme_override_fonts/font = ExtResource("6_g3a1x")
+theme_override_fonts/font = ExtResource("6")
 theme_override_font_sizes/font_size = 72
 theme_override_styles/normal = SubResource("StyleBoxEmpty_w4u2d")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_24bog")

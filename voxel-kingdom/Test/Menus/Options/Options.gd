@@ -12,12 +12,12 @@ extends Control
 @onready var back: Button = %Back
 
 
-func _ready() -> void:
+func _ready() -> void :
 	_connect_signals()
 	_load_initial_values()
 
 
-func _connect_signals() -> void:
+func _connect_signals() -> void :
 	master_vol_slider.value_changed.connect(_on_slider_changed.bind("Master"))
 	music_vol_slider.value_changed.connect(_on_slider_changed.bind("Music"))
 	sfx_vol_slider.value_changed.connect(_on_slider_changed.bind("SFX"))
@@ -25,18 +25,18 @@ func _connect_signals() -> void:
 	back.button_up.connect(_on_back_pressed)
 
 
-func _load_initial_values() -> void:
-	# Load from AudioService instead of AudioServer
+func _load_initial_values() -> void :
+
 	master_vol_slider.value = Services.audio.get_master_volume()
 	music_vol_slider.value = Services.audio.get_music_volume()
 	sfx_vol_slider.value = Services.audio.get_sfx_volume()
-	
+
 	_update_label(master_vol_per, master_vol_slider.value)
 	_update_label(music_vol_per, music_vol_slider.value)
 	_update_label(sfx_vol_per, sfx_vol_slider.value)
 
 
-func _on_slider_changed(value: float, bus_name: String) -> void:
+func _on_slider_changed(value: float, bus_name: String) -> void :
 	match bus_name:
 		"Master":
 			Services.audio.set_master_volume(value)
@@ -49,10 +49,10 @@ func _on_slider_changed(value: float, bus_name: String) -> void:
 			_update_label(sfx_vol_per, value)
 
 
-func _update_label(label: Label, value: float) -> void:
+func _update_label(label: Label, value: float) -> void :
 	label.text = "%d%%" % value
 
 
-func _on_back_pressed() -> void:
+func _on_back_pressed() -> void :
 	Services.audio.save_settings()
 	Services.ui.hide_ui(UI.Uis.GAME_SETTINGS)

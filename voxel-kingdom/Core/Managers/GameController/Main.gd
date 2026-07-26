@@ -1,6 +1,6 @@
-#-###########################################
-# Root Game Node
-#-###########################################
+
+
+
 
 extends Node
 
@@ -9,12 +9,12 @@ extends Node
 @onready var audio_manager: Node = $AudioManager
 
 
-#----------------
-# Lifecycle
-#----------------
-func _ready() -> void:
+
+
+
+func _ready() -> void :
 	Services.set_scene_manager(scene_manager)
 	Services.set_ui_manager(ui_manager)
 	Services.set_audio_manager(audio_manager)
-	
+
 	Services.scene_loader.load_scene(SceneLoader.Scenes.MAIN_MENU)

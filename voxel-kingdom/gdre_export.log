@@ -1,0 +1,37 @@
+GDRE Tools v2.6.0
+CachyOS Linux #1 SMP PREEMPT_DYNAMIC Wed, 08 Jul 2026 18:34:01 +0000, NVIDIA GeForce GTX 1660 Ti, vulkan
+Opening file: /run/media/pawnxpawn/Storage/Projects/Exports/VoxelTestBuild (1)/VoxelTestBuild/index.pck
+ERROR: res://Assets/Models/Hostiles/Bat.gltf.import: no destination files found in import data
+   at: _load (modules/gdsdecomp/utility/import_info.cpp:693)
+ERROR: res://Assets/Models/Passives/Moth (2).gltf.import: no destination files found in import data
+   at: _load (modules/gdsdecomp/utility/import_info.cpp:693)
+Loaded 111 imported files
+Detected Engine Version: 4.7.0
+Detected Bytecode Revision: 4.5.0-stable (ebc36a7)
+Verified 231 files, no errors detected!
+Extracted 231 files, no errors detected!
+Saved project config.
+
+
+********************************EXPORT REPORT********************************
+
+Totals:                                 
+Decompiled scripts:                     53
+Scripts not decompiled:                 0
+Imported resources for export session:  111
+Successfully converted:                 111
+Lossy:                                  3
+Rewrote metadata:                       38
+Non-importable conversions:             0
+Not converted:                          0
+Failed conversions:                     0
+-------------
+
+
+
+------------------------------------------------------------------------------------
+
+Use Godot editor version 4.7.0 to edit the project.
+
+*******************************************************************************
+

@@ -1,6 +1,6 @@
-#-###########################################
-# Input Source Base
-#-###########################################
+
+
+
 
 @abstract class_name InputSource extends Component
 

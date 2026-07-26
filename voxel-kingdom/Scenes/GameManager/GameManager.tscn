@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://c4rskdb1wf7gb"]
 
-[ext_resource type="Script" uid="uid://bfljda1hw0dh1" path="res://Core/Managers/GameController/Main.gd" id="1_mtm67"]
+[ext_resource type="Script" uid="uid://bfljda1hw0dh1" path="res://Core/Managers/GameController/Main.gd" id="1"]
 
 [node name="GameManager" type="Node" unique_id=1787820013]
-script = ExtResource("1_mtm67")
+script = ExtResource("1")
 
 [node name="SceneManager" type="Node" parent="." unique_id=751169187]
 process_mode = 1

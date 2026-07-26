@@ -1,6 +1,6 @@
-#-###########################################
-# Cube (Voxel Block)
-#-###########################################
+
+
+
 
 class_name Cube
 extends MeshInstance3D
@@ -9,53 +9,53 @@ extends MeshInstance3D
 @export var atlas_columns: int = 3
 @export var atlas_texture: Texture2D
 @export var voxel_shader: Shader
-@export var rotation_speed: float = 0.5  # radians/sec
+@export var rotation_speed: float = 0.5
 
 var face_normals: Dictionary[Chunk.Face, Vector3] = {
-	Chunk.Face.FRONT:  Vector3(0, 0, 1),
-	Chunk.Face.BACK:   Vector3(0, 0, -1),
-	Chunk.Face.LEFT:   Vector3(-1, 0, 0),
-	Chunk.Face.RIGHT:  Vector3(1, 0, 0),
-	Chunk.Face.BOTTOM: Vector3(0, -1, 0),
-	Chunk.Face.TOP:    Vector3(0, 1, 0),
+	Chunk.Face.FRONT: Vector3(0, 0, 1), 
+	Chunk.Face.BACK: Vector3(0, 0, -1), 
+	Chunk.Face.LEFT: Vector3(-1, 0, 0), 
+	Chunk.Face.RIGHT: Vector3(1, 0, 0), 
+	Chunk.Face.BOTTOM: Vector3(0, -1, 0), 
+	Chunk.Face.TOP: Vector3(0, 1, 0), 
 }
 
 var face_axes: Dictionary[Chunk.Face, Chunk.FaceAxes] = {
-	Chunk.Face.FRONT:  Chunk.FaceAxes.new(2,  1, 0,  1, 1, 1),
-	Chunk.Face.BACK:   Chunk.FaceAxes.new(2, -1, 0, -1, 1, 1),
-	Chunk.Face.RIGHT:  Chunk.FaceAxes.new(0,  1, 1,  1, 2, 1),
-	Chunk.Face.LEFT:   Chunk.FaceAxes.new(0, -1, 2,  1, 1, 1),
-	Chunk.Face.TOP:    Chunk.FaceAxes.new(1,  1, 2,  1, 0, 1),
-	Chunk.Face.BOTTOM: Chunk.FaceAxes.new(1, -1, 0,  1, 2, 1),
+	Chunk.Face.FRONT: Chunk.FaceAxes.new(2, 1, 0, 1, 1, 1), 
+	Chunk.Face.BACK: Chunk.FaceAxes.new(2, -1, 0, -1, 1, 1), 
+	Chunk.Face.RIGHT: Chunk.FaceAxes.new(0, 1, 1, 1, 2, 1), 
+	Chunk.Face.LEFT: Chunk.FaceAxes.new(0, -1, 2, 1, 1, 1), 
+	Chunk.Face.TOP: Chunk.FaceAxes.new(1, 1, 2, 1, 0, 1), 
+	Chunk.Face.BOTTOM: Chunk.FaceAxes.new(1, -1, 0, 1, 2, 1), 
 }
 
 var face_uv_rotation: Dictionary[Chunk.Face, int] = {
-	Chunk.Face.FRONT:  2,
-	Chunk.Face.BACK:   2,
-	Chunk.Face.RIGHT:  1,
-	Chunk.Face.LEFT:   2,
-	Chunk.Face.TOP:    0,
-	Chunk.Face.BOTTOM: 0,
+	Chunk.Face.FRONT: 2, 
+	Chunk.Face.BACK: 2, 
+	Chunk.Face.RIGHT: 1, 
+	Chunk.Face.LEFT: 2, 
+	Chunk.Face.TOP: 0, 
+	Chunk.Face.BOTTOM: 0, 
 }
 
 
-#----------------
-# Lifecycle
-#----------------
-func _ready() -> void:
+
+
+
+func _ready() -> void :
 	_build_cube()
 	_apply_material()
 
 
-func _process(delta: float) -> void:
+func _process(delta: float) -> void :
 	rotate_y(rotation_speed * delta)
 
 
-#----------------
-# Build Cube Mesh
-#----------------
-func _build_cube() -> void:
-	var st := SurfaceTool.new()
+
+
+
+func _build_cube() -> void :
+	var st: = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
 	var atlas: BlockFaceAtlas = TerrianData.atlas_tiles[block_type]
@@ -68,10 +68,10 @@ func _build_cube() -> void:
 	mesh = st.commit()
 
 
-#----------------
-# Add Face
-#----------------
-func _add_face(st: SurfaceTool, face: Chunk.Face, atlas: BlockFaceAtlas, tile_size: float) -> void:
+
+
+
+func _add_face(st: SurfaceTool, face: Chunk.Face, atlas: BlockFaceAtlas, tile_size: float) -> void :
 	var axes: Chunk.FaceAxes = face_axes[face]
 	var normal: Vector3 = face_normals[face]
 
@@ -92,7 +92,7 @@ func _add_face(st: SurfaceTool, face: Chunk.Face, atlas: BlockFaceAtlas, tile_si
 	var bottom_right: Vector3 = bottom_left + across_dir
 
 	var corners: Array[Vector3] = [
-		bottom_left, top_left, top_right,
+		bottom_left, top_left, top_right, 
 		bottom_left, top_right, bottom_right
 	]
 
@@ -107,12 +107,12 @@ func _add_face(st: SurfaceTool, face: Chunk.Face, atlas: BlockFaceAtlas, tile_si
 	var rot: int = face_uv_rotation[face]
 
 	var repeat_uvs: Array[Vector2] = [
-		_face_uv(0, 0, u0, u1, v0, v1, rot),
-		_face_uv(0, 1, u0, u1, v0, v1, rot),
-		_face_uv(1, 1, u0, u1, v0, v1, rot),
-		_face_uv(0, 0, u0, u1, v0, v1, rot),
-		_face_uv(1, 1, u0, u1, v0, v1, rot),
-		_face_uv(1, 0, u0, u1, v0, v1, rot),
+		_face_uv(0, 0, u0, u1, v0, v1, rot), 
+		_face_uv(0, 1, u0, u1, v0, v1, rot), 
+		_face_uv(1, 1, u0, u1, v0, v1, rot), 
+		_face_uv(0, 0, u0, u1, v0, v1, rot), 
+		_face_uv(1, 1, u0, u1, v0, v1, rot), 
+		_face_uv(1, 0, u0, u1, v0, v1, rot), 
 	]
 
 	for i in range(corners.size()):
@@ -122,11 +122,11 @@ func _add_face(st: SurfaceTool, face: Chunk.Face, atlas: BlockFaceAtlas, tile_si
 		st.add_vertex(corners[i])
 
 
-#----------------
-# Face UV Rotation
-#----------------
+
+
+
 func _face_uv(a: int, b: int, u0: float, u1: float, v0: float, v1: float, rotation_steps: int) -> Vector2:
-	var rotation_index := ((rotation_steps % 4) + 4) % 4
+	var rotation_index: = ((rotation_steps % 4) + 4) % 4
 
 	var rotated_u: int
 	var rotated_v: int
@@ -147,48 +147,48 @@ func _face_uv(a: int, b: int, u0: float, u1: float, v0: float, v1: float, rotati
 
 	if rotation_index % 2 == 0:
 		return Vector2(
-			u0 if rotated_u == 0 else u1,
+			u0 if rotated_u == 0 else u1, 
 			v0 if rotated_v == 0 else v1
 		)
 	else:
 		return Vector2(
-			v0 if rotated_u == 0 else v1,
+			v0 if rotated_u == 0 else v1, 
 			u0 if rotated_v == 0 else u1
 		)
 
 
 
-#----------------
-# Tile Lookup
-#----------------
+
+
+
 func _tile_for_face(face: Chunk.Face, atlas: BlockFaceAtlas) -> Vector2i:
 	match face:
-		Chunk.Face.TOP:    return atlas.top
+		Chunk.Face.TOP: return atlas.top
 		Chunk.Face.BOTTOM: return atlas.bottom
-		_:                 return atlas.side
+		_: return atlas.side
 
 
-#----------------
-# Apply Material
-#----------------
-func _apply_material() -> void:
-	var mat := ShaderMaterial.new()
+
+
+
+func _apply_material() -> void :
+	var mat: = ShaderMaterial.new()
 	mat.shader = voxel_shader
 	mat.set_shader_parameter("atlas_texture", atlas_texture)
 	mat.set_shader_parameter("tile_size", 1.0 / atlas_columns)
 	material_override = mat
 
 
-#----------------
-# Change Block Type
-#----------------
-func change_block_type(new_type: TerrianData.TerrianType) -> void:
+
+
+
+func change_block_type(new_type: TerrianData.TerrianType) -> void :
 	if new_type == block_type:
 		return
-	
+
 	if not TerrianData.atlas_tiles.has(new_type):
 		push_warning("No atlas entry for block type: %s" % TerrianData.TerrianType.keys()[new_type])
 		return
-	
+
 	block_type = new_type
 	_build_cube()

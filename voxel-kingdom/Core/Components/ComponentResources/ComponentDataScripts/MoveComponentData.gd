@@ -1,13 +1,13 @@
-#-###########################################
-# Move Component Data
-#-###########################################
+
+
+
 
 class_name MoveComponentData extends ComponentData
 
-#-########## REQUIRED ################################
+
 @export_custom(PROPERTY_HINT_RESOURCE_TYPE, "Script", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_READ_ONLY)
 var component: Script = preload("uid://chvfc2ghjnp2v")
-#-####################################################
+
 
 @export_group("Stats")
 @export var max_speed: float = 1000.0

@@ -1,20 +1,20 @@
 [gd_scene format=3 uid="uid://b4t8bgelv3vsd"]
 
-[ext_resource type="Texture2D" uid="uid://cej77ob25cvdl" path="res://Assets/Menu/ClickBoxsSliders/SliderOne.png" id="1_2jpdu"]
-[ext_resource type="Script" uid="uid://btxbx878ounkq" path="res://Test/Menus/Options/Options.gd" id="1_3qc7w"]
-[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="2_8dv6q"]
-[ext_resource type="Texture2D" uid="uid://cijecf5q51mft" path="res://Assets/Menu/ClickBoxsSliders/ClickBox.png" id="2_rm3bf"]
+[ext_resource type="Script" uid="uid://btxbx878ounkq" path="res://Test/Menus/Options/Options.gd" id="1"]
+[ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="2"]
+[ext_resource type="Texture2D" uid="uid://cijecf5q51mft" path="res://Assets/Menu/ClickBoxsSliders/ClickBox.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://cej77ob25cvdl" path="res://Assets/Menu/ClickBoxsSliders/SliderOne.png" id="4"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_w45gy"]
-font = ExtResource("2_8dv6q")
+font = ExtResource("2")
 font_size = 60
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_e0yiv"]
-atlas = ExtResource("2_rm3bf")
+atlas = ExtResource("3")
 region = Rect2(69, 98, 243, 21)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_w45gy"]
-atlas = ExtResource("1_2jpdu")
+atlas = ExtResource("4")
 region = Rect2(68, 127, 16, 20)
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_3qc7w"]
@@ -24,7 +24,7 @@ region = Rect2(68, 127, 16, 20)
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ujebd"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_3secf"]
-font = ExtResource("2_8dv6q")
+font = ExtResource("2")
 font_size = 30
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3qc7w"]
@@ -44,7 +44,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_3qc7w")
+script = ExtResource("1")
 
 [node name="Panel" type="Panel" parent="." unique_id=499435030]
 layout_mode = 1
@@ -231,7 +231,7 @@ offset_bottom = 953.0
 theme_override_colors/font_focus_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
 theme_override_colors/font_pressed_color = Color(0.37413925, 0.37413928, 0.37413922, 1)
 theme_override_colors/font_hover_color = Color(0.8089981, 0.8089983, 0.80899894, 1)
-theme_override_fonts/font = ExtResource("2_8dv6q")
+theme_override_fonts/font = ExtResource("2")
 theme_override_font_sizes/font_size = 72
 theme_override_styles/normal = SubResource("StyleBoxEmpty_3qc7w")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty_8dv6q")

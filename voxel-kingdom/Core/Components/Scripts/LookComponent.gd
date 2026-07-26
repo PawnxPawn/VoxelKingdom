@@ -1,6 +1,6 @@
-#-###########################################
-# Look Component
-#-###########################################
+
+
+
 
 class_name LookComponent extends Component
 
@@ -14,17 +14,17 @@ var pitch: float = 0.0
 var yaw: float = 0.0
 
 
-#----------------
-# Look Input
-#----------------
-func _on_look(direction: Vector2) -> void:
+
+
+
+func _on_look(direction: Vector2) -> void :
 	pitch = clamp(
-		pitch - direction.y,
-		pitch_clamp_bottom,
+		pitch - direction.y, 
+		pitch_clamp_bottom, 
 		pitch_clamp_top
 	)
-	
+
 	yaw -= direction.x
-	
+
 	yaw_changed.emit(yaw)
 	pitch_changed.emit(pitch)

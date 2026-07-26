@@ -1,15 +1,14 @@
 [gd_scene format=3 uid="uid://cgi4xbq515n1v"]
 
-[ext_resource type="Script" uid="uid://bq4hlffw4xo1v" path="res://Core/Utils/Debug/DebugSettings.gd" id="1_kjcx6"]
+[ext_resource type="Script" uid="uid://bq4hlffw4xo1v" path="res://Core/Utils/Debug/DebugSettings.gd" id="1"]
 
 [node name="DebugSettings" type="PanelContainer" unique_id=1233916874]
 visible = false
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_kjcx6")
+script = ExtResource("1")
 
 [node name="StatsContainer" type="VBoxContainer" parent="." unique_id=1624380330]
 layout_mode = 2

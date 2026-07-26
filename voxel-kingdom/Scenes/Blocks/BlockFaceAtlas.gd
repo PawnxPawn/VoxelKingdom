@@ -1,6 +1,6 @@
-#-###########################################
-# Block Face Atlas
-#-###########################################
+
+
+
 
 class_name BlockFaceAtlas
 extends Resource

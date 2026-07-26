@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://87h3ee65lrsa"]
+
+[ext_resource type="Shader" uid="uid://dgk1ppwrqs2sb" path="res://Scenes/Blocks/Shaders/voxel_atlas.gdshader" id="1"]
+[ext_resource type="Texture2D" uid="uid://bx0qb40yv57kb" path="res://Assets/BlockTextures/assets for game jam.png" id="2"]
+
+[resource]
+render_priority = 0
+next_pass = null
+shader = ExtResource("1")
+shader_parameter/atlas_texture = ExtResource("2")
+shader_parameter/tile_size = 0.25
+shader_parameter/canvas_size = 128.0
+shader_parameter/alpha_scissor_threshold = 0.5

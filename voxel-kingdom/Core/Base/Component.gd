@@ -1,6 +1,6 @@
-#-###########################################
-# Component Base
-#-###########################################
+
+
+
 
 @abstract class_name Component extends RefCounted
 
@@ -9,7 +9,7 @@ signal deactivated
 
 var _owner: Node
 
-# Activation flag with auto‑emit
+
 var is_active: bool = false:
 	set(value):
 		is_active = value
@@ -19,55 +19,55 @@ var is_active: bool = false:
 			deactivated.emit()
 
 
-func _init(p_owner: Node) -> void:
+func _init(p_owner: Node) -> void :
 	_owner = p_owner
 	activated.connect(_on_activated)
 	deactivated.connect(_on_deactivated)
 
-# Optional setup stage
-func setup() -> void:
+
+func setup() -> void :
 	pass
 
 
-func ready() -> void:
+func ready() -> void :
 	pass
 
 
-func process(_delta: float) -> void:
+func process(_delta: float) -> void :
 	pass
 
 
-func physics_process(_delta: float) -> void:
-	pass
-
-# Only used if interacting with physics bodies
-func integrate_forces(_state: PhysicsDirectBodyState2D) -> void:
+func physics_process(_delta: float) -> void :
 	pass
 
 
-func input(_event: InputEvent) -> void:
+func integrate_forces(_state: PhysicsDirectBodyState2D) -> void :
 	pass
 
 
-func unhandled_input(_event: InputEvent) -> void:
+func input(_event: InputEvent) -> void :
 	pass
 
 
-func paused() -> void:
+func unhandled_input(_event: InputEvent) -> void :
 	pass
 
 
-func unpaused() -> void:
+func paused() -> void :
 	pass
 
 
-func exit() -> void:
+func unpaused() -> void :
 	pass
 
-# Activation callback
-func _on_activated() -> void:
+
+func exit() -> void :
 	pass
 
-# Deactivation callback
-func _on_deactivated() -> void:
+
+func _on_activated() -> void :
+	pass
+
+
+func _on_deactivated() -> void :
 	pass

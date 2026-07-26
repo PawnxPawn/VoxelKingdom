@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://bpskuj1y6xw66"]
+
+[ext_resource type="Script" uid="uid://r412rr4ykmr7" path="res://Test/BreakParticles.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://bx0qb40yv57kb" path="res://Assets/BlockTextures/assets for game jam.png" id="2"]
+[ext_resource type="Shader" uid="uid://dgk1ppwrqs2sb" path="res://Scenes/Blocks/Shaders/voxel_atlas.gdshader" id="3"]
+
+[node name="BreakParticles" type="GPUParticles3D" unique_id=1709288508]
+layers = 4
+emitting = false
+lifetime = 0.7
+one_shot = true
+explosiveness = 1.0
+randomness = 0.8
+script = ExtResource("1")
+atlas_texture = ExtResource("2")
+voxel_shader = ExtResource("3")
+shard_lifetime = 0.6
