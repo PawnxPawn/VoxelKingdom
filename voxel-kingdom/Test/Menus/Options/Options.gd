@@ -37,6 +37,7 @@ func _load_initial_values() -> void :
 
 
 func _on_slider_changed(value: float, bus_name: String) -> void :
+	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
 	match bus_name:
 		"Master":
 			Services.audio.set_master_volume(value)
@@ -54,5 +55,6 @@ func _update_label(label: Label, value: float) -> void :
 
 
 func _on_back_pressed() -> void :
+	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
 	Services.audio.save_settings()
 	Services.ui.hide_ui(UI.Uis.GAME_SETTINGS)

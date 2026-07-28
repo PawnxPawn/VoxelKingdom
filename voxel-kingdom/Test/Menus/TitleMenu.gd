@@ -59,6 +59,7 @@ func _on_button_down(button: TextureButton) -> void :
 
 
 func _on_button_up(button: TextureButton) -> void :
+	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
 	button.modulate = Color(1.0, 1.0, 1.0)
 	_find_button(button)
 
@@ -79,6 +80,7 @@ func _find_button(button: TextureButton) -> void :
 
 
 func _on_button_hover(button: TextureButton, mouse_entered: bool) -> void :
+	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
 	var scale_direction = 1 if mouse_entered else -1
 	button.scale += Vector2(0.25, 0.25) * scale_direction
 

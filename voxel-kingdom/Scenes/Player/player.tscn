@@ -259,7 +259,7 @@ script = ExtResource("1")
 [node name="CharacterMesh" parent="." unique_id=155209410 instance=ExtResource("2")]
 transform = Transform3D(-0.16, 0, -1.3987644e-08, 0, 0.16, 0, 1.3987644e-08, 0, -0.16, 0, -0.18663752, -0.12886858)
 
-[node name="Mesh" parent="CharacterMesh" index="0" unique_id=1471053659]
+[node name="Mesh" parent="CharacterMesh" index="0" unique_id=1776699448]
 transform = Transform3D(1, 0, 7.1054274e-15, 0, 1, 0, -7.1054274e-15, 0, 1, 1.387392e-07, 0, -1.5869915)
 layers = 524288
 cast_shadow = 0
@@ -271,13 +271,13 @@ shape = SubResource("CapsuleShape3D_w45gy")
 [node name="ComponentHandler" type="Node" parent="." unique_id=643640741]
 unique_name_in_owner = true
 script = ExtResource("3")
-component_data = [ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")]
+component_data = Array[Resource]([ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8")])
 metadata/_custom_type_script = "uid://uj3fpyqghe2v"
 
 [node name="StateMachine" type="Node" parent="." unique_id=1902570200]
 unique_name_in_owner = true
 script = ExtResource("9")
-state_scripts = [ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15")]
+state_scripts = Array[GDScript]([ExtResource("10"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15")])
 metadata/_custom_type_script = "uid://cgduh0h7grupy"
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1263752586]

@@ -194,10 +194,6 @@ static func lava_type_for_level(level: int) -> TerrianType:
 	return (TerrianType.LAVA_FLOW_1 + (level - 1)) as TerrianType
 
 
-
-
-
-
 static func is_liquid(type: TerrianType) -> bool:
 	return is_water(type) or is_lava(type)
 

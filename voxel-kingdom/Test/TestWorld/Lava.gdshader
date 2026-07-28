@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode blend_mix, cull_back, diffuse_burley, specular_schlick_ggx, depth_draw_opaque;
+render_mode blend_mix, cull_disabled, diffuse_burley, specular_schlick_ggx, depth_draw_opaque;
 
 uniform sampler2D atlas_texture : source_color, filter_nearest, repeat_enable;
 uniform float tile_size = 0.25;

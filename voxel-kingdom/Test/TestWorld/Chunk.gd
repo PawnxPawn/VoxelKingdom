@@ -512,19 +512,30 @@ func _generate_trees(
 			if _tree_area_has_water(spawn_position, water_level):
 				continue
 
-			_place_tree(spawn_position, water_level)
+			_place_tree(spawn_position, water_level, height_cache)
 			placed_tree_positions.append(spawn_position)
 
 
-func _place_tree(spawn_pos: Vector3i, water_level: float) -> void :
+func _place_tree(spawn_pos: Vector3i, water_level: float, height_cache: PackedFloat32Array) -> void :
 	var trunk_height: int = randi_range(4, 7)
 	var trunk_radius: int = randi_range(1, 2)
-	for dy: int in range(trunk_height):
-		for dx: int in range( - trunk_radius, trunk_radius + 1):
-			for dz: int in range( - trunk_radius, trunk_radius + 1):
-				if abs(dx) + abs(dz) <= trunk_radius:
-					var pos: Vector3i = spawn_pos + Vector3i(dx, dy, dz)
-					_try_place_tree_voxel(pos, TerrianData.TerrianType.WOOD, water_level)
+
+	for dx: int in range( - trunk_radius, trunk_radius + 1):
+		for dz: int in range( - trunk_radius, trunk_radius + 1):
+			if abs(dx) + abs(dz) > trunk_radius:
+				continue
+
+			var column_x: int = spawn_pos.x + dx
+			var column_z: int = spawn_pos.z + dz
+
+			var column_base_y: int = spawn_pos.y
+			if column_x >= 0 and column_x < chunk_size and column_z >= 0 and column_z < chunk_size:
+				var column_terrain_height: float = height_cache[column_x * chunk_size + column_z]
+				column_base_y = int(column_terrain_height - position.y)
+
+			for dy: int in range(trunk_height):
+				var pos: Vector3i = Vector3i(column_x, column_base_y + dy, column_z)
+				_try_place_tree_voxel(pos, TerrianData.TerrianType.WOOD, water_level)
 
 	var leaf_radius: int = trunk_radius + randi_range(2, 3)
 
@@ -925,12 +936,19 @@ func mesh_face(face: Face, flat_voxels: PackedInt32Array) -> void :
 					neighbor_position.z >= chunk_size
 					):
 
-					if is_water_voxel and chunk_manager != null:
+					if (is_water_voxel or is_lava_voxel) and chunk_manager != null:
 						var neighbor_world_position: Vector3i = chunk_world_origin + neighbor_position
 						var cross_chunk_neighbor_value: int = chunk_manager.get_voxel_type_at(neighbor_world_position)
-						var neighbor_is_water: bool = TerrianData.is_water(cross_chunk_neighbor_value as TerrianData.TerrianType)
-						var neighbor_is_lava: bool = TerrianData.is_lava(cross_chunk_neighbor_value as TerrianData.TerrianType)
+						var neighbor_type: TerrianData.TerrianType = cross_chunk_neighbor_value as TerrianData.TerrianType
+
+						var neighbor_is_water: bool = TerrianData.is_water(neighbor_type)
+						var neighbor_is_lava: bool = TerrianData.is_lava(neighbor_type)
+
 						if (is_water_voxel and neighbor_is_water) or (is_lava_voxel and neighbor_is_lava):
+							continue
+
+						var cross_chunk_neighbor_is_transparent: bool = TerrianData.is_transparent(neighbor_type)
+						if not cross_chunk_neighbor_is_transparent and neighbor_type != TerrianData.TerrianType.AIR:
 							continue
 
 					mask[mask_index] = voxel_value

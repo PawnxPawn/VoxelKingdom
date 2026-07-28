@@ -5,7 +5,7 @@ extends GPUParticles3D
 @export var atlas_columns: int = 4
 @export var atlas_texture: Texture2D
 @export var voxel_shader: Shader
-@export var shard_count: int = 12
+@export var shard_count: int = 102
 @export var shard_lifetime: float = 0.45
 @export var shard_speed: float = 4.0
 
@@ -107,16 +107,21 @@ func _spawn_shard(tile_origin: Vector2) -> void :
 
 	add_child(shard)
 
-	var velocity: = Vector3(
-		randf_range(-1.5, 1.5), 
-		randf_range(0.5, 1.2), 
-		randf_range(-1.5, 1.5)
+	var dir: = Vector3(
+		randfn(0.0, 1.0),
+		randfn(0.0, 1.0),
+		randfn(0.0, 1.0)
+	).normalized()
+
+	var magnitude: = randf_range(0.6, 1.0) * shard_speed * randf_range(2.0, 5.0)
+
+	shard.linear_velocity = dir * magnitude
+
+	shard.angular_velocity = Vector3(
+		randf_range(-15.0, 15.0),
+		randf_range(-15.0, 15.0),
+		randf_range(-15.0, 15.0)
 	)
-
-	velocity.y -= randf_range(1.5, 3.0)
-
-	shard.linear_velocity = velocity * shard_speed
-
 
 	var tween: = create_tween()
 	tween.tween_property(mi, "scale", Vector3.ZERO, shard_lifetime)

@@ -78,6 +78,11 @@ func _run_tick() -> void :
 	if _thread_busy:
 		return
 
+	if _queued_positions.is_empty():
+		return
+
+	_sort_queue_by_proximity()
+
 	var update_count: int = min(max_updates_per_tick, _queued_positions.size())
 	if update_count <= 0:
 		return
@@ -91,6 +96,18 @@ func _run_tick() -> void :
 	_thread_busy = true
 	_task_id = WorkerThreadPool.add_task(_thread_worker.bind(positions_to_process), false, "water_flow_tick")
 
+
+func _sort_queue_by_proximity() -> void :
+	if chunk_manager == null or chunk_manager.stream_target == null:
+		return
+
+	var player_position: Vector3 = chunk_manager.stream_target.global_position
+
+	_queued_positions.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		var dist_a: float = Vector3(a).distance_squared_to(player_position)
+		var dist_b: float = Vector3(b).distance_squared_to(player_position)
+		return dist_a < dist_b
+	)
 
 func _thread_worker(positions_to_process: Array[Vector3i]) -> void :
 	var edits_by_chunk: Dictionary[Vector3i, Array] = {}

@@ -1082,6 +1082,9 @@ func add_voxel_at_position(target_block: Vector3i, voxel_type: TerrianData.Terri
 	chunk.set_voxel(local_voxel_position, voxel_type)
 	_store_modified_chunk(chunk_world_key, chunk)
 
+	if Services.audio:
+		Services.audio.play_sfx(Services.audio.get_place_sfx(voxel_type), 0.0, randf_range(0.95, 1.05))
+
 	if water_flow_manager != null:
 		if TerrianData.is_water(voxel_type):
 			water_flow_manager.enqueue(target_block)
@@ -1118,6 +1121,9 @@ func remove_voxel_at_position(target_block: Vector3i) -> void :
 			chunk_world_key.z + local_voxel_position.z
 		)
 		_spawn_block_break_particles(world_pos, voxel_type)
+
+		if Services.audio:
+			Services.audio.play_sfx(Services.audio.get_break_sfx(voxel_type), 0.0, randf_range(0.95, 1.05))
 
 	_store_modified_chunk(chunk_world_key, chunk)
 

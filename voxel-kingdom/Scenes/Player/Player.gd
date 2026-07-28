@@ -64,8 +64,16 @@ var _head_in_lava: bool = false
 var move: MoveComponent = null
 var _is_buried: bool = false
 
+var _footstep_distance_accum: float = 0.0
+const FOOTSTEP_STRIDE: float = 1.2 
+var _ambient_timer: float = 0.0
 
-
+const WATER_SCAN_RADIUS: int = 4
+const LAVA_SCAN_RADIUS: int = 4
+const CAVE_SCAN_RADIUS_H: int = 3
+const CAVE_SCAN_RADIUS_V: int = 2
+var _proximity_scan_timer: float = 0.0
+const PROXIMITY_SCAN_INTERVAL: float = 0.25
 
 func _ready() -> void :
 
@@ -96,9 +104,6 @@ func _ready() -> void :
 	Services.ui.ui_hidden.connect(_unpause)
 
 	play_display_idle()
-
-
-
 
 
 func _connect_components() -> void :
@@ -153,14 +158,8 @@ func _unpause(ui: UI.Uis) -> void :
 	_pause_cooldown_frames = 3
 
 
-
-
-
 func _setup_sm() -> void :
 	_sm.init(_handler)
-
-
-
 
 
 func _setup_camera() -> void :
@@ -180,25 +179,133 @@ func _setup_camera() -> void :
 	})
 
 
-
-
-
 func _process(_delta: float) -> void :
 	var hit: BlockRayCast.RayHit = ray_cast.get_ray_hit()
 	if hit == null:
 		block_highlight.hide_highlight()
+	else:
+		var hit_pos: Vector3 = hit.hit_position
+		var normal: Vector3 = hit.hit_normal
+		var hit_block: Vector3i = Vector3i(round(hit_pos - normal * 0.5))
+		block_highlight.show_at_block(hit_block)
+
+	_update_ambient_sfx(_delta)
+
+func _update_ambient_sfx(delta: float) -> void :
+	_ambient_timer -= delta
+
+	_proximity_scan_timer -= delta
+	if _proximity_scan_timer <= 0.0:
+		_proximity_scan_timer = PROXIMITY_SCAN_INTERVAL
+		_update_lava_proximity()
+		_update_water_proximity()
+
+	if _ambient_timer > 0.0 or not Services.audio:
 		return
 
-	var hit_pos: Vector3 = hit.hit_position
-	var normal: Vector3 = hit.hit_normal
-
-	var hit_block: Vector3i = Vector3i(round(hit_pos - normal * 0.5))
-
-	block_highlight.show_at_block(hit_block)
-
+	if _is_in_cave():
+		Services.audio.play_sfx(Audio.SFX_Titles.CAVE_WATER_DRIP, randf_range(-16.0, -10.0), randf_range(0.85, 1.15))
+		_ambient_timer = randf_range(15.0, 30.0)
+	else:
+		_ambient_timer = 1.0
 
 
+func _update_water_proximity() -> void :
+	if chunk_manager == null or not Services.audio:
+		return
 
+	if _feet_submerged or _head_submerged:
+		Services.audio.set_water_proximity(true, 0.0, _head_submerged)
+		return
+
+	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
+	var closest_dist_sq: int = -1
+
+	for dx in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1):
+		for dy in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1):
+			for dz in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1):
+				var dist_sq: int = dx * dx + dy * dy + dz * dz
+				if dist_sq > WATER_SCAN_RADIUS * WATER_SCAN_RADIUS:
+					continue
+				var check_pos: Vector3i = player_pos + Vector3i(dx, dy, dz)
+				if TerrianData.is_water(chunk_manager.get_voxel_type_at(check_pos)):
+					if closest_dist_sq == -1 or dist_sq < closest_dist_sq:
+						closest_dist_sq = dist_sq
+
+	if closest_dist_sq == -1:
+		Services.audio.set_water_proximity(false)
+		return
+
+	var closest_dist: float = sqrt(float(closest_dist_sq))
+	var falloff: float = 1.0 - clampf(closest_dist / float(WATER_SCAN_RADIUS), 0.0, 1.0)
+	var volume_db: float = lerp(-24.0, 0.0, falloff)
+	Services.audio.set_water_proximity(true, volume_db, false)
+
+
+func _update_lava_proximity() -> void :
+	if chunk_manager == null or not Services.audio:
+		return
+
+	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
+	var closest_dist_sq: int = -1
+
+	for dx in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1):
+		for dy in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1):
+			for dz in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1):
+				var dist_sq: int = dx * dx + dy * dy + dz * dz
+				if dist_sq > LAVA_SCAN_RADIUS * LAVA_SCAN_RADIUS:
+					continue
+				var check_pos: Vector3i = player_pos + Vector3i(dx, dy, dz)
+				if TerrianData.is_lava(chunk_manager.get_voxel_type_at(check_pos)):
+					if closest_dist_sq == -1 or dist_sq < closest_dist_sq:
+						closest_dist_sq = dist_sq
+
+	if closest_dist_sq == -1:
+		Services.audio.set_lava_proximity(false)
+		return
+
+	var closest_dist: float = sqrt(float(closest_dist_sq))
+	var falloff: float = 1.0 - clampf(closest_dist / float(LAVA_SCAN_RADIUS), 0.0, 1.0)
+	var volume_db: float = lerp(-24.0, 0.0, falloff)
+	Services.audio.set_lava_proximity(true, volume_db)
+
+func _is_in_cave() -> bool:
+	if chunk_manager == null:
+		return false
+
+	if global_position.y >= chunk_manager.water_level:
+		return false
+
+	if not _has_ceiling_above():
+		return false
+
+	var air_count: int = 0
+	var total: int = 0
+	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
+
+	for dx in range(-CAVE_SCAN_RADIUS_H, CAVE_SCAN_RADIUS_H + 1):
+		for dy in range(-1, CAVE_SCAN_RADIUS_V + 1):
+			for dz in range(-CAVE_SCAN_RADIUS_H, CAVE_SCAN_RADIUS_H + 1):
+				total += 1
+				var check_pos: Vector3i = player_pos + Vector3i(dx, dy, dz)
+				if chunk_manager.get_voxel_type_at(check_pos) == TerrianData.TerrianType.AIR:
+					air_count += 1
+
+	return float(air_count) / float(total) > 0.5
+
+const CEILING_CHECK_HEIGHT: int = 6
+
+func _has_ceiling_above() -> bool:
+	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
+	for dy in range(2, CEILING_CHECK_HEIGHT + 1):
+		var check_pos: Vector3i = player_pos + Vector3i(0, dy, 0)
+		var voxel_type: TerrianData.TerrianType = chunk_manager.get_voxel_type_at(check_pos)
+		if voxel_type == TerrianData.TerrianType.AIR:
+			continue
+		if voxel_type == TerrianData.TerrianType.LEAVES:
+			continue
+		return true
+	return false
 
 func _physics_process(_delta: float) -> void :
 	if _pause_cooldown_frames > 0:
@@ -208,10 +315,40 @@ func _physics_process(_delta: float) -> void :
 	if _player_auto_rotate:
 		look._on_look(Vector2(_rotation_speed * _delta, 0))
 	_update_buried_state()
+	_update_footsteps(_delta)
 	_loaded_chunk_bounds()
 	camera.set_rotation(look.pitch, look.yaw, 0)
 
+func _update_footsteps(delta: float) -> void :
+	if _feet_submerged or _feet_in_lava:
+		_footstep_distance_accum = 0.0
+		return
 
+	var current_state: StringName = _sm.get_current_state()
+	if current_state != &"MoveState":
+		_footstep_distance_accum = 0.0
+		return
+
+	var horizontal_velocity: Vector3 = velocity * Vector3(1, 0, 1)
+	var speed: float = horizontal_velocity.length()
+	if speed < 0.1:
+		return
+
+	_footstep_distance_accum += speed * delta
+	if _footstep_distance_accum >= FOOTSTEP_STRIDE:
+		_footstep_distance_accum = 0.0
+		_play_footstep()
+
+func _play_footstep() -> void :
+	if chunk_manager == null or not Services.audio:
+		return
+	var ground_pos: Vector3i = Vector3i(
+		roundi(global_position.x), 
+		roundi(global_position.y - 0.1), 
+		roundi(global_position.z)
+	)
+	var ground_type: TerrianData.TerrianType = chunk_manager.get_voxel_type_at(ground_pos)
+	Services.audio.play_sfx(Services.audio.get_walk_sfx(ground_type), 0.0, randf_range(0.95, 1.05))
 
 
 
@@ -223,8 +360,6 @@ func _loaded_chunk_bounds() -> void :
 		_last_valid_position = global_position
 	else:
 		global_position = _last_valid_position
-
-
 
 
 
@@ -246,8 +381,6 @@ func _change_inventory_highlight(slot: int) -> void :
 
 
 
-
-
 func _would_overlap_player(target_block: Vector3i) -> bool:
 	var blocks: Array[Vector3i] = []
 	var rounded_pos: Vector3i = Vector3i(
@@ -260,13 +393,6 @@ func _would_overlap_player(target_block: Vector3i) -> bool:
 	blocks.append(Vector3i(rounded_pos.x, rounded_pos.y + 1, rounded_pos.z))
 
 	return blocks.has(target_block)
-
-
-
-
-
-
-
 
 
 func _on_add_block() -> void :
@@ -289,9 +415,6 @@ func _on_add_block() -> void :
 		return
 
 	add_block.emit(target_block, normal_dir, terrian_type)
-
-
-
 
 
 func _on_remove_block() -> void :
@@ -317,9 +440,6 @@ func _on_remove_block() -> void :
 	hand.play("RemoveBlock")
 
 
-
-
-
 func _cancel_swap_for_removal() -> void :
 	if not _block_changed_this_swap:
 		default_cube_mesh.hide()
@@ -329,12 +449,15 @@ func _cancel_swap_for_removal() -> void :
 	_is_swapping = false
 
 
-
-
-
 func _on_feet_submerged(is_submerged: bool, kind: WaterOverlay.FluidKind) -> void :
 	_feet_submerged = is_submerged
 	_feet_in_lava = (kind == WaterOverlay.FluidKind.LAVA)
+
+	if kind != WaterOverlay.FluidKind.LAVA and Services.audio:
+		if is_submerged:
+			Services.audio.play_water_enter(false)
+		else:
+			Services.audio.play_water_exit(false)
 
 	if gravity:
 		gravity.set_at_surface(is_at_liquid_surface())
@@ -357,12 +480,14 @@ func _on_head_submerged(is_submerged: bool, kind: WaterOverlay.FluidKind) -> voi
 
 	water_overlay.set_submerged(is_submerged, kind)
 
+	if kind != WaterOverlay.FluidKind.LAVA and Services.audio:
+		if is_submerged:
+			Services.audio.play_water_enter(true)
+		else:
+			Services.audio.play_water_exit(true)
+
 	if gravity:
 		gravity.set_at_surface(is_at_liquid_surface())
-
-
-
-
 
 
 func is_under_liquid() -> bool:

@@ -14,32 +14,120 @@ shadow_offset = Vector2(5, 5)
 
 [sub_resource type="AudioStream" id="AudioStream_b330u"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_b330u"]
-sky_top_color = Color(0.42745098, 0.6509804, 1, 1)
-sky_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
-ground_bottom_color = Color(0.42745098, 0.6509804, 1, 1)
-ground_horizon_color = Color(0.42745098, 0.6509804, 1, 1)
+[sub_resource type="Shader" id="Shader_b330u"]
+code = "shader_type sky;
 
-[sub_resource type="Sky" id="Sky_ab4hr"]
-sky_material = SubResource("ProceduralSkyMaterial_b330u")
+uniform vec3 horizon_color_day : source_color = vec3(0.65, 0.79, 1.0);
+uniform vec3 zenith_color_day : source_color = vec3(0.29, 0.51, 0.98);
+uniform vec3 horizon_color_night : source_color = vec3(0.02, 0.02, 0.06);
+uniform vec3 zenith_color_night : source_color = vec3(0.0, 0.0, 0.02);
+uniform vec3 sunset_color : source_color = vec3(0.95, 0.45, 0.25);
+
+uniform vec3 sun_color : source_color = vec3(3.0, 2.6, 1.8);
+uniform float sun_angular_size : hint_range(0.5, 15.0) = 4.0;
+uniform float sun_glare_size : hint_range(0.5, 8.0) = 4.0;
+
+
+uniform float pixelation_steps : hint_range(4.0, 64.0) = 16.0;
+
+uniform sampler2D cloud_noise : hint_default_black;
+uniform float cloud_height : hint_range(0.0, 1.0) = 0.55;
+uniform float cloud_coverage : hint_range(0.0, 1.0) = 0.45;
+uniform float cloud_speed : hint_range(0.0, 1.0) = 0.02;
+uniform vec3 cloud_color : source_color = vec3(1.0, 1.0, 1.0);
+
+vec3 quantize(vec3 color, float steps) {
+	return floor(color * steps + 0.5) / steps;
+}
+
+void sky() {
+	float sun_h = clamp(LIGHT0_DIRECTION.y, -1.0, 1.0);
+	float day_factor = smoothstep(-0.2, 0.3, sun_h);
+	float sunset_factor = 1.0 - smoothstep(0.0, 0.35, abs(sun_h));
+
+	vec3 horizon = mix(horizon_color_night, horizon_color_day, day_factor);
+	vec3 zenith = mix(zenith_color_night, zenith_color_day, day_factor);
+	horizon = mix(horizon, sunset_color, sunset_factor * day_factor);
+
+	float sky_gradient = clamp(EYEDIR.y, 0.0, 1.0);
+	sky_gradient = pow(sky_gradient, 0.55);
+	vec3 sky_col = mix(horizon, zenith, sky_gradient);
+	sky_col = quantize(sky_col, pixelation_steps);
+
+	float sun_dot = dot(EYEDIR, LIGHT0_DIRECTION);
+	float sun_disc = smoothstep(cos(radians(sun_angular_size)), cos(radians(sun_angular_size) * 0.9), sun_dot);
+
+	float glare_size = sun_angular_size * sun_glare_size;
+	float glare = smoothstep(cos(radians(glare_size)), cos(radians(sun_angular_size)), sun_dot);
+	glare = pow(glare, 2.0);
+
+	sky_col = mix(sky_col, sun_color, sun_disc * day_factor);
+	sky_col += sun_color * glare * 0.6 * day_factor; 
+
+
+	if (EYEDIR.y > 0.02) {
+		vec2 cloud_uv = EYEDIR.xz / (EYEDIR.y + cloud_height);
+		cloud_uv *= 0.15;
+		cloud_uv += TIME * cloud_speed;
+		float n = texture(cloud_noise, cloud_uv).r;
+		float cloud_mask = step(1.0 - cloud_coverage, n);
+		vec3 lit_cloud = cloud_color * mix(0.5, 1.0, day_factor);
+		sky_col = mix(sky_col, lit_cloud, cloud_mask * smoothstep(0.0, 0.15, EYEDIR.y));
+	}
+
+	COLOR = sky_col;
+}"
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4mhdq"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_6qn7x"]
+noise = SubResource("FastNoiseLite_4mhdq")
+seamless = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6qn7x"]
+shader = SubResource("Shader_b330u")
+shader_parameter/horizon_color_day = Color(0.65, 0.79, 1, 1)
+shader_parameter/zenith_color_day = Color(0.29, 0.51, 0.98, 1)
+shader_parameter/horizon_color_night = Color(0.02, 0.02, 0.06, 1)
+shader_parameter/zenith_color_night = Color(0, 0, 0.02, 1)
+shader_parameter/sunset_color = Color(0.95, 0.45, 0.25, 1)
+shader_parameter/sun_color = Color(3, 2.6, 1.8, 1)
+shader_parameter/sun_angular_size = 2.00000007125
+shader_parameter/sun_glare_size = 3.00000011875
+shader_parameter/pixelation_steps = 64.0
+shader_parameter/cloud_noise = SubResource("NoiseTexture2D_6qn7x")
+shader_parameter/cloud_height = 0.14000000665
+shader_parameter/cloud_coverage = 0.2870000136325
+shader_parameter/cloud_speed = 0.0010000000475
+shader_parameter/cloud_color = Color(0.9297146, 0.9297147, 0.9297146, 1)
+
+[sub_resource type="Sky" id="Sky_4mhdq"]
+sky_material = SubResource("ShaderMaterial_6qn7x")
 
 [sub_resource type="Environment" id="Environment_6qn7x"]
-sky = SubResource("Sky_ab4hr")
-ambient_light_source = 2
-ambient_light_color = Color(0.14767182, 0.14767182, 0.14767176, 1)
-ambient_light_energy = 2.0
+background_mode = 2
+sky = SubResource("Sky_4mhdq")
+ambient_light_source = 3
+ambient_light_sky_contribution = 0.6
+ambient_light_energy = 0.6
+reflected_light_source = 2
 ssao_enabled = true
+ssao_radius = 3.0
+ssao_intensity = 5.59
+ssil_radius = 3.0
 glow_enabled = true
-glow_intensity = 1.63
-glow_hdr_threshold = 2.74
+glow_intensity = 1.0
+glow_bloom = 0.15
 fog_enabled = true
 fog_mode = 1
-fog_light_color = Color(0.74673575, 0.98635215, 0.9999998, 1)
-fog_density = 11.685
-fog_height_density = 0.03
-fog_depth_begin = 15.0
-fog_depth_end = 1839.1
+fog_light_color = Color(0.82665706, 0.9013065, 1, 1)
+fog_density = 0.5
+fog_sky_affect = 0.0
+fog_depth_begin = 0.0
+fog_depth_end = 200.0
 adjustment_enabled = true
+adjustment_contrast = 1.05
+adjustment_saturation = 1.1
 
 [node name="World" type="Node3D" unique_id=1147436933]
 script = ExtResource("1")
