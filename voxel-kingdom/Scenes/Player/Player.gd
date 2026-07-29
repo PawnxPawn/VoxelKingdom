@@ -70,8 +70,11 @@ var _ambient_timer: float = 0.0
 
 const WATER_SCAN_RADIUS: int = 4
 const LAVA_SCAN_RADIUS: int = 4
+const CEILING_CHECK_HEIGHT: int = 24
 const CAVE_SCAN_RADIUS_H: int = 3
 const CAVE_SCAN_RADIUS_V: int = 2
+var _cached_in_cave: bool = false
+
 var _proximity_scan_timer: float = 0.0
 const PROXIMITY_SCAN_INTERVAL: float = 0.25
 
@@ -199,11 +202,15 @@ func _update_ambient_sfx(delta: float) -> void :
 		_proximity_scan_timer = PROXIMITY_SCAN_INTERVAL
 		_update_lava_proximity()
 		_update_water_proximity()
+		_cached_in_cave = _is_in_cave()
+
+	if ScreenEffects:
+		ScreenEffects.set_cave_intensity(_cached_in_cave)
 
 	if _ambient_timer > 0.0 or not Services.audio:
 		return
 
-	if _is_in_cave():
+	if _cached_in_cave:
 		Services.audio.play_sfx(Audio.SFX_Titles.CAVE_WATER_DRIP, randf_range(-16.0, -10.0), randf_range(0.85, 1.15))
 		_ambient_timer = randf_range(15.0, 30.0)
 	else:
@@ -221,9 +228,9 @@ func _update_water_proximity() -> void :
 	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
 	var closest_dist_sq: int = -1
 
-	for dx in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1):
-		for dy in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1):
-			for dz in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1):
+	for dx in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1, 2):
+		for dy in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1, 2):
+			for dz in range(-WATER_SCAN_RADIUS, WATER_SCAN_RADIUS + 1, 2):
 				var dist_sq: int = dx * dx + dy * dy + dz * dz
 				if dist_sq > WATER_SCAN_RADIUS * WATER_SCAN_RADIUS:
 					continue
@@ -249,9 +256,9 @@ func _update_lava_proximity() -> void :
 	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
 	var closest_dist_sq: int = -1
 
-	for dx in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1):
-		for dy in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1):
-			for dz in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1):
+	for dx in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1, 2):
+		for dy in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1, 2):
+			for dz in range(-LAVA_SCAN_RADIUS, LAVA_SCAN_RADIUS + 1, 2):
 				var dist_sq: int = dx * dx + dy * dy + dz * dz
 				if dist_sq > LAVA_SCAN_RADIUS * LAVA_SCAN_RADIUS:
 					continue
@@ -262,12 +269,19 @@ func _update_lava_proximity() -> void :
 
 	if closest_dist_sq == -1:
 		Services.audio.set_lava_proximity(false)
+		if ScreenEffects:
+			ScreenEffects.set_lava_proximity(0.0)
+			ScreenEffects.set_in_lava(false)
 		return
 
 	var closest_dist: float = sqrt(float(closest_dist_sq))
 	var falloff: float = 1.0 - clampf(closest_dist / float(LAVA_SCAN_RADIUS), 0.0, 1.0)
 	var volume_db: float = lerp(-24.0, 0.0, falloff)
 	Services.audio.set_lava_proximity(true, volume_db)
+
+	if ScreenEffects:
+		ScreenEffects.set_lava_proximity(falloff)
+		ScreenEffects.set_in_lava(_feet_in_lava or _head_in_lava)
 
 func _is_in_cave() -> bool:
 	if chunk_manager == null:
@@ -277,6 +291,7 @@ func _is_in_cave() -> bool:
 		return false
 
 	if not _has_ceiling_above():
+		print("no ceiling")
 		return false
 
 	var air_count: int = 0
@@ -291,9 +306,9 @@ func _is_in_cave() -> bool:
 				if chunk_manager.get_voxel_type_at(check_pos) == TerrianData.TerrianType.AIR:
 					air_count += 1
 
-	return float(air_count) / float(total) > 0.5
+	var ratio: float = float(air_count) / float(total)
+	return ratio > 0.2
 
-const CEILING_CHECK_HEIGHT: int = 6
 
 func _has_ceiling_above() -> bool:
 	var player_pos: Vector3i = Vector3i(roundi(global_position.x), roundi(global_position.y), roundi(global_position.z))
@@ -485,6 +500,8 @@ func _on_head_submerged(is_submerged: bool, kind: WaterOverlay.FluidKind) -> voi
 			Services.audio.play_water_enter(true)
 		else:
 			Services.audio.play_water_exit(true)
+			if ScreenEffects:
+				ScreenEffects.trigger_droplets()
 
 	if gravity:
 		gravity.set_at_surface(is_at_liquid_surface())

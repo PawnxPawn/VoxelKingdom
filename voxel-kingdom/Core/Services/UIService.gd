@@ -103,5 +103,4 @@ func _ui_manager_check() -> bool:
 
 
 func is_ui_shown(ui: Uis) -> bool:
-	print(_active_uis)
 	return _active_uis.has(ui)

@@ -102,7 +102,8 @@ func _process_interaction_input() -> void :
 		inventory_pressed.emit()
 
 	if Input.is_action_just_pressed(&"Fly"):
-		fly_pressed.emit()
+		#fly_pressed.emit()
+		pass
 
 
 
