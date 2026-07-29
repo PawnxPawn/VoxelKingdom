@@ -128,6 +128,7 @@ func _connect_components() -> void :
 	if gravity and _gravity_allowed:
 		_handler.set_active(GravityComponent, true)
 		gravity.chunk_manager = chunk_manager
+		gravity.grounded.connect(_on_grounded)
 
 
 	move = _handler.get_component(MoveComponent)
@@ -507,26 +508,16 @@ func is_in_lava() -> bool:
 	return _feet_in_lava or _head_in_lava
 
 
-
-
-
-
 func play_swap_item(value: int, is_wheel: bool = false) -> void :
 	if not _input_allowed: return
 	if _is_removing: return
 
-	# Instant swap: update slot + block right away, no waiting on the
-	# previous animation. Restart the swing animation from frame 0 every
-	# time so mashing the switch input always feels responsive.
 	_is_swapping = true
 	_is_wheel = is_wheel
 	_swap_pending_value = value
 
 	_change_block(value, is_wheel)
 
-	# If a previous swing had already hidden the cube (hand closed) when
-	# this new swap interrupted it, pop it back up immediately. The fresh
-	# animation's own frame 2 / frame 9 cycle takes over from here.
 	default_cube_mesh.show()
 
 	hand.stop()
@@ -600,3 +591,7 @@ func _update_buried_state() -> void :
 		gravity.is_buried = buried
 	if move:
 		move.is_buried = buried
+
+
+func _on_grounded() -> void:
+	_play_footstep()
