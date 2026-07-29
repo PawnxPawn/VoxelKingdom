@@ -205,3 +205,7 @@ static func is_fallable(type: TerrianType) -> bool:
 
 static func is_solid_terrain(type: TerrianType) -> bool:
 	return type != TerrianType.AIR and not is_liquid(type)
+
+
+static func is_fall_passable(type: TerrianType) -> bool:
+	return type == TerrianType.AIR or is_water(type) or is_lava(type)

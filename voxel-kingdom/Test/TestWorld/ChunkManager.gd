@@ -1173,14 +1173,22 @@ func _drop_if_needed(pos: Vector3i) -> void :
 		return
 
 	var below: Vector3i = pos + Vector3i.DOWN
-	if get_voxel_type_at(below) != TerrianData.TerrianType.AIR:
+	var below_type: TerrianData.TerrianType = get_voxel_type_at(below)
+
+	if not TerrianData.is_fall_passable(below_type):
 		return
 
+	var was_water: bool = TerrianData.is_water(below_type)
+	var was_lava: bool = TerrianData.is_lava(below_type)
+
 	_move_voxel(pos, below)
+
+	if was_water and water_flow_manager != null:
+		water_flow_manager.wake_neighbors(below)
+	elif was_lava and lava_flow_manager != null:
+		lava_flow_manager.wake_neighbors(below)
+
 	_drop_if_needed(below)
-
-
-
 
 
 func get_voxel_type_at(world_position: Vector3i) -> TerrianData.TerrianType:

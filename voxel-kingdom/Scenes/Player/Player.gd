@@ -1,7 +1,3 @@
-
-
-
-
 class_name Player
 extends Entity
 
@@ -51,7 +47,6 @@ var _is_wheel: bool = false
 var _is_swapping: bool = false
 var _is_removing: bool = false
 var _swap_pending_value: int = 0
-var _block_changed_this_swap: bool = false
 var _block_removed_this_swing: bool = false
 var _pending_remove_block: Vector3i = Vector3i.ZERO
 var _has_pending_remove: bool = false
@@ -455,11 +450,6 @@ func _on_remove_block() -> void :
 
 
 func _cancel_swap_for_removal() -> void :
-	if not _block_changed_this_swap:
-		default_cube_mesh.hide()
-		_change_block(_swap_pending_value, _is_wheel)
-		_block_changed_this_swap = true
-
 	_is_swapping = false
 
 
@@ -524,21 +514,31 @@ func is_in_lava() -> bool:
 func play_swap_item(value: int, is_wheel: bool = false) -> void :
 	if not _input_allowed: return
 	if _is_removing: return
-	if _is_swapping: return
+
+	# Instant swap: update slot + block right away, no waiting on the
+	# previous animation. Restart the swing animation from frame 0 every
+	# time so mashing the switch input always feels responsive.
 	_is_swapping = true
 	_is_wheel = is_wheel
 	_swap_pending_value = value
-	_block_changed_this_swap = false
+
+	_change_block(value, is_wheel)
+
+	# If a previous swing had already hidden the cube (hand closed) when
+	# this new swap interrupted it, pop it back up immediately. The fresh
+	# animation's own frame 2 / frame 9 cycle takes over from here.
+	default_cube_mesh.show()
+
+	hand.stop()
+	hand.frame = 0
 	hand.play("ItemSwap")
 
 
 func _on_hand_frame_changed() -> void :
 	match hand.animation:
 		&"ItemSwap":
-			if hand.frame == 2 and not _block_changed_this_swap:
+			if hand.frame == 2:
 				default_cube_mesh.hide()
-				_change_block(_swap_pending_value, _is_wheel)
-				_block_changed_this_swap = true
 			elif hand.frame == 9:
 				default_cube_mesh.show()
 
