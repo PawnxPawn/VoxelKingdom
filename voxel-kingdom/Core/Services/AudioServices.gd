@@ -31,10 +31,10 @@ enum  SFX_Titles {
 @onready var music_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
 var music: Dictionary = {
-	Music_Titles.MENUS: preload("uid://cmdld0usdketi"), 
-	Music_Titles.C4188: preload("uid://ucajyunnv11n"), 
-	Music_Titles.VoxelKingdom: preload("uid://lblty5d1hbi5"), 
-	Music_Titles.C4189: preload("uid://bf6hdj40jwk5a")
+	Music_Titles.MENUS: preload("uid://6ny7vetafvwp"), 
+	Music_Titles.C4188: preload("uid://ddcugaxhrxhaw"), 
+	Music_Titles.VoxelKingdom: preload("uid://cpsurs0wur8j7"), 
+	Music_Titles.C4189: preload("uid://bx3nu0wdnxuq3")
 }
 
 var sfx: Dictionary = {
