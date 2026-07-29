@@ -291,7 +291,6 @@ func _is_in_cave() -> bool:
 		return false
 
 	if not _has_ceiling_above():
-		print("no ceiling")
 		return false
 
 	var air_count: int = 0

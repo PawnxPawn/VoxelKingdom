@@ -62,8 +62,8 @@ void fragment() {
 
 	// ---- surfacing droplets ----
 	float elapsed = TIME - droplet_start_time;
-	if (elapsed >= 0.0 && elapsed < 0.35) {
-		float fade = 1.0 - smoothstep(0.0, 0.35, elapsed);
+	if (elapsed >= 0.0 && elapsed < 1.2) {
+		float fade = 1.0 - smoothstep(0.0, 1.2, elapsed);
 		float drop_total = 0.0;
 
 		for (int i = 0; i < 10; i++) {
@@ -79,5 +79,5 @@ void fragment() {
 		color *= mix(1.0, 0.85, drop_total);
 	}
 
-	COLOR = vec4(color, 1.0);
-}
+		COLOR = vec4(color, 1.0);
+	}
