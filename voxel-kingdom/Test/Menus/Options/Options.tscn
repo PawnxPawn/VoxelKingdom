@@ -4,6 +4,8 @@
 [ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="2"]
 [ext_resource type="Texture2D" uid="uid://cijecf5q51mft" path="res://Assets/Menu/ClickBoxsSliders/ClickBox.png" id="3"]
 [ext_resource type="Texture2D" uid="uid://cej77ob25cvdl" path="res://Assets/Menu/ClickBoxsSliders/SliderOne.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://dfokut8b1takt" path="res://Assets/Menu/PauseMenu/SoundNTrack.png" id="5_3secf"]
+[ext_resource type="Texture2D" uid="uid://bvijhfutnrnpv" path="res://Assets/Menu/PauseMenu/TrackSkip.png" id="6_ms8x0"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_w45gy"]
 font = ExtResource("2")
@@ -220,6 +222,60 @@ text = "0%"
 label_settings = SubResource("LabelSettings_3secf")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="SwapMusic" type="Control" parent="Panel" unique_id=41550099]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TextureRect" type="TextureRect" parent="Panel/SwapMusic" unique_id=11780752]
+layout_mode = 0
+offset_left = 638.0
+offset_top = 729.0
+offset_right = 1235.0
+offset_bottom = 795.0
+texture = ExtResource("5_3secf")
+
+[node name="SongLabel" type="Label" parent="Panel/SwapMusic/TextureRect" unique_id=1384086902]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 9.0
+offset_right = 581.0
+offset_bottom = 57.0
+theme_override_fonts/font = ExtResource("2")
+theme_override_font_sizes/font_size = 32
+text = "Song"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SwapLeft" type="TextureButton" parent="Panel/SwapMusic" unique_id=201998482]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 558.0
+offset_top = 729.0
+offset_right = 624.0
+offset_bottom = 795.0
+pivot_offset = Vector2(33, 33)
+texture_normal = ExtResource("6_ms8x0")
+texture_pressed = ExtResource("6_ms8x0")
+texture_hover = ExtResource("6_ms8x0")
+texture_disabled = ExtResource("6_ms8x0")
+texture_focused = ExtResource("6_ms8x0")
+
+[node name="SwapRight" type="TextureButton" parent="Panel/SwapMusic" unique_id=1499842543]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1247.0
+offset_top = 729.0
+offset_right = 1313.0
+offset_bottom = 795.0
+pivot_offset = Vector2(33, 33)
+texture_normal = ExtResource("6_ms8x0")
+texture_pressed = ExtResource("6_ms8x0")
+texture_hover = ExtResource("6_ms8x0")
+texture_disabled = ExtResource("6_ms8x0")
+texture_focused = ExtResource("6_ms8x0")
 
 [node name="Back" type="Button" parent="." unique_id=2136993335]
 unique_name_in_owner = true

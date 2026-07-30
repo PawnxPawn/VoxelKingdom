@@ -6,6 +6,7 @@ extends Node3D
 @onready var credits_back: Button = %CreditsBack
 @onready var credits: Panel = %Credits
 @onready var title: TextureRect = %Title
+@onready var seed_value: LineEdit = %SeedValue
 
 func _ready() -> void :
 	Services.game_state.change_game_state(GameState.GameStates.MAIN_MENU)
@@ -27,6 +28,7 @@ func _connect_signals() -> void :
 			button.button_up.connect(_on_button_up.bind(button))
 			button.mouse_entered.connect(_on_button_hover.bind(button, true))
 			button.mouse_exited.connect(_on_button_hover.bind(button, false))
+	seed_value.text_changed.connect(_on_seed_input_changed)
 
 
 func _setup_initial_state() -> void :
@@ -92,6 +94,7 @@ func _credits_back() -> void :
 
 
 func _new_game() -> void :
+	Services.globals.set_world_seed_from_text(seed_value.text)
 	Services.game_state.change_game_state(GameState.GameStates.PLAYING)
 	Services.scene_loader.load_scene(SceneLoader.Scenes.WORLD)
 
@@ -100,6 +103,14 @@ func _on_ui_hidden(ui: UI.Uis) -> void :
 	match ui:
 		UI.Uis.GAME_SETTINGS:
 			title_screen.visible = true
+
+
+func _on_seed_input_changed(text: String) -> void:
+	var lower: String = text.to_lower()
+	if lower != text:
+		var caret_pos := seed_value.caret_column
+		seed_value.text = lower
+		seed_value.caret_column = caret_pos
 
 
 func _disconnect_external_signals() -> void :

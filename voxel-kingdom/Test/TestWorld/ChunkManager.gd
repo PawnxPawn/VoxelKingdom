@@ -112,9 +112,6 @@ var cave_min_y: int = 0
 var cave_max_y: int = 0
 
 
-
-
-
 var terrain_noise: FastNoiseLite = FastNoiseLite.new()
 var cave_noise: FastNoiseLite = FastNoiseLite.new()
 var cave_entrance_noise: FastNoiseLite = FastNoiseLite.new()
@@ -127,9 +124,6 @@ var iron_deposit_noise: FastNoiseLite = FastNoiseLite.new()
 
 var number_of_chunks: Vector3i
 var chunk_scene: PackedScene = preload("uid://vqyykbxy7a60")
-
-
-
 
 
 var chunks_by_key: Dictionary[Vector3i, Chunk] = {}
@@ -154,9 +148,6 @@ var _pending_lava_wakes_mutex: Mutex = Mutex.new()
 var max_concurrent_chunk_tasks = max(2, OS.get_processor_count() - 2)
 
 
-
-
-
 var stream_target: Node3D = null
 
 var loading_chunks_flags: Dictionary[Vector3i, bool] = {}
@@ -177,13 +168,7 @@ var modified_chunks: Dictionary[Vector3i, PackedInt32Array] = {}
 var vertical_streaming_locked_to_spawn: bool = true
 
 
-
-
-
-
 var is_thread_stopping: bool = false
-
-
 
 
 var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
@@ -191,21 +176,13 @@ var _pending_neighbor_rebuilds_flags: Dictionary[Vector3i, bool] = {}
 @export var neighbor_rebuilds_per_frame: int = 4
 
 
-
-
-
 var _column_info_cache: Dictionary[Vector2i, Dictionary] = {}
-
-
-
 
 
 var _pending_water_wakes: Array[Vector3i] = []
 var _pending_water_wakes_mutex: Mutex = Mutex.new()
 
 var rebuild_needs_collision: bool = false
-
-
 
 
 var _chunk_vertical_priority: Dictionary[Vector3i, int] = {}
@@ -215,25 +192,17 @@ var _chunk_vertical_priority: Dictionary[Vector3i, int] = {}
 var block_break_particles_scene: PackedScene = preload("uid://bpskuj1y6xw66")
 
 
-
-
-
-
-
 func _ready() -> void :
 	instance = self
-
-	if noise_seed == 0:
-		noise_seed = randi()
-
+	
+	noise_seed = Services.globals.world_seed
+	
 	start_time_usec = Time.get_ticks_usec()
-
-
+	
 	terrain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	terrain_noise.frequency = noise_frequency
 	terrain_noise.seed = noise_seed
-
-
+	
 	cave_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	cave_noise.frequency = cave_frequency
 	cave_noise.seed = noise_seed + 1
@@ -1054,10 +1023,6 @@ func _generate_chunk_at(chunk_grid_coord: Vector3i) -> void :
 	loading_chunks_mutex.lock()
 	loading_chunks_flags.erase(chunk_world_key)
 	loading_chunks_mutex.unlock()
-
-
-
-
 
 
 func _voxel_to_chunk_key(voxel_position: Vector3i) -> Vector3i:

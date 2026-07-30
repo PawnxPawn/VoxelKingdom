@@ -11,6 +11,10 @@ extends Control
 
 @onready var back: Button = %Back
 
+@onready var song_label: Label = %SongLabel
+@onready var swap_left: TextureButton = %SwapLeft
+@onready var swap_right: TextureButton = %SwapRight
+
 
 func _ready() -> void :
 	_connect_signals()
@@ -22,8 +26,15 @@ func _connect_signals() -> void :
 	music_vol_slider.value_changed.connect(_on_slider_changed.bind("Music"))
 	sfx_vol_slider.value_changed.connect(_on_slider_changed.bind("SFX"))
 
-	back.button_up.connect(_on_back_pressed)
+	swap_left.button_up.connect(_on_swap_song.bind(-1))
+	swap_left.mouse_entered.connect(_on_button_hover.bind(swap_left, true))
+	swap_left.mouse_exited.connect(_on_button_hover.bind(swap_left, false))
+	
+	swap_right.button_up.connect(_on_swap_song.bind(1))
+	swap_right.mouse_entered.connect(_on_button_hover.bind(swap_right, true))
+	swap_right.mouse_exited.connect(_on_button_hover.bind(swap_right, false))
 
+	back.button_up.connect(_on_back_pressed)
 
 func _load_initial_values() -> void :
 
@@ -34,7 +45,7 @@ func _load_initial_values() -> void :
 	_update_label(master_vol_per, master_vol_slider.value)
 	_update_label(music_vol_per, music_vol_slider.value)
 	_update_label(sfx_vol_per, sfx_vol_slider.value)
-
+	_update_song_label()
 
 func _on_slider_changed(value: float, bus_name: String) -> void :
 	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
@@ -52,6 +63,24 @@ func _on_slider_changed(value: float, bus_name: String) -> void :
 
 func _update_label(label: Label, value: float) -> void :
 	label.text = "%d%%" % value
+
+func _update_song_label() -> void :
+	song_label.text = Services.audio.get_current_song_name()
+
+
+func _on_swap_song(direction: int) -> void :
+	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
+	if direction > 0:
+		Services.audio.next_song()
+	else:
+		Services.audio.previous_song()
+	_update_song_label()
+
+
+func _on_button_hover(button: TextureButton, mouse_enter: bool) -> void :
+	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
+	var scale_direction = 1 if mouse_enter else -1
+	button.scale += Vector2(0.25, 0.25) * scale_direction
 
 
 func _on_back_pressed() -> void :

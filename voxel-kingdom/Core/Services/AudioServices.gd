@@ -78,6 +78,7 @@ const LAVA_PROXIMITY_RADIUS: int = 8
 var _water_loop_player: AudioStreamPlayer = AudioStreamPlayer.new()
 var _lava_loop_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
+var current_song: Music_Titles = Music_Titles.MENUS
 
 func _ready() -> void :
 	_load_settings()
@@ -124,6 +125,7 @@ func get_sfx_volume() -> float:
 
 
 func play_music(song: Music_Titles = Music_Titles.MENUS) -> void :
+	current_song = song
 	if _random_play:
 		play_random_song()
 		return
@@ -143,7 +145,23 @@ func play_random_song() -> void :
 				break
 
 	_last_random_key = song_key
+	current_song = song_key
 	_switch_stream(music[song_key])
+
+func next_song() -> void:
+	var values: Array = Music_Titles.values()
+	var idx: int = values.find(current_song)
+	idx = (idx + 1) % values.size()
+	current_song = values[idx]
+	_switch_stream(music[current_song])
+
+
+func previous_song() -> void:
+	var values: Array = Music_Titles.values()
+	var idx: int = values.find(current_song)
+	idx = (idx - 1 + values.size()) % values.size()
+	current_song = values[idx]
+	_switch_stream(music[current_song])
 
 
 func _switch_stream(stream: AudioStream) -> void :
@@ -151,6 +169,10 @@ func _switch_stream(stream: AudioStream) -> void :
 	music_player.stream = stream
 	await get_tree().process_frame
 	music_player.play()
+
+
+func get_current_song_name() -> String:
+	return Music_Titles.keys()[current_song].to_lower()
 
 
 func stop_music() -> void :

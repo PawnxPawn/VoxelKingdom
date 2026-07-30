@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://2gr5al6axbru" path="res://Assets/Menu/MainMenu/MainMenuTitle.png" id="5"]
 [ext_resource type="FontFile" uid="uid://2huvyxax8iqt" path="res://Assets/Fonts/PICO-8.ttf" id="6"]
 [ext_resource type="Texture2D" uid="uid://dsgrn4b45qwr2" path="res://Assets/Menu/MainMenu/Boot.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://cfvwluwjkodaf" path="res://Assets/Menu/MainMenu/InsertSeed.png" id="8_3br18"]
 
 [sub_resource type="Shader" id="Shader_g3a1x"]
 code = "shader_type sky;
@@ -331,8 +332,9 @@ vertical_alignment = 1
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
+offset_top = 101.0
 offset_right = 40.0
-offset_bottom = 40.0
+offset_bottom = 141.0
 theme_override_styles/panel = SubResource("StyleBoxEmpty_e0yiv")
 
 [node name="GenerateWorld" type="TextureButton" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=547514580]
@@ -420,6 +422,34 @@ texture_pressed = SubResource("AtlasTexture_g3a1x")
 texture_hover = SubResource("AtlasTexture_g3a1x")
 texture_disabled = SubResource("AtlasTexture_g3a1x")
 texture_focused = SubResource("AtlasTexture_g3a1x")
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/TitleScreen/TitleButtons" unique_id=2051427775]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 575.0
+offset_top = 279.0
+offset_right = 1304.0
+offset_bottom = 432.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("8_3br18")
+
+[node name="SeedValue" type="LineEdit" parent="CanvasLayer/TitleScreen/TitleButtons/TextureRect" unique_id=679912097]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 9.0
+offset_top = 54.0
+offset_right = 720.0
+offset_bottom = 99.0
+theme_override_fonts/font = ExtResource("6")
+theme_override_font_sizes/font_size = 32
+placeholder_text = "0"
+max_length = 32
+caret_blink = true
 
 [node name="Credits" type="Panel" parent="CanvasLayer/TitleScreen" unique_id=217753276]
 unique_name_in_owner = true

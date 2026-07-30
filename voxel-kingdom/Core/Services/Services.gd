@@ -8,6 +8,7 @@ var scene_loader: SceneLoader
 var ui: UI
 var debug: Debug
 var audio: Audio
+var globals: Globals
 
 
 
@@ -38,6 +39,8 @@ func _register_services() -> void :
 
 	debug = Debug.new()
 	add_child(debug)
+	
+	globals = Globals.new()
 
 
 
