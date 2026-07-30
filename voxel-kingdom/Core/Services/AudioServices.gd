@@ -4,6 +4,8 @@
 class_name Audio
 extends Node
 
+signal song_changed(song: Music_Titles)
+
 enum Music_Titles{
 	MENUS, C4188, VoxelKingdom, C4189
 }
@@ -169,6 +171,7 @@ func _switch_stream(stream: AudioStream) -> void :
 	music_player.stream = stream
 	await get_tree().process_frame
 	music_player.play()
+	song_changed.emit(current_song)
 
 
 func get_current_song_name() -> String:

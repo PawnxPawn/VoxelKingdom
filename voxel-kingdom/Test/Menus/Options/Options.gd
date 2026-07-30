@@ -35,6 +35,8 @@ func _connect_signals() -> void :
 	swap_right.mouse_exited.connect(_on_button_hover.bind(swap_right, false))
 
 	back.button_up.connect(_on_back_pressed)
+	
+	Services.audio.song_changed.connect(_on_song_changed)
 
 func _load_initial_values() -> void :
 
@@ -69,11 +71,16 @@ func _update_song_label() -> void :
 
 
 func _on_swap_song(direction: int) -> void :
+	Services.audio.set_loop(false)
+	Services.audio.set_random_play(true)
 	Services.audio.play_sfx(Audio.SFX_Titles.MENU_CLICK)
 	if direction > 0:
 		Services.audio.next_song()
 	else:
 		Services.audio.previous_song()
+
+
+func _on_song_changed(_song: Audio.Music_Titles) -> void :
 	_update_song_label()
 
 
